@@ -3,7 +3,7 @@
 ![Language](https://img.shields.io/badge/Language-Verilog-blue)
 ![Platform](https://img.shields.io/badge/Platform-Xilinx%20Vivado-red)
 ![Target](https://img.shields.io/badge/Target-Artix--7%20(Nexys%204)-orange)
-![License](https://img.shields.io/badge/License-MIT-green)
+![License](https://img.shields.io/badge/License-green)
 ![Status](https://img.shields.io/badge/Status-Synthesis%20Ready-brightgreen)
 
 ## 📌 Overview
