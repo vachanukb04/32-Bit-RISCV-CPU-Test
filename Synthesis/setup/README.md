@@ -8,12 +8,12 @@ This setup contains 78 original functional cell models in Liberty format. They c
 
 | Setup ID | VDD | Temperature | Library use |
 | --- | ---: | ---: | --- |
+| `1v00_n40c` | 1.00 V | −40 °C | [Functional Liberty view](liberty/stdcells_1v00_n40c.lib) |
+| `1v00_p125c` | 1.00 V | +125 °C | [Functional Liberty view](liberty/stdcells_1v00_p125c.lib) |
 | `5v00_n40c` | 5.00 V | −40 °C | [Functional Liberty view](liberty/stdcells_5v00_n40c.lib) |
 | `5v00_p125c` | 5.00 V | +125 °C | [Functional Liberty view](liberty/stdcells_5v00_p125c.lib) |
-| `0v00_n40c` | 0.00 V | −40 °C | Power-off state |
-| `0v00_p125c` | 0.00 V | +125 °C | Power-off state |
 
-VSS is 0 V in both powered views. A 0 V **supply** is a separate power-off state. The manifest marks those rows ineligible for mapping and gives them no Liberty path. The two powered views share the same logic and pin definitions. Their voltage and temperature values identify the requested setups, with no characterized delays, timing arcs, area, or power values.
+VSS is 0 V in all four views. The views share the same logic and pin definitions and support functional mapping. Their voltage and temperature values identify the requested setups. Timing, area, and power characterization requires process-specific models.
 
 For a published 5 V family, GF180MCU 7-track provides characterized 5.00 V at 25 °C and 4.50 V or 5.50 V views at −40 °C and +125 °C. Exact 5.00 V timing at both requested temperatures requires matching characterized data. [Published GF180MCU Liberty views](https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/tree/main/liberty)
 
