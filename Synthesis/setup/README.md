@@ -1,6 +1,6 @@
 # Synthesis setup
 
-[riscv_core.filelist](riscv_core.filelist) lists the eight RTL sources for the CPU. The planned `init` command expands `${REPO_ROOT}` to the absolute path of the checkout.
+[riscv_core.filelist](riscv_core.filelist) lists the eight RTL sources for the CPU. [Init and elaboration](../README.md) expand `${REPO_ROOT}` to the absolute path of the checkout.
 
 ## Cell library and corners
 
@@ -21,8 +21,8 @@ For a published 5 V family, GF180MCU 7-track provides characterized 5.00 V at 25
 
 ## Flow inputs
 
-- **Init** will read [corners.json](corners.json), which defines corner IDs, library paths relative to this directory, and whether each setup allows functional mapping.
-- **Elab** will use [cell_interfaces.json](cell_interfaces.json) to resolve explicitly instantiated cells as leaves and check signal pin names, directions, and widths. Power and ground pins are recorded separately. The RISC-V design's behavioral RTL and inferred memories remain RTL at this stage.
+- **Init** reads the RTL file list. [corners.json](corners.json) records corner IDs, library paths relative to this directory, and whether each setup allows functional mapping.
+- **Elab** accepts [cell_interfaces.json](cell_interfaces.json) through `--interfaces` to resolve explicitly instantiated cells as leaves and check signal pin names, directions, and widths. Power and ground pins are recorded separately. The RISC-V design's behavioral RTL and inferred memories remain RTL at this stage.
 - **Compile** will use the selected powered Liberty view for Boolean and sequential matching. STA and timing-driven mapping require characterized Liberty data from a chosen process.
 
 For cells with both asynchronous set and reset, the functional model gives reset priority. The active-low `RN` and `SN` pins encode assertion polarity.

@@ -10,19 +10,32 @@ This directory is for the in-house synthesis tool for the 32-bit RISC-V design. 
 | `analyze` | Process HDL includes, macro definitions and expansions, and conditional directives in one ordered compilation unit. Tokenize the result and parse it with a recursive descent parser and an operator precedence parser for expressions. Store each module as a reusable syntax tree with its ordered port declarations, parameters, signals, procedural blocks, and instance declarations. Keep the original source locations, including locations in included headers. Detect duplicate module definitions before linking. | Module index and parsed RTL |
 | `elab` | Starting at the selected top, evaluate parameters, create instance scopes, expand supported generate constructs, and bind child ports to expressions or nets in their parent scopes. Resolve identifier references, packed widths, signedness, and unpacked array dimensions. Record any required conversions and diagnose unresolved references. | Elaborated hierarchy and diagnostics |
 
-The planned command interface is:
+Run the flow from the repository root with Python 3.10 or newer:
 
 ```sh
-python3 Synthesis/rtl_tool.py init --filelist Synthesis/setup/riscv_core.filelist --top riscv_core --work build/riscv_core
-python3 Synthesis/rtl_tool.py analyze --work build/riscv_core
-python3 Synthesis/rtl_tool.py elab --work build/riscv_core
+python3 Synthesis/init_design/init_elab.py \
+  --filelist Synthesis/setup/riscv_core.filelist \
+  --top riscv_core --out build/riscv_core
 ```
 
-Each stage will consume the previous stage's output. Changes to sources, included files, or options will invalidate affected checkpoints. These commands describe the planned interface.
+The command runs all three stages and records source hashes and dependencies. Use a dedicated report directory. A rerun replaces that directory's previous generated reports, and a failed run publishes its diagnostics without a successful elaboration report.
+
+| Output | Contents |
+| --- | --- |
+| `init.json` | Resolved input manifest, top module, defines, includes, source hashes, and optional interface catalogs |
+| `analysis.json` | Parsed module definitions, procedural syntax, include dependencies, and source locations |
+| `elaboration.json` | Resolved hierarchy with instance paths and port bindings, plus typed RTL, parameters, signal widths and signedness, array dimensions, and source locations for each definition |
+| `elaboration.rpt` | Human-readable hierarchical report and port connections |
+| `blocks/*.rpt` | Flat report for each resolved block definition, parameter specialization, or macro interface, including all instance paths that use it |
+| `diagnostics.json` | Run status, stage, first fatal error or reported warnings, and available source and instance locations |
+
+The design database preserves hierarchy. Flat block reports are local views of each definition and keep references to child instances. Multiple instances with the same effective parameters share a definition.
+
+Init reports missing sources and invalid or recursive file lists. Analyze reports missing headers, undefined macros, syntax errors, unsupported syntax, and duplicate module definitions. Elaborate reports unresolved modules or macros, invalid or cyclic parameters, undeclared identifiers, recursive hierarchy, and invalid, duplicate, or wrong-width port bindings. Open input and bidirectional ports produce warnings. Intentional open outputs are recorded in the hierarchy.
 
 ## RTL file list
 
-Use an ordered text manifest named `<design>.filelist` with one source or directive per line. During `init`, expand the literal `${REPO_ROOT}` prefix to the absolute path of the Git checkout containing the top-level file list. Absolute paths can also be supplied directly. Resolve other relative paths from the directory containing the manifest that declares them. The first version will accept `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. Expand nested lists in place and report recursive list references. Resolve HDL include paths relative to the including source first, then search the declared include directories in order.
+Use an ordered text manifest named `<design>.filelist` with one source or directive per line. During `init`, the tool expands the literal `${REPO_ROOT}` prefix to the absolute path of the Git checkout containing the top-level file list. Absolute paths can also be supplied directly. Other relative paths resolve from the directory containing the manifest that declares them. The reader accepts `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. It expands nested lists in place and reports recursive list references. HDL includes resolve relative to the including source first, then through the declared include directories in order.
 
 The [RISC-V example](setup/riscv_core.filelist) contains:
 
@@ -59,7 +72,7 @@ See [setup](setup/README.md) for the functional cell library, explicit cell inte
 | Prebuilt block, SRAM, or other hard macro | Register the module name and its port interface explicitly. The interface can come from a designated Verilog stub or a project port manifest. Record directions, widths, and any supported parameter values. Validate the instance connections and keep it as an opaque leaf with a reference to its model. Liberty and physical views can be associated for later stages. |
 | Missing module or macro interface | Fail with the instance path, source location, and unresolved module name. This keeps a missing file from becoming an accidental black box. |
 
-A module name must have one provider. Report a collision if both an RTL definition and a registered macro claim the same name.
+A module name must have one provider. The tool reports a collision if both an RTL definition and a registered macro claim the same name. Supply an interface catalog with `--interfaces Synthesis/setup/cell_interfaces.json` for explicitly instantiated cells or macros. The behavioral RISC-V sources need no catalog. Use `--parameter NAME=EXPR` to override an integral parameter on the top module.
 
 The RISC-V register file, instruction memory, and data memory are RTL blocks. Preserve their unpacked arrays, indexed accesses, and initialization or reset behavior. An external memory macro would need an explicitly registered interface and a design decision about matching its behavior to the RTL.
 
@@ -68,3 +81,11 @@ The RISC-V register file, instruction memory, and data memory are RTL blocks. Pr
 Run the flow on the original RISC-V RTL. Require eight reachable modules including the top and all seven child instances linked. Verify that `riscv_core.u_alu` binds its 5-bit `alu_op` port and retains the 33-bit `tmp` signal, and that the register file and memory arrays retain their declared dimensions. Check that a removed source file, a misspelled child port, and a wrong-width connection in strict mode each produce a source-located error. Repeated runs with identical inputs should produce the same elaborated JSON.
 
 Phase 1 ends with a linked RTL database. Gate mapping, timing constraints, and timing analysis consume that database in later phases.
+
+The implementation covers the project's Verilog subset, including ANSI ports, integral constants and parameters, named and positional bindings, named conditional and loop generate blocks, procedural assignments, event controls, and unpacked arrays. It requires explicit signal declarations and exact port widths in the first version. General SystemVerilog constructs, arbitrary hierarchical expressions, simulation scheduling, and functional equivalence checking require further implementation.
+
+Run the acceptance and diagnostic tests with:
+
+```sh
+python3 Synthesis/init_design/test_init_elab.py -v
+```
