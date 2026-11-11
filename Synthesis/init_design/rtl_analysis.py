@@ -70,7 +70,7 @@ def locate_root(filelist):
                     source_at(str(filelist)))
 
 
-def read_inputs(filelist, top, interface_paths):
+def read_inputs(filelist, top, interface_paths, trace):
     """Expand source manifests without shell evaluation."""
     filelist = filelist.resolve()
     root = locate_root(filelist)
@@ -91,8 +91,9 @@ def read_inputs(filelist, top, interface_paths):
         if path in active:
             raise FlowError(f"Recursive file list: {display_path(path, root)}", at)
         active.add(path)
-        body, digest = read_text(path, at)
         label = display_path(path, root)
+        trace(f"Reading RTL file list {label}")
+        body, digest = read_text(path, at)
         manifests[label] = digest
         for number, line in enumerate(body.splitlines(), 1):
             line = line.strip()
@@ -112,16 +113,22 @@ def read_inputs(filelist, top, interface_paths):
                     raise FlowError(f"Missing include directory: {directory}", at_line)
                 if directory not in incdirs:
                     incdirs.append(directory)
+                    trace(f"Include search directory: {display_path(directory, root)}")
             elif directive.startswith("+define+") and len(fields) == 1:
                 name, sep, value = directive[8:].partition("=")
                 if not re.fullmatch(IDENT, name):
                     raise FlowError(f"Invalid macro name: {name!r}", at_line)
                 defines[name] = value if sep else "1"
+                trace(f"Registered file-list define {name}")
             elif len(fields) == 1 and not directive.startswith(("-", "+")):
                 source = resolve(directive, path.parent, at_line)
                 if source in sources:
                     raise FlowError(f"Duplicate RTL source: {display_path(source, root)}", at_line)
-                sources[source] = read_text(source, at_line)
+                source_label = display_path(source, root)
+                trace(f"Reading RTL source {source_label} (file list {label}:{number})")
+                body, digest = read_text(source, at_line)
+                sources[source] = (body, digest)
+                trace(f"Read {len(body.splitlines())} lines from {source_label}, sha256 {digest[:12]}")
             else:
                 raise FlowError(f"Unsupported file list entry: {line}", at_line)
         active.remove(path)
@@ -136,6 +143,7 @@ def read_inputs(filelist, top, interface_paths):
         path = path.resolve()
         label = display_path(path, root)
         at = source_at(label)
+        trace(f"Reading cell or macro interface catalog {label}")
         body, digest = read_text(path, at)
         try:
             cells = json.loads(body)["cells"]
@@ -168,6 +176,7 @@ def read_inputs(filelist, top, interface_paths):
                 raise FlowError(f"{name}: invalid or duplicate power pins", at)
             interfaces[name] = {"ports": ports, "power_pins": power_pins, "source": at}
         interface_files[label] = digest
+        trace(f"Registered {len(cells)} interfaces from {label}")
 
     manifest = {
         "top": top,
@@ -195,7 +204,7 @@ def tokenize_line(line, file, number):
         pos = match.end()
 
 
-def preprocess(root, sources, include_dirs, defines):
+def preprocess(root, sources, include_dirs, defines, trace):
     macros = dict(defines)
     deps, tokens, timescales = {}, [], []
     active_files = set()
@@ -218,6 +227,8 @@ def preprocess(root, sources, include_dirs, defines):
         text, digest = data
         file = display_path(path, root)
         deps[file] = digest
+        trace(f"Preprocessing and tokenizing {file}")
+        token_start = len(tokens)
         # Retain newlines and columns while removing comments, including comments
         # before a directive. Quoted include filenames are left intact.
         text = COMMENT_OR_STRING.sub(lambda m: m[0] if m[0].startswith('"')
@@ -262,20 +273,24 @@ def preprocess(root, sources, include_dirs, defines):
                 header = next((p.resolve() for p in candidates if p.is_file()), None)
                 if header is None:
                     raise FlowError(f"Include file not found: {requested[1]}", at_line)
+                trace(f"Including {display_path(header, root)} from {file}:{number}")
                 visit(header, read_text(header, at_line), at_line)
             elif directive == "define":
                 parts = re.fullmatch(rf"({IDENT})(?:\s+(.*))?", arg)
                 if not parts or arg.endswith("\\"):
                     raise FlowError("Only single-line object-like macros are supported", at_line)
                 macros[parts[1]] = parts[2] or ""
+                trace(f"Defined macro {parts[1]} at {file}:{number}")
             elif directive == "undef":
                 if not re.fullmatch(IDENT, arg):
                     raise FlowError("undef requires a macro name", at_line)
                 macros.pop(arg, None)
+                trace(f"Undefined macro {arg} at {file}:{number}")
             elif directive == "timescale":
                 if not re.fullmatch(r"(?:1|10|100)\s*(?:s|ms|us|ns|ps|fs)\s*/\s*(?:1|10|100)\s*(?:s|ms|us|ns|ps|fs)", arg):
                     raise FlowError("Malformed timescale directive", at_line)
                 timescales.append({"source": at_line, "value": arg})
+                trace(f"Recorded timescale {arg} at {file}:{number}")
             elif directive == "default_nettype":
                 if arg not in ("none", "wire"):
                     raise FlowError(f"Unsupported default_nettype: {arg}", at_line)
@@ -283,6 +298,7 @@ def preprocess(root, sources, include_dirs, defines):
                 tokens.extend(tokenize_line(expand(line, at_line), file, number))
         if frames:
             raise FlowError("Unclosed preprocessor conditional", frames[-1][3])
+        trace(f"Tokenized {file}: {len(tokens) - token_start} tokens including headers")
         active_files.remove(path)
 
     for path, data in sources.items():
@@ -622,7 +638,7 @@ class Parser:
             items.extend(self.item(generate))
         return items
 
-    def modules(self):
+    def modules(self, trace):
         result = {}
         while self.token.text != "<eof>":
             self.expect("module")
@@ -631,12 +647,17 @@ class Parser:
                 previous = result[name.text]["source"]
                 raise FlowError(f"Duplicate module {name.text!r}; first defined at "
                                 f"{previous['file']}:{previous['line']}", name.source)
+            trace(f"Parsing module {name.text} at {name.file}:{name.line}")
             parameters = []
             if self.accept("#"):
                 self.expect("(")
                 parameters = self.parameters(")")
             ports = self.header_ports() if self.accept("(") else []
             self.expect(";")
+            items = self.items_until("endmodule")
             result[name.text] = node("module", name, name=name.text, parameters=parameters, ports=ports,
-                                     items=self.items_until("endmodule"))
+                                     items=items)
+            trace(f"Analyzed {name.text}: {len(ports)} ports, "
+                  f"{sum(item['kind'] == 'process' for item in items)} top-level processes, "
+                  f"{sum(item['kind'] == 'instance' for item in items)} top-level instance declarations")
         return result

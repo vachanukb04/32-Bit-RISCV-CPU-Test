@@ -435,9 +435,10 @@ def bind_order(bindings, formals, item, kind):
 
 
 class Elaborator:
-    def __init__(self, modules, interfaces):
+    def __init__(self, modules, interfaces, trace):
         self.modules = modules
         self.interfaces = interfaces
+        self.trace = trace
         self.definitions = {}
         self.active = []
         self.paths = []
@@ -449,6 +450,7 @@ class Elaborator:
                 fail(site, f"Macro {module!r} has no parameter interface")
             if module not in self.definitions:
                 interface = self.interfaces[module]
+                self.trace(f"Registering macro definition {module}: {len(interface['ports'])} signal ports")
                 self.definitions[module] = {
                     "id": module, "module": module, "kind": "macro", "source": interface["source"],
                     "parameters": {}, "ports": [
@@ -462,6 +464,7 @@ class Elaborator:
             fail(site, f"Unresolved module or macro {module!r}")
         definition = self.modules[module]
         items = definition["items"]
+        self.trace(f"Resolving declarations and parameters for {path} ({module})")
         scope = Scope()
         declarations = [*definition["parameters"], *definition["ports"],
                         *(item for item in items if item["kind"] == "declaration")]
@@ -481,6 +484,7 @@ class Elaborator:
         if key in self.active or len(self.active) >= 128:
             fail(site, f"Recursive or excessively deep hierarchy: {' -> '.join([*self.active, key])}")
         if key in self.definitions:
+            self.trace(f"Reusing definition {key} for {path}")
             return self.definitions[key]
 
         self.active.append(key)
@@ -493,14 +497,26 @@ class Elaborator:
                         not in ("parameter", "localparam")],
             "children": [], "items": [],
         }
+        if parameters:
+            values = ", ".join(f"{name}={param['value']}" for name, param in parameters.items())
+            self.trace(f"Resolved constants for {path}: {values}")
+        for symbol in block["signals"]:
+            dtype = symbol["type"]
+            if dtype["dimensions"]:
+                dimensions = " ".join(f"[{left}:{right}]" for left, right in dtype["dimensions"])
+                self.trace(f"Preserved array {path}.{symbol['name']}: {dtype['width']}-bit elements {dimensions}")
         self.region(items, scope, block, block["items"])
         self.paths.pop()
         self.active.pop()
         self.definitions[key] = block
+        self.trace(f"Elaborated {path}: {len(block['ports'])} ports, {len(block['signals'])} local signals, "
+                   f"{len(block['children'])} direct children")
         return block
 
     def child(self, item, scope, path):
         module = item["module"]
+        site = item["source"]
+        self.trace(f"Linking {path} to {module} at {site['file']}:{site['line']}")
         template = self.modules.get(module)
         params = [] if template is None else [
             d["name"] for d in [*template["parameters"], *template["items"]]
@@ -529,12 +545,16 @@ class Elaborator:
                          f"got {atype['width']} bits {atype['dimensions']}")
                 if formal["direction"] != "input":
                     validate_target(actual, procedural=False)
+                target = actual.get("symbol", actual.get("text", actual["kind"]))
+                self.trace(f"Bound {path}.{name} to {target}: {formal['direction']}, {dtype['width']} bits")
             elif formal["direction"] != "output":
                 self.warnings.append({"severity": "warning", "stage": "elab", "source": at,
                                       "definition": self.active[-1],
                                       "instance_path": path,
                                       "message": f"Open {formal['direction']} port "
                                                  f"{scope.prefix}{item['name']}.{name}"})
+            else:
+                self.trace(f"Recorded open output {path}.{name}")
             bound.append({"port": name, "direction": formal["direction"], "type": dtype,
                           "actual": actual, "source": at, "explicit": entry is not None})
         return {"instance": scope.prefix + item["name"], "module": module, "definition": definition["id"],
@@ -545,6 +565,7 @@ class Elaborator:
             fail(item, f"Duplicate generated scope or instance {label!r}")
         occupied.add(label)
         local = Scope(scope, scope.prefix + label + ".")
+        self.trace(f"Expanding generate scope {self.paths[-1]}.{local.prefix.rstrip('.')}")
         if genvar is not None:
             name, value = genvar
             local.resolved[name] = {"name": name, "symbol": local.prefix + name, "type": vector(32, True),
@@ -621,6 +642,13 @@ class Elaborator:
                         scalar(value)
                     events.append({**event, "expression": value})
                 result.append({**item, "events": events, "body": statement(item["body"], scope)})
+                site = item["source"]
+                controls = ", ".join(
+                    event["edge"] if event["expression"] is None else
+                    f"{event['edge']} {event['expression'].get('symbol', event['expression']['kind'])}"
+                    for event in events)
+                detail = f" ({controls})" if controls else ""
+                self.trace(f"Preserved {item['process']} at {site['file']}:{site['line']}{detail}")
             else:
                 fail(item, f"Unsupported module item: {kind}")
 

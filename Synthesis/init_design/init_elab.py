@@ -14,6 +14,9 @@ from rtl_elaboration import Elaborator, Scope, expr, require_constant
 
 SCHEMA_VERSION = 1
 OWNER_FILE = ".init_elab_output.json"
+INIT_DESIGN = Path(__file__).resolve().parent
+DEFAULT_REPORTS = INIT_DESIGN / "reports"
+DEFAULT_LOG = INIT_DESIGN / "logs" / "init_design.log"
 
 
 def write_json(path, value):
@@ -206,27 +209,46 @@ def parameter_overrides(raw):
     return values
 
 
-def run(options):
+def run(options, log):
     docs, diagnostics = {}, []
     stage, design = "init", None
+
+    def trace(message):
+        log(stage, message)
+
+    log("run", f"Starting init_design for top {options.top}")
     try:
+        trace("Begin initialization and source discovery")
         root, sources, include_dirs, defines, interfaces, manifest = read_inputs(
-            options.filelist, options.top, options.interfaces)
+            options.filelist, options.top, options.interfaces, trace)
         overrides = parameter_overrides(options.parameter)
         manifest["parameter_overrides"] = options.parameter
         docs["init.json"] = {"schema_version": SCHEMA_VERSION, **manifest}
+        trace(f"Initialization complete: {len(sources)} RTL files, {len(include_dirs)} include "
+              f"directories, {len(defines)} defines, {len(interfaces)} explicit cell or macro interfaces")
+        if overrides:
+            trace(f"Top parameter overrides: {', '.join(overrides)}")
         stage = "analyze"
-        tokens, dependencies, timescales = preprocess(root, sources, include_dirs, defines)
-        modules = Parser(tokens).modules()
+        trace("Begin RTL front-end compilation: preprocess, tokenize, and parse")
+        tokens, dependencies, timescales = preprocess(root, sources, include_dirs, defines, trace)
+        trace(f"Tokenization complete: {len(tokens) - 1} tokens from {len(dependencies)} source dependencies")
+        modules = Parser(tokens).modules(trace)
         docs["analysis.json"] = {"schema_version": SCHEMA_VERSION, "top": options.top,
                                  "dependencies_sha256": dependencies, "timescales": timescales,
                                  "modules": modules}
+        trace(f"Analysis complete: indexed {len(modules)} module definitions")
         stage = "elab"
-        elaborator = Elaborator(modules, interfaces)
+        trace(f"Begin elaboration from {options.top}")
+        elaborator = Elaborator(modules, interfaces, trace)
         diagnostics = elaborator.warnings
         design = elaborator.elaborate(options.top, overrides)
         design["diagnostics"] = diagnostics
         docs["elaboration.json"] = design
+        bindings = [binding for instance in design["instances"] for binding in instance["bindings"]]
+        open_ports = sum(binding["actual"] is None for binding in bindings)
+        trace(f"Elaboration complete: {len(design['definitions'])} definitions, "
+              f"{len(design['instances']) - 1} child instances, "
+              f"{len(bindings) - open_ports} width-checked bindings, {open_ports} open ports")
     except FlowError as exc:
         diagnostics.append({"severity": "error", "stage": stage, "source": exc.source,
                             "instance_path": exc.instance_path, "message": str(exc)})
@@ -236,15 +258,21 @@ def run(options):
     docs["diagnostics.json"] = {"schema_version": SCHEMA_VERSION, "top": options.top,
                                "status": "ok" if design else "failed",
                                "stage": stage, "diagnostics": diagnostics}
-    publish(options.out.resolve(), docs, design, diagnostics)
     for diagnostic in diagnostics:
         instance = diagnostic.get("instance_path")
         context = f" [{instance}]" if instance else ""
+        log(diagnostic["stage"], f"{source_text(diagnostic['source'])}{context}: "
+            f"{diagnostic['message']}", diagnostic["severity"])
         print(f"{source_text(diagnostic['source'])}: {diagnostic['stage']} "
               f"{diagnostic['severity']}{context}: {diagnostic['message']}")
+    log("report", "Writing " + ", ".join(docs))
+    publish(options.out.resolve(), docs, design, diagnostics)
     if design is None:
+        log("run", f"Status: FAILED during {stage}", "error")
         print(f"See {options.out / 'diagnostics.json'}")
         return 1
+    log("report", f"Wrote elaboration.rpt and {len(design['definitions'])} block reports")
+    log("run", f"Status: SUCCESS ({len(diagnostics)} diagnostics)")
     print(f"Elaborated {options.top}: {len(design['definitions'])} definitions, "
           f"{len(design['instances']) - 1} child instances. Reports: {options.out}")
     return 0
@@ -254,15 +282,28 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--filelist", type=Path, required=True)
     parser.add_argument("--top", required=True)
-    parser.add_argument("--out", "--work", type=Path, required=True, dest="out",
-                        help="Dedicated report directory")
+    parser.add_argument("--out", "--work", type=Path, default=DEFAULT_REPORTS, dest="out",
+                        help="Dedicated report directory (default: init_design/reports)")
+    parser.add_argument("--log", type=Path, default=DEFAULT_LOG,
+                        help="Text transcript (default: init_design/logs/init_design.log)")
     parser.add_argument("--interfaces", type=Path, action="append", default=[],
                         help="Optional JSON port interfaces for explicit cell or macro instances")
     parser.add_argument("--parameter", action="append", default=[], metavar="NAME=EXPR",
                         help="Override a top-level integral parameter")
     options = parser.parse_args(argv)
     try:
-        return run(options)
+        if options.log.resolve().is_relative_to(options.out.resolve()):
+            raise FlowError("The log path must be outside the report directory")
+        options.log.parent.mkdir(parents=True, exist_ok=True)
+        with options.log.open("w", encoding="utf-8", buffering=1) as stream:
+            def log(stage, message, severity="info"):
+                print(f"[{severity.upper()}] [{stage.upper()}] {message}", file=stream)
+
+            try:
+                return run(options, log)
+            except (FlowError, OSError) as exc:
+                log("run", f"Status: FAILED: {exc}", "error")
+                raise
     except (FlowError, OSError) as exc:
         parser.exit(1, f"init_elab: {exc}\n")
 

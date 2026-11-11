@@ -15,10 +15,12 @@ Run the flow from the repository root with Python 3.10 or newer:
 ```sh
 python3 Synthesis/init_design/init_elab.py \
   --filelist Synthesis/setup/riscv_core.filelist \
-  --top riscv_core --out build/riscv_core
+  --top riscv_core
 ```
 
-The command runs all three stages and records source hashes and dependencies. Use a dedicated report directory. A rerun replaces that directory's previous generated reports, and a failed run publishes its diagnostics without a successful elaboration report.
+The command runs all three stages and writes `Synthesis/init_design/logs/init_design.log` and the reports under `Synthesis/init_design/reports/`. The transcript records ordered file reads and source hashes, preprocessing and tokenization, front-end module compilation, hierarchy linking, port checks, and warnings or errors. Front-end compilation produces parsed RTL for elaboration. Technology mapping occurs later.
+
+Use `--out` to choose another dedicated report directory and `--log` to choose another transcript path. A rerun replaces the previous transcript and generated reports. A failed run records the phase and diagnostic without publishing a successful elaboration report.
 
 | Output | Contents |
 | --- | --- |

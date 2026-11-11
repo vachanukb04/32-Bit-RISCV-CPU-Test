@@ -25,11 +25,12 @@ class InitElabTest(unittest.TestCase):
         self.filelist = self.root / "rtl.filelist"
         self.filelist.write_text("design.v\n", encoding="utf-8")
         self.out = self.root / "out"
+        self.log = self.root / "logs" / "init_design.log"
 
     def invoke(self, *, filelist=None, top="top", options=()):
         return subprocess.run(
             [sys.executable, str(SCRIPT), "--filelist", str(filelist or self.filelist),
-             "--top", top, "--out", str(self.out), *options],
+             "--top", top, "--out", str(self.out), "--log", str(self.log), *options],
             capture_output=True, text=True, check=False, cwd=REPO,
         )
 
@@ -42,6 +43,11 @@ class InitElabTest(unittest.TestCase):
         self.assertEqual(diag["status"], "failed")
         self.assertEqual(diag["stage"], stage)
         self.assertIn(message, diag["diagnostics"][-1]["message"])
+        log = self.log.read_text(encoding="utf-8")
+        self.assertIn(f"[ERROR] [{stage.upper()}]", log)
+        self.assertIn(message, log)
+        self.assertIn(f"Status: FAILED during {stage}", log)
+        self.assertEqual(log.count("Starting init_design"), 1)
         self.assertGreater(diag["diagnostics"][-1]["source"]["line"], 0)
         if instance is not None:
             self.assertEqual(diag["diagnostics"][-1]["instance_path"], instance)
@@ -57,6 +63,20 @@ class InitElabTest(unittest.TestCase):
         self.assertEqual(sum(len(i["bindings"]) for i in design["instances"]), 51)
         self.assertFalse(design["diagnostics"])
         self.assertEqual(len(list((self.out / "blocks").glob("*.rpt"))), 8)
+        log = self.log.read_text(encoding="utf-8")
+        for expected in (
+            "[INFO] [INIT] Reading RTL file list",
+            "Reading RTL source RiscV-32bit/RiscV-32bit.srcs/sources_1/new/alu.v",
+            "[INFO] [ANALYZE] Begin RTL front-end compilation",
+            "Analyzed alu: 8 ports",
+            "Linking riscv_core.u_alu to alu",
+            "Bound riscv_core.u_alu.alu_op to alu_op: input, 5 bits",
+            "Preserved array riscv_core.u_dmem.mem: 32-bit elements [0:255]",
+            "51 width-checked bindings, 0 open ports",
+            "Wrote elaboration.rpt and 8 block reports",
+            "Status: SUCCESS (0 diagnostics)",
+        ):
+            self.assertIn(expected, log)
         for module, signal, dims, width in (
             ("alu", "tmp", [], 33),
             ("reg_file", "regs", [[0, 31]], 32),
@@ -76,6 +96,7 @@ class InitElabTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(before, {p.relative_to(self.out): p.read_bytes()
                                  for p in self.out.rglob("*") if p.is_file()})
+        self.assertEqual(self.log.read_text(encoding="utf-8"), log)
 
     def test_include_parameter_generate_and_macro(self):
         tick = chr(96)
@@ -154,6 +175,7 @@ class InitElabTest(unittest.TestCase):
         self.assertEqual(len(report["diagnostics"]), 1)
         self.assertEqual(report["diagnostics"][0]["severity"], "warning")
         self.assertIn("Open input port", report["diagnostics"][0]["message"])
+        self.assertIn("[WARNING] [ELAB]", self.log.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
