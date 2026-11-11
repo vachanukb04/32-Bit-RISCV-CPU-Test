@@ -1,0 +1,10066 @@
+{
+  "schema_version": 1,
+  "library_kind": "synthetic_nldm",
+  "cells": {
+    "BUF_X1_SVT": {
+      "base_cell": "BUF_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "INV_X1_SVT": {
+      "base_cell": "INV_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKBUF_X1_SVT": {
+      "base_cell": "CLKBUF_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKINV_X1_SVT": {
+      "base_cell": "CLKINV_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND2_X1_SVT": {
+      "base_cell": "AND2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND2_X1_SVT": {
+      "base_cell": "NAND2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND3_X1_SVT": {
+      "base_cell": "AND3_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND3_X1_SVT": {
+      "base_cell": "NAND3_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND4_X1_SVT": {
+      "base_cell": "AND4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND4_X1_SVT": {
+      "base_cell": "NAND4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR2_X1_SVT": {
+      "base_cell": "OR2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR2_X1_SVT": {
+      "base_cell": "NOR2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR3_X1_SVT": {
+      "base_cell": "OR3_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR3_X1_SVT": {
+      "base_cell": "NOR3_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR4_X1_SVT": {
+      "base_cell": "OR4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR4_X1_SVT": {
+      "base_cell": "NOR4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR2_X1_SVT": {
+      "base_cell": "XOR2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR2_X1_SVT": {
+      "base_cell": "XNOR2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR3_X1_SVT": {
+      "base_cell": "XOR3_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR3_X1_SVT": {
+      "base_cell": "XNOR3_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR4_X1_SVT": {
+      "base_cell": "XOR4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR4_X1_SVT": {
+      "base_cell": "XNOR4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO21_X1_SVT": {
+      "base_cell": "AO21_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI21_X1_SVT": {
+      "base_cell": "AOI21_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO22_X1_SVT": {
+      "base_cell": "AO22_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI22_X1_SVT": {
+      "base_cell": "AOI22_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO31_X1_SVT": {
+      "base_cell": "AO31_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI31_X1_SVT": {
+      "base_cell": "AOI31_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO32_X1_SVT": {
+      "base_cell": "AO32_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI32_X1_SVT": {
+      "base_cell": "AOI32_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO211_X1_SVT": {
+      "base_cell": "AO211_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI211_X1_SVT": {
+      "base_cell": "AOI211_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO221_X1_SVT": {
+      "base_cell": "AO221_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI221_X1_SVT": {
+      "base_cell": "AOI221_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO222_X1_SVT": {
+      "base_cell": "AO222_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI222_X1_SVT": {
+      "base_cell": "AOI222_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA21_X1_SVT": {
+      "base_cell": "OA21_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI21_X1_SVT": {
+      "base_cell": "OAI21_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA22_X1_SVT": {
+      "base_cell": "OA22_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI22_X1_SVT": {
+      "base_cell": "OAI22_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA31_X1_SVT": {
+      "base_cell": "OA31_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI31_X1_SVT": {
+      "base_cell": "OAI31_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA32_X1_SVT": {
+      "base_cell": "OA32_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI32_X1_SVT": {
+      "base_cell": "OAI32_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA211_X1_SVT": {
+      "base_cell": "OA211_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI211_X1_SVT": {
+      "base_cell": "OAI211_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA221_X1_SVT": {
+      "base_cell": "OA221_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI221_X1_SVT": {
+      "base_cell": "OAI221_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA222_X1_SVT": {
+      "base_cell": "OA222_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI222_X1_SVT": {
+      "base_cell": "OAI222_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX2_X1_SVT": {
+      "base_cell": "MUX2_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX4_X1_SVT": {
+      "base_cell": "MUX4_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S0",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "HA_X1_SVT": {
+      "base_cell": "HA_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "FA_X1_SVT": {
+      "base_cell": "FA_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CIN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIELO_X1_SVT": {
+      "base_cell": "TIELO_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIEHI_X1_SVT": {
+      "base_cell": "TIEHI_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFF_X1_SVT": {
+      "base_cell": "DFF_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFR_X1_SVT": {
+      "base_cell": "DFFR_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFS_X1_SVT": {
+      "base_cell": "DFFS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFRS_X1_SVT": {
+      "base_cell": "DFFRS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFE_X1_SVT": {
+      "base_cell": "DFFE_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFN_X1_SVT": {
+      "base_cell": "DFFN_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNR_X1_SVT": {
+      "base_cell": "DFFNR_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNS_X1_SVT": {
+      "base_cell": "DFFNS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNRS_X1_SVT": {
+      "base_cell": "DFFNRS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNE_X1_SVT": {
+      "base_cell": "DFFNE_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFF_X1_SVT": {
+      "base_cell": "SDFF_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFR_X1_SVT": {
+      "base_cell": "SDFFR_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFS_X1_SVT": {
+      "base_cell": "SDFFS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFRS_X1_SVT": {
+      "base_cell": "SDFFRS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCH_X1_SVT": {
+      "base_cell": "LATCH_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHR_X1_SVT": {
+      "base_cell": "LATCHR_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHS_X1_SVT": {
+      "base_cell": "LATCHS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHN_X1_SVT": {
+      "base_cell": "LATCHN_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNR_X1_SVT": {
+      "base_cell": "LATCHNR_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNS_X1_SVT": {
+      "base_cell": "LATCHNS_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICG_X1_SVT": {
+      "base_cell": "ICG_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICGT_X1_SVT": {
+      "base_cell": "ICGT_X1",
+      "vt": "SVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "TE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "BUF_X1_LVT": {
+      "base_cell": "BUF_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "INV_X1_LVT": {
+      "base_cell": "INV_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKBUF_X1_LVT": {
+      "base_cell": "CLKBUF_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKINV_X1_LVT": {
+      "base_cell": "CLKINV_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND2_X1_LVT": {
+      "base_cell": "AND2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND2_X1_LVT": {
+      "base_cell": "NAND2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND3_X1_LVT": {
+      "base_cell": "AND3_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND3_X1_LVT": {
+      "base_cell": "NAND3_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND4_X1_LVT": {
+      "base_cell": "AND4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND4_X1_LVT": {
+      "base_cell": "NAND4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR2_X1_LVT": {
+      "base_cell": "OR2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR2_X1_LVT": {
+      "base_cell": "NOR2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR3_X1_LVT": {
+      "base_cell": "OR3_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR3_X1_LVT": {
+      "base_cell": "NOR3_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR4_X1_LVT": {
+      "base_cell": "OR4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR4_X1_LVT": {
+      "base_cell": "NOR4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR2_X1_LVT": {
+      "base_cell": "XOR2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR2_X1_LVT": {
+      "base_cell": "XNOR2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR3_X1_LVT": {
+      "base_cell": "XOR3_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR3_X1_LVT": {
+      "base_cell": "XNOR3_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR4_X1_LVT": {
+      "base_cell": "XOR4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR4_X1_LVT": {
+      "base_cell": "XNOR4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO21_X1_LVT": {
+      "base_cell": "AO21_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI21_X1_LVT": {
+      "base_cell": "AOI21_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO22_X1_LVT": {
+      "base_cell": "AO22_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI22_X1_LVT": {
+      "base_cell": "AOI22_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO31_X1_LVT": {
+      "base_cell": "AO31_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI31_X1_LVT": {
+      "base_cell": "AOI31_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO32_X1_LVT": {
+      "base_cell": "AO32_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI32_X1_LVT": {
+      "base_cell": "AOI32_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO211_X1_LVT": {
+      "base_cell": "AO211_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI211_X1_LVT": {
+      "base_cell": "AOI211_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO221_X1_LVT": {
+      "base_cell": "AO221_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI221_X1_LVT": {
+      "base_cell": "AOI221_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO222_X1_LVT": {
+      "base_cell": "AO222_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI222_X1_LVT": {
+      "base_cell": "AOI222_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA21_X1_LVT": {
+      "base_cell": "OA21_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI21_X1_LVT": {
+      "base_cell": "OAI21_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA22_X1_LVT": {
+      "base_cell": "OA22_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI22_X1_LVT": {
+      "base_cell": "OAI22_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA31_X1_LVT": {
+      "base_cell": "OA31_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI31_X1_LVT": {
+      "base_cell": "OAI31_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA32_X1_LVT": {
+      "base_cell": "OA32_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI32_X1_LVT": {
+      "base_cell": "OAI32_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA211_X1_LVT": {
+      "base_cell": "OA211_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI211_X1_LVT": {
+      "base_cell": "OAI211_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA221_X1_LVT": {
+      "base_cell": "OA221_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI221_X1_LVT": {
+      "base_cell": "OAI221_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA222_X1_LVT": {
+      "base_cell": "OA222_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI222_X1_LVT": {
+      "base_cell": "OAI222_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX2_X1_LVT": {
+      "base_cell": "MUX2_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX4_X1_LVT": {
+      "base_cell": "MUX4_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S0",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "HA_X1_LVT": {
+      "base_cell": "HA_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "FA_X1_LVT": {
+      "base_cell": "FA_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CIN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIELO_X1_LVT": {
+      "base_cell": "TIELO_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIEHI_X1_LVT": {
+      "base_cell": "TIEHI_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFF_X1_LVT": {
+      "base_cell": "DFF_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFR_X1_LVT": {
+      "base_cell": "DFFR_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFS_X1_LVT": {
+      "base_cell": "DFFS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFRS_X1_LVT": {
+      "base_cell": "DFFRS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFE_X1_LVT": {
+      "base_cell": "DFFE_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFN_X1_LVT": {
+      "base_cell": "DFFN_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNR_X1_LVT": {
+      "base_cell": "DFFNR_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNS_X1_LVT": {
+      "base_cell": "DFFNS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNRS_X1_LVT": {
+      "base_cell": "DFFNRS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNE_X1_LVT": {
+      "base_cell": "DFFNE_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFF_X1_LVT": {
+      "base_cell": "SDFF_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFR_X1_LVT": {
+      "base_cell": "SDFFR_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFS_X1_LVT": {
+      "base_cell": "SDFFS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFRS_X1_LVT": {
+      "base_cell": "SDFFRS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCH_X1_LVT": {
+      "base_cell": "LATCH_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHR_X1_LVT": {
+      "base_cell": "LATCHR_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHS_X1_LVT": {
+      "base_cell": "LATCHS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHN_X1_LVT": {
+      "base_cell": "LATCHN_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNR_X1_LVT": {
+      "base_cell": "LATCHNR_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNS_X1_LVT": {
+      "base_cell": "LATCHNS_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICG_X1_LVT": {
+      "base_cell": "ICG_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICGT_X1_LVT": {
+      "base_cell": "ICGT_X1",
+      "vt": "LVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "TE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "BUF_X1_ULVT": {
+      "base_cell": "BUF_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "INV_X1_ULVT": {
+      "base_cell": "INV_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKBUF_X1_ULVT": {
+      "base_cell": "CLKBUF_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKINV_X1_ULVT": {
+      "base_cell": "CLKINV_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND2_X1_ULVT": {
+      "base_cell": "AND2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND2_X1_ULVT": {
+      "base_cell": "NAND2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND3_X1_ULVT": {
+      "base_cell": "AND3_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND3_X1_ULVT": {
+      "base_cell": "NAND3_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND4_X1_ULVT": {
+      "base_cell": "AND4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND4_X1_ULVT": {
+      "base_cell": "NAND4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR2_X1_ULVT": {
+      "base_cell": "OR2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR2_X1_ULVT": {
+      "base_cell": "NOR2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR3_X1_ULVT": {
+      "base_cell": "OR3_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR3_X1_ULVT": {
+      "base_cell": "NOR3_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR4_X1_ULVT": {
+      "base_cell": "OR4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR4_X1_ULVT": {
+      "base_cell": "NOR4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR2_X1_ULVT": {
+      "base_cell": "XOR2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR2_X1_ULVT": {
+      "base_cell": "XNOR2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR3_X1_ULVT": {
+      "base_cell": "XOR3_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR3_X1_ULVT": {
+      "base_cell": "XNOR3_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR4_X1_ULVT": {
+      "base_cell": "XOR4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR4_X1_ULVT": {
+      "base_cell": "XNOR4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO21_X1_ULVT": {
+      "base_cell": "AO21_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI21_X1_ULVT": {
+      "base_cell": "AOI21_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO22_X1_ULVT": {
+      "base_cell": "AO22_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI22_X1_ULVT": {
+      "base_cell": "AOI22_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO31_X1_ULVT": {
+      "base_cell": "AO31_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI31_X1_ULVT": {
+      "base_cell": "AOI31_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO32_X1_ULVT": {
+      "base_cell": "AO32_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI32_X1_ULVT": {
+      "base_cell": "AOI32_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO211_X1_ULVT": {
+      "base_cell": "AO211_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI211_X1_ULVT": {
+      "base_cell": "AOI211_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO221_X1_ULVT": {
+      "base_cell": "AO221_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI221_X1_ULVT": {
+      "base_cell": "AOI221_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO222_X1_ULVT": {
+      "base_cell": "AO222_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI222_X1_ULVT": {
+      "base_cell": "AOI222_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA21_X1_ULVT": {
+      "base_cell": "OA21_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI21_X1_ULVT": {
+      "base_cell": "OAI21_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA22_X1_ULVT": {
+      "base_cell": "OA22_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI22_X1_ULVT": {
+      "base_cell": "OAI22_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA31_X1_ULVT": {
+      "base_cell": "OA31_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI31_X1_ULVT": {
+      "base_cell": "OAI31_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA32_X1_ULVT": {
+      "base_cell": "OA32_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI32_X1_ULVT": {
+      "base_cell": "OAI32_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA211_X1_ULVT": {
+      "base_cell": "OA211_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI211_X1_ULVT": {
+      "base_cell": "OAI211_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA221_X1_ULVT": {
+      "base_cell": "OA221_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI221_X1_ULVT": {
+      "base_cell": "OAI221_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA222_X1_ULVT": {
+      "base_cell": "OA222_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI222_X1_ULVT": {
+      "base_cell": "OAI222_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX2_X1_ULVT": {
+      "base_cell": "MUX2_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX4_X1_ULVT": {
+      "base_cell": "MUX4_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S0",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "HA_X1_ULVT": {
+      "base_cell": "HA_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "FA_X1_ULVT": {
+      "base_cell": "FA_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CIN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIELO_X1_ULVT": {
+      "base_cell": "TIELO_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIEHI_X1_ULVT": {
+      "base_cell": "TIEHI_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFF_X1_ULVT": {
+      "base_cell": "DFF_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFR_X1_ULVT": {
+      "base_cell": "DFFR_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFS_X1_ULVT": {
+      "base_cell": "DFFS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFRS_X1_ULVT": {
+      "base_cell": "DFFRS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFE_X1_ULVT": {
+      "base_cell": "DFFE_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFN_X1_ULVT": {
+      "base_cell": "DFFN_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNR_X1_ULVT": {
+      "base_cell": "DFFNR_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNS_X1_ULVT": {
+      "base_cell": "DFFNS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNRS_X1_ULVT": {
+      "base_cell": "DFFNRS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNE_X1_ULVT": {
+      "base_cell": "DFFNE_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFF_X1_ULVT": {
+      "base_cell": "SDFF_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFR_X1_ULVT": {
+      "base_cell": "SDFFR_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFS_X1_ULVT": {
+      "base_cell": "SDFFS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFRS_X1_ULVT": {
+      "base_cell": "SDFFRS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCH_X1_ULVT": {
+      "base_cell": "LATCH_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHR_X1_ULVT": {
+      "base_cell": "LATCHR_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHS_X1_ULVT": {
+      "base_cell": "LATCHS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHN_X1_ULVT": {
+      "base_cell": "LATCHN_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNR_X1_ULVT": {
+      "base_cell": "LATCHNR_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNS_X1_ULVT": {
+      "base_cell": "LATCHNS_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICG_X1_ULVT": {
+      "base_cell": "ICG_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICGT_X1_ULVT": {
+      "base_cell": "ICGT_X1",
+      "vt": "ULVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "TE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "BUF_X1_SLVT": {
+      "base_cell": "BUF_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "INV_X1_SLVT": {
+      "base_cell": "INV_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKBUF_X1_SLVT": {
+      "base_cell": "CLKBUF_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "CLKINV_X1_SLVT": {
+      "base_cell": "CLKINV_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND2_X1_SLVT": {
+      "base_cell": "AND2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND2_X1_SLVT": {
+      "base_cell": "NAND2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND3_X1_SLVT": {
+      "base_cell": "AND3_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND3_X1_SLVT": {
+      "base_cell": "NAND3_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AND4_X1_SLVT": {
+      "base_cell": "AND4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NAND4_X1_SLVT": {
+      "base_cell": "NAND4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR2_X1_SLVT": {
+      "base_cell": "OR2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR2_X1_SLVT": {
+      "base_cell": "NOR2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR3_X1_SLVT": {
+      "base_cell": "OR3_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR3_X1_SLVT": {
+      "base_cell": "NOR3_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OR4_X1_SLVT": {
+      "base_cell": "OR4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "NOR4_X1_SLVT": {
+      "base_cell": "NOR4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR2_X1_SLVT": {
+      "base_cell": "XOR2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR2_X1_SLVT": {
+      "base_cell": "XNOR2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR3_X1_SLVT": {
+      "base_cell": "XOR3_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR3_X1_SLVT": {
+      "base_cell": "XNOR3_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XOR4_X1_SLVT": {
+      "base_cell": "XOR4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "XNOR4_X1_SLVT": {
+      "base_cell": "XNOR4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO21_X1_SLVT": {
+      "base_cell": "AO21_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI21_X1_SLVT": {
+      "base_cell": "AOI21_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO22_X1_SLVT": {
+      "base_cell": "AO22_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI22_X1_SLVT": {
+      "base_cell": "AOI22_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO31_X1_SLVT": {
+      "base_cell": "AO31_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI31_X1_SLVT": {
+      "base_cell": "AOI31_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO32_X1_SLVT": {
+      "base_cell": "AO32_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI32_X1_SLVT": {
+      "base_cell": "AOI32_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO211_X1_SLVT": {
+      "base_cell": "AO211_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI211_X1_SLVT": {
+      "base_cell": "AOI211_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO221_X1_SLVT": {
+      "base_cell": "AO221_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI221_X1_SLVT": {
+      "base_cell": "AOI221_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AO222_X1_SLVT": {
+      "base_cell": "AO222_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "AOI222_X1_SLVT": {
+      "base_cell": "AOI222_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA21_X1_SLVT": {
+      "base_cell": "OA21_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI21_X1_SLVT": {
+      "base_cell": "OAI21_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA22_X1_SLVT": {
+      "base_cell": "OA22_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI22_X1_SLVT": {
+      "base_cell": "OAI22_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA31_X1_SLVT": {
+      "base_cell": "OA31_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI31_X1_SLVT": {
+      "base_cell": "OAI31_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA32_X1_SLVT": {
+      "base_cell": "OA32_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI32_X1_SLVT": {
+      "base_cell": "OAI32_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A3",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA211_X1_SLVT": {
+      "base_cell": "OA211_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI211_X1_SLVT": {
+      "base_cell": "OAI211_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA221_X1_SLVT": {
+      "base_cell": "OA221_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI221_X1_SLVT": {
+      "base_cell": "OAI221_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OA222_X1_SLVT": {
+      "base_cell": "OA222_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "OAI222_X1_SLVT": {
+      "base_cell": "OAI222_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "A2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C2",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX2_X1_SLVT": {
+      "base_cell": "MUX2_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "MUX4_X1_SLVT": {
+      "base_cell": "MUX4_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "C",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S0",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "S1",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "HA_X1_SLVT": {
+      "base_cell": "HA_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "FA_X1_SLVT": {
+      "base_cell": "FA_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "A",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "B",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CIN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SUM",
+          "direction": "output",
+          "width": 1
+        },
+        {
+          "name": "COUT",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIELO_X1_SLVT": {
+      "base_cell": "TIELO_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "TIEHI_X1_SLVT": {
+      "base_cell": "TIEHI_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "Y",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFF_X1_SLVT": {
+      "base_cell": "DFF_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFR_X1_SLVT": {
+      "base_cell": "DFFR_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFS_X1_SLVT": {
+      "base_cell": "DFFS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFRS_X1_SLVT": {
+      "base_cell": "DFFRS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFE_X1_SLVT": {
+      "base_cell": "DFFE_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFN_X1_SLVT": {
+      "base_cell": "DFFN_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNR_X1_SLVT": {
+      "base_cell": "DFFNR_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNS_X1_SLVT": {
+      "base_cell": "DFFNS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNRS_X1_SLVT": {
+      "base_cell": "DFFNRS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "DFFNE_X1_SLVT": {
+      "base_cell": "DFFNE_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFF_X1_SLVT": {
+      "base_cell": "SDFF_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFR_X1_SLVT": {
+      "base_cell": "SDFFR_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFS_X1_SLVT": {
+      "base_cell": "SDFFS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "SDFFRS_X1_SLVT": {
+      "base_cell": "SDFFRS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SI",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCH_X1_SLVT": {
+      "base_cell": "LATCH_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHR_X1_SLVT": {
+      "base_cell": "LATCHR_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHS_X1_SLVT": {
+      "base_cell": "LATCHS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHN_X1_SLVT": {
+      "base_cell": "LATCHN_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNR_X1_SLVT": {
+      "base_cell": "LATCHNR_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "RN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "LATCHNS_X1_SLVT": {
+      "base_cell": "LATCHNS_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "D",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "G",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "SN",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "Q",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICG_X1_SLVT": {
+      "base_cell": "ICG_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    },
+    "ICGT_X1_SLVT": {
+      "base_cell": "ICGT_X1",
+      "vt": "SLVT",
+      "ports": [
+        {
+          "name": "CLK",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "E",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "TE",
+          "direction": "input",
+          "width": 1
+        },
+        {
+          "name": "GCLK",
+          "direction": "output",
+          "width": 1
+        }
+      ],
+      "power_pins": [
+        "VDD",
+        "VSS"
+      ]
+    }
+  }
+}

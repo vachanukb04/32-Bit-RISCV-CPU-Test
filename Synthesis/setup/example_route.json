@@ -1,0 +1,15 @@
+{
+  "design": "rc_chain",
+  "nets": [
+    {
+      "name": "n_link",
+      "driver": {"node": "u_src:Y", "kind": "instance"},
+      "sinks": [{"node": "u_dst:A", "kind": "instance"}],
+      "segments": [
+        {"from": "u_src:Y", "to": "n_link:1", "layer": "M1", "length_um": 50},
+        {"from": "n_link:1", "to": "n_link:2", "via": "VIA12"},
+        {"from": "n_link:2", "to": "u_dst:A", "layer": "M2", "length_um": 50}
+      ]
+    }
+  ]
+}

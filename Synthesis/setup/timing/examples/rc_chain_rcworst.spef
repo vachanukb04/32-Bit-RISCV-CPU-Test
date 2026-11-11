@@ -1,0 +1,31 @@
+*SPEF "IEEE 1481-1998"
+*DESIGN "rc_chain"
+*DATE "Synthetic example"
+*VENDOR "In-house synthesis flow"
+*PROGRAM "generate_rc_spef.py"
+*VERSION "1.0"
+*DESIGN_FLOW "PIN_CAP NONE"
+*DIVIDER /
+*DELIMITER :
+*BUS_DELIMITER [ ]
+*T_UNIT 1 NS
+*C_UNIT 1 FF
+*R_UNIT 1 OHM
+*L_UNIT 1 HENRY
+
+// rcworst: synthetic grounded wire RC
+
+*D_NET n_link 19.5
+*CONN
+*I u_src:Y O
+*I u_dst:A I
+*CAP
+1 n_link:1 5.25
+2 n_link:2 4.5
+3 u_dst:A 4.5
+4 u_src:Y 5.25
+*RES
+1 u_src:Y n_link:1 12
+2 n_link:1 n_link:2 5
+3 n_link:2 u_dst:A 8.5
+*END

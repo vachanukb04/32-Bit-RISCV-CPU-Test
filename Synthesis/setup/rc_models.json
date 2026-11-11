@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "model_kind": "synthetic_routed_wire_rc",
+  "corners": {
+    "rcbest": {
+      "layers": {
+        "M1": {"r_ohm_per_um": 0.16, "c_ground_ff_per_um": 0.14},
+        "M2": {"r_ohm_per_um": 0.11, "c_ground_ff_per_um": 0.12},
+        "M3": {"r_ohm_per_um": 0.08, "c_ground_ff_per_um": 0.10}
+      },
+      "via_resistance_ohm": {"VIA12": 3.0, "VIA23": 2.5}
+    },
+    "rcworst": {
+      "layers": {
+        "M1": {"r_ohm_per_um": 0.24, "c_ground_ff_per_um": 0.21},
+        "M2": {"r_ohm_per_um": 0.17, "c_ground_ff_per_um": 0.18},
+        "M3": {"r_ohm_per_um": 0.12, "c_ground_ff_per_um": 0.15}
+      },
+      "via_resistance_ohm": {"VIA12": 5.0, "VIA23": 4.0}
+    }
+  }
+}

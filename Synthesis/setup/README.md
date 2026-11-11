@@ -15,7 +15,7 @@ This setup contains 78 original functional cell models in Liberty format. They c
 
 VSS is 0 V in all four views. The views share the same logic and pin definitions and support functional mapping. Their voltage and temperature values identify the requested setups. Timing, area, and power characterization requires process-specific models.
 
-The [synthetic timing models](timing_models.md) add LVT, ULVT, and SLVT NLDM views for flow testing.
+The [synthetic timing and RC models](timing_models.md) provide individual SVT, LVT, ULVT, and SLVT Liberty files for all 32 SS-labeled scenarios, with separate RC-best and RC-worst profiles and example SPEFs.
 
 For a published 5 V family, GF180MCU 7-track provides characterized 5.00 V at 25 °C and 4.50 V or 5.50 V views at −40 °C and +125 °C. Exact 5.00 V timing at both requested temperatures requires matching characterized data. [Published GF180MCU Liberty views](https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/tree/main/liberty)
 

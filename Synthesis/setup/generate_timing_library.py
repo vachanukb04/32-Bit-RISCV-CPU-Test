@@ -7,10 +7,12 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from generate_cell_library import SETUP, catalog, json_text, render_liberty
+from generate_rc_spef import EXAMPLE_ROUTE_FILE, RC_MODEL_FILE, read_json, render_spef
 
 
 # Illustrative labels and coefficients. These are not process measurements.
-VT_DELAY_SCALE = {"LVT": 1.0, "ULVT": 0.88, "SLVT": 0.78}
+VT_DELAY_SCALE = {"SVT": 1.12, "LVT": 1.0, "ULVT": 0.88, "SLVT": 0.78}
+PROCESS_LABEL = "ss"
 SLEW_NS = (0.010, 0.050, 0.150)
 LOAD_PF = (0.001, 0.005, 0.015)
 CHECK_NS = {"setup": 0.028, "hold": 0.010, "recovery": 0.032, "removal": 0.012}
@@ -185,16 +187,21 @@ def timing_for_cell(name, cell, delay_scale, check_scale):
 
 def generate():
     base_cells = catalog()
-    base_corners = json.loads((SETUP / "corners.json").read_text(encoding="utf-8"))["corners"]
-    files = {}
+    base_corners = read_json(SETUP / "corners.json")["corners"]
+    rc_models = read_json(RC_MODEL_FILE)
+    route = read_json(EXAMPLE_ROUTE_FILE)
+    files = {"rc_models.json": RC_MODEL_FILE.read_text(encoding="utf-8")}
+    for rc_id, rc_model in rc_models["corners"].items():
+        files[f"examples/rc_chain_{rc_id}.spef"] = render_spef(route, rc_model, rc_id)
     interface = {"schema_version": 1, "library_kind": "synthetic_nldm", "cells": {}}
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "library_kind": "synthetic_nldm",
         "timing_characterized": False,
         "time_unit": "ns",
         "capacitance_unit": "pF",
         "cell_interfaces": "cell_interfaces.json",
+        "rc_models": "rc_models.json",
         "views": {},
     }
     for vt, multiplier in VT_DELAY_SCALE.items():
@@ -211,7 +218,7 @@ def generate():
                 ],
                 "power_pins": ["VDD", "VSS"],
             }
-        for corner_id, corner in base_corners.items():
+        for corner in base_corners.values():
             voltage = corner["supply_voltage_v"]
             temperature = corner["temperature_c"]
             temperature_scale = 1 + 0.001 * (temperature - 25)
@@ -222,17 +229,25 @@ def generate():
                 name + suffix: timing_for_cell(name, cell, delay_scale, temperature_scale)
                 for name, cell in base_cells.items()
             }}
-            view_id = f"{corner_id}_{vt.lower()}"
-            path = f"liberty/stdcells_{view_id}.lib"
-            files[path] = render_liberty(cells, view_id, voltage, temperature, timing=model)
-            manifest["views"][view_id] = {
-                "vt": vt,
-                "supply_voltage_v": voltage,
-                "temperature_c": temperature,
-                "liberty": path,
-                "propagation_scale": delay_scale,
-                "constraint_scale": temperature_scale,
-            }
+            temp_label = f"{'m' if temperature < 0 else 'p'}{abs(temperature)}c"
+            voltage_label = f"{voltage:g}".replace(".", "p") + "v"
+            cell_corner = f"{PROCESS_LABEL}_{temp_label}_{vt.lower()}_{voltage_label}"
+            liberty = render_liberty(cells, cell_corner, voltage, temperature, timing=model)
+            for rc_id in rc_models["corners"]:
+                view_id = f"{cell_corner}_{rc_id}"
+                path = f"liberty/{view_id}.lib"
+                files[path] = liberty
+                manifest["views"][view_id] = {
+                    "process": PROCESS_LABEL,
+                    "vt": vt,
+                    "supply_voltage_v": voltage,
+                    "temperature_c": temperature,
+                    "liberty": path,
+                    "rc_corner": rc_id,
+                    "example_spef": f"examples/rc_chain_{rc_id}.spef",
+                    "propagation_scale": delay_scale,
+                    "constraint_scale": temperature_scale,
+                }
     files["timing_manifest.json"] = json_text(manifest)
     files["cell_interfaces.json"] = json_text(interface)
     return files
