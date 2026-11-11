@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "library_kind": "functional_only",
+  "default_power_state": "on",
+  "reference_ground_v": 0.0,
+  "cell_interfaces": "cell_interfaces.json",
+  "corners": {
+    "0v00_n40c": {
+      "supply_voltage_v": 0.0,
+      "temperature_c": -40,
+      "power_state": "off",
+      "liberty": null,
+      "functional_mapping_allowed": false,
+      "timing_characterized": false
+    },
+    "5v00_n40c": {
+      "supply_voltage_v": 5.0,
+      "temperature_c": -40,
+      "power_state": "on",
+      "liberty": "liberty/stdcells_5v00_n40c.lib",
+      "functional_mapping_allowed": true,
+      "timing_characterized": false
+    },
+    "0v00_p125c": {
+      "supply_voltage_v": 0.0,
+      "temperature_c": 125,
+      "power_state": "off",
+      "liberty": null,
+      "functional_mapping_allowed": false,
+      "timing_characterized": false
+    },
+    "5v00_p125c": {
+      "supply_voltage_v": 5.0,
+      "temperature_c": 125,
+      "power_state": "on",
+      "liberty": "liberty/stdcells_5v00_p125c.lib",
+      "functional_mapping_allowed": true,
+      "timing_characterized": false
+    }
+  }
+}

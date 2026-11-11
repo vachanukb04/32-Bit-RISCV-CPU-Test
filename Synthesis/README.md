@@ -13,7 +13,7 @@ This directory is for the in-house synthesis tool for the 32-bit RISC-V design. 
 The planned command interface is:
 
 ```sh
-python3 Synthesis/rtl_tool.py init --filelist Synthesis/init_design/riscv_core.filelist --top riscv_core --work build/riscv_core
+python3 Synthesis/rtl_tool.py init --filelist Synthesis/setup/riscv_core.filelist --top riscv_core --work build/riscv_core
 python3 Synthesis/rtl_tool.py analyze --work build/riscv_core
 python3 Synthesis/rtl_tool.py elab --work build/riscv_core
 ```
@@ -24,7 +24,7 @@ Each stage will consume the previous stage's output. Changes to sources, include
 
 Use an ordered text manifest named `<design>.filelist` with one source or directive per line. During `init`, expand the literal `${REPO_ROOT}` prefix to the absolute path of the Git checkout containing the top-level file list. Absolute paths can also be supplied directly. Resolve other relative paths from the directory containing the manifest that declares them. The first version will accept `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. Expand nested lists in place and report recursive list references. Resolve HDL include paths relative to the including source first, then search the declared include directories in order.
 
-The [RISC-V example](init_design/riscv_core.filelist) contains:
+The [RISC-V example](setup/riscv_core.filelist) contains:
 
 ```text
 # Design sources for the riscv_core top
@@ -39,6 +39,8 @@ ${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v
 ```
 
 Select the top explicitly at init. Keep board wrappers, testbenches, and FPGA constraints in their own project inputs. Module definition order is flexible because analysis indexes all definitions before elaboration. Source order still matters for preprocessor directives. Headers referenced by HDL includes are loaded through those directives.
+
+See [setup](setup/README.md) for the functional cell library, explicit cell interfaces, and voltage and temperature configuration.
 
 ## Elaboration and hierarchy
 
