@@ -22,20 +22,20 @@ Each stage will consume the previous stage's output. Changes to sources, include
 
 ## RTL file list
 
-Use an ordered text manifest named `<design>.filelist` with one source or directive per line. Resolve relative paths from the directory containing the manifest that declares them. The first version will accept `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. Expand nested lists in place and report recursive list references. Resolve HDL include paths relative to the including source first, then search the declared include directories in order.
+Use an ordered text manifest named `<design>.filelist` with one source or directive per line. During `init`, expand the literal `${REPO_ROOT}` prefix to the absolute path of the Git checkout containing the top-level file list. Absolute paths can also be supplied directly. Resolve other relative paths from the directory containing the manifest that declares them. The first version will accept `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. Expand nested lists in place and report recursive list references. Resolve HDL include paths relative to the including source first, then search the declared include directories in order.
 
 The [RISC-V example](init_design/riscv_core.filelist) contains:
 
 ```text
 # Design sources for the riscv_core top
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/alu.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/control_unit.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/data_mem.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/inst_mem.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/instr_decode.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/pc.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/reg_file.v
-../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/alu.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/control_unit.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/data_mem.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/inst_mem.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/instr_decode.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/pc.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/reg_file.v
+${REPO_ROOT}/RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v
 ```
 
 Select the top explicitly at init. Keep board wrappers, testbenches, and FPGA constraints in their own project inputs. Module definition order is flexible because analysis indexes all definitions before elaboration. Source order still matters for preprocessor directives. Headers referenced by HDL includes are loaded through those directives.
