@@ -13,29 +13,29 @@ This directory is for the in-house synthesis tool for the 32-bit RISC-V design. 
 The planned command interface is:
 
 ```sh
-python3 Synthesis/rtl_tool.py init --filelist Synthesis/riscv_core.f --top riscv_core --work build/riscv_core
+python3 Synthesis/rtl_tool.py init --filelist Synthesis/init_design/riscv_core.filelist --top riscv_core --work build/riscv_core
 python3 Synthesis/rtl_tool.py analyze --work build/riscv_core
 python3 Synthesis/rtl_tool.py elab --work build/riscv_core
 ```
 
-Each stage will consume the previous stage's output. Changes to sources, included files, or options will invalidate affected checkpoints. These commands and the example file list describe the planned interface.
+Each stage will consume the previous stage's output. Changes to sources, included files, or options will invalidate affected checkpoints. These commands describe the planned interface.
 
 ## RTL file list
 
-Use an ordered text manifest with one source or directive per line. Resolve relative paths from the directory containing the manifest that declares them. The first version will accept `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. Expand nested lists in place and report recursive list references. Resolve HDL include paths relative to the including source first, then search the declared include directories in order.
+Use an ordered text manifest named `<design>.filelist` with one source or directive per line. Resolve relative paths from the directory containing the manifest that declares them. The first version will accept `#` and `//` comment lines, quoted paths, `+incdir+<directory>`, `+define+<name>[=<value>]`, and `-f <file>` for nested lists. Expand nested lists in place and report recursive list references. Resolve HDL include paths relative to the including source first, then search the declared include directories in order.
 
-Example contents for `Synthesis/riscv_core.f`:
+The [RISC-V example](init_design/riscv_core.filelist) contains:
 
 ```text
 # Design sources for the riscv_core top
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/alu.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/control_unit.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/data_mem.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/inst_mem.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/instr_decode.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/pc.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/reg_file.v
-../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/alu.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/control_unit.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/data_mem.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/inst_mem.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/instr_decode.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/pc.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/reg_file.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v
 ```
 
 Select the top explicitly at init. Keep board wrappers, testbenches, and FPGA constraints in their own project inputs. Module definition order is flexible because analysis indexes all definitions before elaboration. Source order still matters for preprocessor directives. Headers referenced by HDL includes are loaded through those directives.

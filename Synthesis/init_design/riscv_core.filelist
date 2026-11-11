@@ -1,0 +1,9 @@
+# Design sources for the riscv_core top
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/alu.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/control_unit.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/data_mem.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/inst_mem.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/instr_decode.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/pc.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/reg_file.v
+../../RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v
