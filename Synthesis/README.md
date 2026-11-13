@@ -1,6 +1,8 @@
-# Synthesis
+# VLSI Suite 101
 
 This directory is for the in-house synthesis tool for the 32-bit RISC-V design. Phase 1 will turn the original Verilog sources into a linked RTL design database, starting at `riscv_core`. The database will describe the hierarchy, resolved parameters, typed signals and expressions, and port connections that later synthesis stages will consume.
+
+The [RISC-V reference baseline](validation/README.md) documents the suite scope and reproduces simulation, synthesis, and a provisional 10 ns timing run.
 
 ## Phase 1 flow
 
