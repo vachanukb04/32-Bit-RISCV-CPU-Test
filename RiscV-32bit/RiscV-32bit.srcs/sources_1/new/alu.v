@@ -19,6 +19,7 @@ module alu (
         result=32'd0;
         c_r=1'b0;
         v_r=1'b0;
+        // #WARNING Fix : Lint-012
         tmp=33'd0;
         case(alu_op)
             5'b00000:result=32'd0;
@@ -69,4 +70,5 @@ module alu (
     assign carry=c_r;
     assign overflow=v_r;
 
+// #WARNING Fix : Lint-001
 endmodule

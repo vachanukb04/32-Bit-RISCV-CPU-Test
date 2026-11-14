@@ -39,4 +39,5 @@ module nexys4_top (
 
     assign led = io_out[15:0];
 
+// #WARNING Fix : Lint-006
 endmodule

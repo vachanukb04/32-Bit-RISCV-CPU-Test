@@ -45,4 +45,5 @@ module tb_riscv_core;
         end
     end
 
+// #WARNING Fix : Lint-015
 endmodule

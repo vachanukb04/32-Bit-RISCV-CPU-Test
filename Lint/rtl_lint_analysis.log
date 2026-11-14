@@ -6,56 +6,84 @@ CHIPVERIFY INPUT REPORT
 Job ID: bd4667e9-503d-4ff7-98a1-b305c8326b08
 Tool: Verilator 5.054 (2026-11-01, rev v5.054)
 Reported result: 14 warnings, 0 errors
-Diagnostic lines transcribed from the supplied report:
+Each warning is followed by its RTL fix. Matching RTL markers use
+the form // #WARNING Fix : Lint-###.
 
+Lint-001
 %Warning-EOFNEWLINE: alu.v:71:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-002
 %Warning-EOFNEWLINE: control_unit.v:114:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-003
 %Warning-EOFNEWLINE: data_mem.v:33:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-004
 %Warning-EOFNEWLINE: inst_mem.v:28:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-005
 %Warning-EOFNEWLINE: instr_decode.v:65:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-006
 %Warning-EOFNEWLINE: nexys4_top.v:42:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-007
 %Warning-EOFNEWLINE: pc.v:17:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-008
 %Warning-EOFNEWLINE: reg_file.v:32:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-009
 %Warning-EOFNEWLINE: riscv_core.v:146:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
+
+Lint-010
 %Warning-UNUSEDSIGNAL: data_mem.v:8:22: Bits of signal are not used: 'addr'[31:10,1:0]
   In instance riscv_core.u_dmem.
+Fix: Added valid_word_addr to require a word-aligned byte address in the 1 KiB data window.
+  Invalid writes are ignored and invalid reads return zero.
+
+Lint-011
 %Warning-UNUSEDSIGNAL: inst_mem.v:4:22: Bits of signal are not used: 'addr'[31:10,1:0]
   In instance riscv_core.u_imem.
+Fix: Added a range and alignment check to instruction memory.
+  Invalid fetches return the RISC-V NOP encoding (32'h00000013).
+
+Lint-012
 %Warning-LATCH: alu.v:18:5: Latch inferred for signal 'riscv_core.u_alu.tmp' (not all control paths of combinational always assign a value)
+Fix: Defaulted tmp to 33'd0 at entry to the combinational block.
+  Arithmetic cases overwrite it before use, so it needs no storage.
+
+Lint-013
 %Warning-LATCH: instr_decode.v:17:5: Latch inferred for signal 'riscv_core.u_dec.opc' (not all control paths of combinational always assign a value)
+Fix: Defaulted opc to 7'd0 before the reset branch.
+  The normal decode path still assigns instr[6:0].
+
+Lint-014
 %Warning-SYNCASYNCNET: riscv_core.v:5:16: Signal flopped as both synchronous and async: 'reset'
   Async use: riscv_core.v:107:12. Sync use: data_mem.v:17:12.
   pc.v also used an asynchronous reset, and reg_file.v used a synchronous reset.
+Fix: Changed the PC and MMIO state blocks to posedge clk only.
+  Active-high state reset is sampled at a rising edge, matching data memory
+  and the register file. The init/elab test now expects a clock-only event.
 
-CHANGES
-LATCH (2)
-  alu.v: Initialize the 33-bit tmp to 33'd0 at entry to the combinational
-  block. The arithmetic branches still overwrite tmp before reading it.
-  instr_decode.v: Initialize opc to 7'd0 before testing reset. Normal
-  instruction decode still takes opc from instr[6:0].
+ADDITIONAL LOCAL FINDING
+Lint-015
+%Warning-EOFNEWLINE: tb_riscv_core.v:48:10: Missing newline at end of file (POSIX 3.206).
+Fix: Added a final newline after endmodule. The RTL marker sits above endmodule.
 
-SYNCASYNCNET (1)
-  pc.v and riscv_core.v: Remove posedge reset from the PC and MMIO state
-  processes. All CPU state now samples active-high reset at posedge clk,
-  matching the register file and data memory. Reset must be present at a
-  rising edge. PC and MMIO no longer clear immediately between edges.
-  The combinational reset gating in decode and control remains in place.
-  Synthesis/init_design/test_init_elab.py now expects the PC process to
-  have only a rising-clock event.
-
-UNUSEDSIGNAL (2)
-  data_mem.v and inst_mem.v: Use addr[31:10] and addr[1:0] to check the
-  memory region and word alignment. Each 256 x 32 memory accepts aligned
-  byte addresses 0x00000000 through 0x000003fc. The word index remains
-  addr[9:2]. High or misaligned addresses previously aliased valid words.
-  Invalid data writes are ignored, invalid data reads return zero, and
-  invalid instruction fetches return the existing RISC-V NOP encoding.
-  These are baseline memory-map choices for this core. No trap or
-  exception is generated. The separate MMIO write at 0x00007000 remains.
-
-EOFNEWLINE (9 from ChipVerify, 1 additional in the local checkout)
-  Add a trailing newline to the nine reported design files and
-  tb_riscv_core.v, which local Verilator also flagged.
+BEHAVIOR NOTES
+The memory window is 0x00000000 through 0x000003fc for aligned words.
+The word index remains addr[9:2]. Invalid accesses generate no trap.
+The separate MMIO write at 0x00007000 is preserved.
 
 LOCAL VERIFICATION
 The local tool was Verilator 5.048. The same repository file set and top

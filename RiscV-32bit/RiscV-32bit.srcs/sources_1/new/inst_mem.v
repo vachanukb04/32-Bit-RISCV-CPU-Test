@@ -10,6 +10,7 @@ module inst_mem (
 
     // 256 aligned words at byte addresses 0x00000000 through 0x000003fc.
     wire valid_word_addr;
+    // #WARNING Fix : Lint-011
     assign valid_word_addr = (addr[31:10] == 22'd0) && (addr[1:0] == 2'b00);
 
     initial begin
@@ -26,10 +27,12 @@ module inst_mem (
     end
 
     always @* begin
+        // #WARNING Fix : Lint-011
         if(valid_word_addr)
             inst = mem[addr[9:2]];
         else
             inst = 32'h00000013; // NOP for an invalid fetch in this core.
     end
 
+// #WARNING Fix : Lint-004
 endmodule

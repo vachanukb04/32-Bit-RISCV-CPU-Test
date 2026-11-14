@@ -29,4 +29,5 @@ module reg_file (
         rd1=(rs1==5'd0)?32'd0:regs[rs1];
         rd2=(rs2==5'd0)?32'd0:regs[rs2];
     end
+// #WARNING Fix : Lint-008
 endmodule

@@ -15,6 +15,7 @@ module data_mem (
 
     // 256 aligned words at byte addresses 0x00000000 through 0x000003fc.
     wire valid_word_addr;
+    // #WARNING Fix : Lint-010
     assign valid_word_addr = (addr[31:10] == 22'd0) && (addr[1:0] == 2'b00);
 
     always @(posedge clk) begin
@@ -22,16 +23,19 @@ module data_mem (
             for(i=0;i<256;i=i+1)
                 mem[i]<=32'd0;
         end else begin
+            // #WARNING Fix : Lint-010
             if(mem_write && valid_word_addr)
                 mem[addr[9:2]]<=write_data;
         end
     end
 
     always @* begin
+        // #WARNING Fix : Lint-010
         if(mem_read && valid_word_addr)
             read_data=mem[addr[9:2]];
         else
             read_data=32'd0;
     end
 
+// #WARNING Fix : Lint-003
 endmodule

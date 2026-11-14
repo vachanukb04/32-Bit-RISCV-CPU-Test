@@ -7,6 +7,7 @@ module pc (
     output reg [31:0]pc
 );
 
+    // #WARNING Fix : Lint-014
     always @(posedge clk) begin
         if(reset)
             pc <= 32'b0;
@@ -14,4 +15,5 @@ module pc (
             pc <= pc_next;
     end
 
+// #WARNING Fix : Lint-007
 endmodule

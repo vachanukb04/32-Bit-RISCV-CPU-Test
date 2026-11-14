@@ -111,4 +111,5 @@ module control_unit (
             endcase
         end
     end
+// #WARNING Fix : Lint-002
 endmodule

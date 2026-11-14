@@ -15,6 +15,7 @@ module instr_decode (
     reg [6:0]opc;
 
     always @* begin
+        // #WARNING Fix : Lint-013
         opc=7'd0;
         if(reset) begin
             opcode=7'd0;
@@ -63,4 +64,5 @@ module instr_decode (
         end
     end
 
+// #WARNING Fix : Lint-005
 endmodule

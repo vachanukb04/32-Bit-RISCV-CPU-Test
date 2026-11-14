@@ -103,6 +103,7 @@ module riscv_core (
     assign is_io_write = mem_write & (alu_result == 32'h00007000);
     assign dmem_write = mem_write & ~is_io_write;
 
+    // #WARNING Fix : Lint-014
     always @(posedge clk) begin
         if(reset)
             io_reg <= 32'd0;
@@ -143,4 +144,5 @@ module riscv_core (
     assign dbg_carry = carry;
     assign dbg_overflow = overflow;
 
+// #WARNING Fix : Lint-009
 endmodule
