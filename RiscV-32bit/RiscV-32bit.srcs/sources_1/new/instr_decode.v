@@ -15,6 +15,7 @@ module instr_decode (
     reg [6:0]opc;
 
     always @* begin
+        opc=7'd0;
         if(reset) begin
             opcode=7'd0;
             rd=5'd0;

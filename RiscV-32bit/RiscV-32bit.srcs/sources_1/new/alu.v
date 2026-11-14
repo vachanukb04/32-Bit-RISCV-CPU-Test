@@ -19,6 +19,7 @@ module alu (
         result=32'd0;
         c_r=1'b0;
         v_r=1'b0;
+        tmp=33'd0;
         case(alu_op)
             5'b00000:result=32'd0;
             5'b00001,

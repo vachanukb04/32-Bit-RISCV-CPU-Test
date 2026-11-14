@@ -8,6 +8,10 @@ module inst_mem (
     reg [31:0]mem[0:255];
     integer i;
 
+    // 256 aligned words at byte addresses 0x00000000 through 0x000003fc.
+    wire valid_word_addr;
+    assign valid_word_addr = (addr[31:10] == 22'd0) && (addr[1:0] == 2'b00);
+
     initial begin
 
         for(i=0; i<256; i=i+1) begin
@@ -22,7 +26,10 @@ module inst_mem (
     end
 
     always @* begin
-        inst = mem[addr[9:2]];
+        if(valid_word_addr)
+            inst = mem[addr[9:2]];
+        else
+            inst = 32'h00000013; // NOP for an invalid fetch in this core.
     end
 
 endmodule

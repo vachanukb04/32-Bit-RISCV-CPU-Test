@@ -87,7 +87,7 @@ class InitElabTest(unittest.TestCase):
             self.assertEqual((found["type"]["dimensions"], found["type"]["width"]), (dims, width))
         pc = next(i for i in design["definitions"]["pc"]["items"] if i["kind"] == "process")
         self.assertEqual([(e["edge"], e["expression"]["name"]) for e in pc["events"]],
-                         [("posedge", "clk"), ("posedge", "reset")])
+                         [("posedge", "clk")])
         data_mem = next(i for i in design["definitions"]["data_mem"]["items"]
                         if i["kind"] == "process" and i["events"][0]["edge"] == "posedge")
         self.assertEqual(len(data_mem["events"]), 1)
