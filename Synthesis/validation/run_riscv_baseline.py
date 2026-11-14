@@ -14,7 +14,7 @@ import sys
 REPO = Path(__file__).resolve().parents[2]
 SETUP = REPO / "Synthesis/setup"
 WRAPPER = REPO / "RiscV-32bit/RiscV-32bit.srcs/sources_1/new/nexys4_top.v"
-TESTBENCH = REPO / "RiscV-32bit/RiscV-32bit.srcs/sim_1/new/tb_riscv_core.v"
+TESTBENCH = WRAPPER.with_name("tb_riscv_core.v")
 SDC = Path(__file__).with_name("riscv_core_10ns.sdc")
 EXPECTED = "Time: 55000 | IO Output changed to: 00005555"
 
@@ -49,7 +49,7 @@ def run(command, out, name, *, cwd=None, append=False):
     return log.read_text(encoding="utf-8", errors="replace")
 
 
-def baseline(out, liberty):
+def baseline(out, liberty, abc_constraints=None):
     for executable in ("iverilog", "vvp", "yosys", "sta"):
         if not shutil.which(executable):
             raise ValueError(f"Required tool missing from PATH: {executable}")
@@ -67,6 +67,10 @@ def baseline(out, liberty):
         shutil.copyfile(path, rtl / path.name)
     shutil.copyfile(liberty, out / "cells.lib")
     shutil.copyfile(SDC, out / SDC.name)
+    abc_constraint_arg = ""
+    if abc_constraints is not None:
+        shutil.copyfile(abc_constraints, out / "abc.constr")
+        abc_constraint_arg = " -constr abc.constr"
     (out / "inputs.txt").write_text(
         "RTL revision: " + subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
@@ -87,8 +91,11 @@ def baseline(out, liberty):
         "hierarchy -check -top riscv_core",
         "synth -top riscv_core -flatten -noabc",
         "dfflibmap -liberty cells.lib",
-        "abc -liberty cells.lib -D 10000",
+        "abc -liberty cells.lib -D 10000" + abc_constraint_arg,
         "clean",
+        "read_liberty -lib cells.lib",
+        "hierarchy -check -top riscv_core",
+        "check -assert -mapped",
         "stat -liberty cells.lib",
         "write_verilog -noattr -noexpr -simple-lhs riscv_core_mapped.v",
         "",
@@ -102,11 +109,11 @@ def baseline(out, liberty):
         "report_clock_properties [get_clocks *]",
         "check_setup -verbose",
         'puts "=== SETUP ==="',
-        "report_checks -path_delay max -group_count 3 -digits 3",
+        "report_checks -path_delay max -group_count 3 -fields {slew capacitance net fanout} -digits 3",
         "report_worst_slack -digits 3",
         "report_tns -digits 3",
         'puts "=== HOLD ==="',
-        "report_checks -path_delay min -group_count 3 -digits 3",
+        "report_checks -path_delay min -group_count 3 -fields {slew capacitance net fanout} -digits 3",
         "exit",
         "",
     ]), encoding="utf-8")
@@ -125,11 +132,13 @@ def baseline(out, liberty):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--liberty", required=True, type=Path,
-                        help="Sky130 HD TT 1.80 V, 25 C Liberty file (ns timing units)")
+                        help="Target Liberty file (ns timing units)")
+    parser.add_argument("--abc-constraints", type=Path,
+                        help="ABC input driver and output load file for buffering and sizing")
     parser.add_argument("--out", required=True, type=Path, help="New or empty run directory")
     args = parser.parse_args()
     try:
-        baseline(args.out.resolve(), args.liberty.resolve())
+        baseline(args.out.resolve(), args.liberty.resolve(), args.abc_constraints)
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         print(f"Baseline failed: {exc}", file=sys.stderr)
         return 1

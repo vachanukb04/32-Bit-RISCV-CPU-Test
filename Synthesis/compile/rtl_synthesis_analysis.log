@@ -1,0 +1,140 @@
+RISC-V SYNTHESIS AND PRE-LAYOUT STA
+RTL checkout: ba699982a1439b8ddbb70346c1edaa4cd8e979b6
+Design top: riscv_core
+Sources: eight entries in Synthesis/setup/riscv_core.filelist
+Reference run: local Yosys / ABC / OpenSTA
+Library: sky130_fd_sc_hs__ss_100C_1v60, slow process, 1.60 V, 100 C
+SDC: Synthesis/validation/riscv_core_10ns.sdc, core_clk, 10 ns, ideal clock
+Scope: flattened standard-cell mapping and single-corner pre-layout STA.
+       No placed/routed parasitics, clock tree, or fast-corner hold analysis.
+
+RESULTS
+                                   Initial mapping       Buffered and sized
+Mapped cells                               28,678                   32,626
+Mapped DFFs                                 8,524                    8,524
+Liberty cell area (um^2)              417,962.419              449,428.522
+Setup WNS (ns)                           -205.492                   -2.927
+Setup TNS (ns)                         -1,311,812.000          -23,546.281
+Worst reported hold (ns)                   +0.420                   +0.420
+Post-map structural problems                    0                        0
+RTL smoke test                              PASS                     PASS
+Zero-delay gate smoke test                  PASS                     PASS
+
+Both smoke tests produced io_out = 0x00005555 at 55 ns. Gate simulation
+used functional models derived from the same Liberty. A zero-delay smoke
+test verifies the boot sequence and does not exercise the reported delays.
+The optimized map failed the 10 ns setup target. Its worst reported path
+implies approximately 12.927 ns for zero setup slack in this pre-layout
+model, before changes to constraints or parasitics.
+
+Worst setup path in the optimized run:
+  _56672_/Q (u_pc.pc[16]) -> _53019_/D (u_dmem.mem[23][11])
+  Arrival: 12.645 ns. Required: 9.718 ns. Slack: -2.927 ns.
+  Clock path: ideal. The endpoint is a mapped data-memory flop.
+
+FLOW DIAGNOSTICS AND ACTIONS
+
+Synth-001 | Missing testbench path | FIXED
+Baseline failed with Errno 2 on RiscV-32bit/RiscV-32bit.srcs/sim_1/new/tb_riscv_core.v.
+Fix: Point the runner to the existing sources_1/new/tb_riscv_core.v. The
+testbench and FPGA wrapper are only used as simulation inputs.
+
+Synth-002 | Liberty generation and OpenSTA compatibility | FIXED
+The upstream generator needed dataclasses-json. Its module launcher also
+stopped on two internal TimingType doctest failures in this environment.
+Fix: Install the dependency and invoke the generator's main function.
+OpenSTA 2.0.17 then emitted:
+  Warning: cells.lib, line 19 default_operating_condition max_ind not found.
+Fix: Move the default_operating_conditions declaration below the matching
+operating_conditions group in a run-local copy. The corner name, PVT and
+all timing tables are preserved. The warning disappeared. The setup slack
+was identical with the original and reordered Liberty.
+
+Synth-003 | Sequential mapping warnings | REVIEWED
+Yosys 0.23 reported 26 unique warnings (234 total), all for unsupported
+pin expressions in scan or enable flop definitions. Examples:
+  'D&!SCE|SCD&SCE' in sky130_fd_sc_hs__sdfbbn_1
+  'D&DE|IQ&!DE' in sky130_fd_sc_hs__edfxtp_1
+  'D&DE&!SCE|IQ&!DE&!SCE|SCD&SCE' in sky130_fd_sc_hs__sedfxtp_1
+ABC also reports excluding sequential, tri-state, and non-logic cells
+from combinational mapping. dfflibmap mapped 8,524 positive-edge flops
+to sky130_fd_sc_hs__dfxtp_1. The runner loads the target cell interfaces,
+checks all references, and fails on unmapped cells or structural errors.
+Action for DFT: Qualify scan-cell mappings before scan insertion.
+
+Synth-004 | High fanout in first mapping | FIXED IN FLOW
+The initial worst path contained a minimum-drive nor2b_1 driving 2,052
+loads (5.937 pF). OpenSTA reported 89.976 ns across that arc, with
+125.980 ns output slew, well beyond the library's 1 ns default limit.
+Fix: Feed ABC a dummy buf_4 driver and 5 fF load through -constr to
+enable buffering and sizing. Keep the 10,000 ps mapping target and 10 ns
+STA clock. This recovered 202.565 ns of setup slack with the same RTL.
+The driver and load apply to ABC's extracted network and are illustrative.
+
+Synth-005 | Missing I/O constraints | DUMMY COVERAGE CHECKED
+The clock-only baseline reports no input delay for reset and no output
+delay for 132 bits. Those 132 output bits are reported as unconstrained.
+Fix for coverage testing: The optional riscv_core_10ns_io_example.sdc
+assigns illustrative min/max reset and output delays and transition/load.
+The rerun removed the missing-delay warnings. The remaining 11 endpoints
+are dbg_instr bits driven by constants from the built-in ROM. Verified
+their constant assignments in the mapped netlist. The worst setup path
+with these provisional budgets is reset to dbg_zero, slack -5.110 ns.
+The I/O example has worst reported hold +0.331 ns at the same slow corner.
+Use actual reset timing and debug/output budgets before evaluating closure.
+
+Synth-006 | Standalone cell simulation models | FIXED FOR SMOKE CHECK
+Raw upstream functional wrappers reference helper modules absent from the
+cell checkout. The direct simulation compile failed on a missing
+u_vpwr_vgnd include, followed by unresolved cell modules.
+Fix: Generate zero-delay functional Verilog from the run's Liberty via
+Yosys read_liberty, retain the cell types present in the mapped netlist,
+and compile those models with the netlist and existing testbench. The
+optimized netlist passed the smoke check. Obtain assembled PDK simulation
+models and back-annotated delays for a timing simulation.
+
+RTL CHANGES FOR REVIEW ONLY
+No design RTL or testbench changes were made.
+1. data_mem.v:13-29. The 256 x 32 array has a full synchronous reset and
+   asynchronous read. It maps to flops and a large mux/enable network in
+   this flow. If area or 10 ns timing is a requirement, evaluate a
+   characterized memory macro. Preserve reset-visible zero behavior
+   with valid bits or a documented initialization sequence if the macro
+   cannot reset its contents. Account for read latency and MMIO behavior.
+2. riscv_core.v:16-136. If 10 ns still fails after placement-aware timing
+   optimization, evaluate a register boundary between fetch/decode and
+   the execute/memory path. Preserve PC redirects and store ordering, and
+   verify the added cycle with the testbench and formal properties.
+
+REPRODUCTION
+Tools: Yosys 0.23 (7ce5011c24b), ABC 1.01, OpenSTA 2.0.17,
+       Icarus Verilog 12.0.
+SkyWater HS cell data: google/skywater-pdk-libs-sky130_fd_sc_hs
+  revision 1d051f49bfe4e2fe9108d702a8bc2e9c081005a4
+SkyWater Liberty generator: google/skywater-pdk
+  revision 7198cf647113f56041e02abf3eb623692820c5e1
+Guide: https://lab.chipverify.com/guide (High Speed, Slow)
+Generate the raw .lib from the two SkyWater checkouts with dataclasses-json
+0.6.7 and the generator's Python package on PYTHONPATH:
+  python3 -c 'from skywater_pdk.liberty import main; raise SystemExit(main())' \
+    /path/to/hs ss_100C_1v60 -o /path/to/output
+For OpenSTA 2.0.17, move the single line
+  default_operating_conditions : "max_ind";
+below the closing brace of the operating_conditions ("max_ind") group.
+Raw Liberty SHA-256:
+  152939238a3a2f69cef497df0ccb98e77479ab00da5f820c6e0b9c532bb25204
+Reordered Liberty SHA-256:
+  577d56827d3230109df840f19eff5cf8476bd431555ae51a5cbd90759121f15c
+Mapped netlist SHA-256:
+  a257c733f5d863ef58b2e1b9cd60dd1e3d7800363861d73dd27048a9d6483e62
+
+Run from the repository root with the tools on PATH:
+  python3 Synthesis/validation/run_riscv_baseline.py \
+    --liberty /path/to/sky130_fd_sc_hs__ss_100C_1v60.lib \
+    --abc-constraints Synthesis/compile/sky130_hs_abc.constr \
+    --out build/riscv_hs_ss
+Omit --abc-constraints to reproduce the initial mapping. The runner writes
+the full simulation, synthesis and STA logs, replay scripts, netlist and
+RTL waveform. For the optional I/O coverage check, use the generated STA
+script with read_sdc pointing to riscv_core_10ns_io_example.sdc and rerun
+STA on the optimized netlist.
