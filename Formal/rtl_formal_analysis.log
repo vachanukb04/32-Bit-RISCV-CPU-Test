@@ -10,15 +10,26 @@ Timeout: 60 seconds per model build or solver check in the comparison
 
 CHIPVERIFY JOBS (USER-PROVIDED EVIDENCE)
 Bitwuzla  3f6f97f3-2eaf-40b4-81d8-5a4b7a12f65a  PASS at depth 10, 46 s
-Z3        59531924-0288-4780-964d-7b8c9d516b34  Terminal status unavailable
+Z3        59531924-0288-4780-964d-7b8c9d516b34  ERROR at depth 10 (cached)
 Boolector                                        No ChipVerify job supplied
 
 Formal-001
-ChipVerify Z3: "Log stream connection lost." Yosys base, prep and SMT2
-generation returned 0. Z3 started, then the displayed log ended.
-Suggested fix: Persist the worker log and exit status by job ID. Reconnect
-the viewer to the existing job and replay its log. Track stream status and
-solver result independently so a disconnect cannot appear as a solver timeout.
+ChipVerify Z3: Yosys base, prep and SMT2 generation returned 0. The live
+viewer reported "Log stream connection lost" after Z3 started. ChipVerify
+later returned the cached ERROR for that same job:
+  SBY 0:35:12 ... engine_0: BrokenPipeError: [Errno 32] Broken pipe
+A write to a closed pipe failed. This is consistent with the solver or its
+input stream closing before the formal driver finished. The excerpt gives
+no Z3 exit code, termination signal or first stderr message. The underlying
+cause remains unknown, and the job has no reported assertion verdict.
+Suggested debug: Bypass the cached result and rerun with the same sources,
+harness, Z3 and depth 10. Capture the earliest Z3 stderr and its exit code
+or signal from the worker. A fresh run at a smaller depth can help localize
+the issue if it reproduces. Keep the earlier Bitwuzla result as a reference.
+Suggested flow fix: Persist the solver's stderr, exit status and worker
+resource events by job ID. Track the viewer connection separately. Classify
+a broken pipe as a tool error unless worker evidence identifies its cause.
+The local mapped-memory Z3 PASS used a different harness and model setup.
 
 Formal-002
 The exact ChipVerify formal_props.sv assertion body was unavailable. The
