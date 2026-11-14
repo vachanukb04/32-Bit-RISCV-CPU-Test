@@ -1,0 +1,176 @@
+RISC-V RTL FORMAL ANALYSIS
+DUT: riscv_core
+Formal top: riscv_core_formal_top
+RTL revision: e047d5f24acf1db1cd8627bfd9525c35e3c6dae1
+Inputs: eight core RTL files from Synthesis/setup/riscv_core.filelist
+Harness: Formal/formal_props.sv
+Mode: bounded model checking (BMC), followed by a separate reachability run
+Depth: 10 sampled model steps (0 through 9)
+Timeout: 60 seconds per model build or solver check in the comparison
+
+CHIPVERIFY JOBS (USER-PROVIDED EVIDENCE)
+Bitwuzla  3f6f97f3-2eaf-40b4-81d8-5a4b7a12f65a  PASS at depth 10, 46 s
+Z3        59531924-0288-4780-964d-7b8c9d516b34  Terminal status unavailable
+Boolector                                        No ChipVerify job supplied
+
+Formal-001
+ChipVerify Z3: "Log stream connection lost." Yosys base, prep and SMT2
+generation returned 0. Z3 started, then the displayed log ended.
+Suggested fix: Persist the worker log and exit status by job ID. Reconnect
+the viewer to the existing job and replay its log. Track stream status and
+solver result independently so a disconnect cannot appear as a solver timeout.
+
+Formal-002
+The exact ChipVerify formal_props.sv assertion body was unavailable. The
+repository also contains two RTL copies. The local run follows the synthesis
+filelist, uses a repository-owned harness, and excludes the unused FPGA
+wrapper and simulation testbench. Local results apply to these inputs.
+Fix: Keep the harness under version control. Export its content, resolved
+filelist, and input hashes with every job when comparing environments.
+
+LOCAL PROPERTY SCOPE
+One assumption requires reset at the first sampled rising edge. Later reset
+values are unconstrained. The RTL supplies the fixed instruction ROM.
+Seven assertions check PC alignment, PC and MMIO reset, the store's instruction
+word and effective address, the resulting MMIO value, and MMIO stability
+outside reset and the store. Two covers establish that the boot program
+reaches the store at PC 0x0000000c and produces 0x00005555 at MMIO 0x00007000.
+The bounded checks apply to the built-in boot program. ISA-wide coverage
+requires separate properties and instruction stimulus.
+
+LOCAL TOOLCHAIN
+Yosys 0.66 (86f2ddebce7e98ce7cacc27e8a5c14cb53b51b51)
+yosys-smtbmc driver: Yosys upstream e419c4eef77f953212f2dbc6af88d4eaef177084
+Solvers: Bitwuzla 0.10.0, Z3 4.13.3, Boolector 3.2.4
+The local runner calls yosys-smtbmc directly, the backend used by the
+ChipVerify job. It builds one SMT2 model per memory representation and
+runs each solver with the same depth, assumptions, and wall-clock budget.
+
+Formal-003
+Local setup errors:
+  ModuleNotFoundError: No module named 'smtio'
+  boolector: error while loading shared libraries: libboolector.so
+  Bitwuzla 0.10.0: invalid option '--smt2' (legacy driver), BrokenPipeError
+  Python SyntaxWarning: invalid escape sequences in the Yosys 0.23 driver
+Fix: Expose the Python support modules and shared libraries from the
+extracted tool packages. Use a driver that invokes current Bitwuzla with
+--lang smt2. Its incremental mode handles successive SMT-LIB commands.
+The reported comparison uses the compatible driver for all three engines.
+
+Formal-004
+Early model export with Yosys 0.66 produced no assertion, assumption or
+cover metadata until the clocked property cells were lowered.
+Fix: Run async2sync for this single-clock model before SMT export. The
+runner checks that the model contains each property type before solving.
+The first mapped export also raised:
+  ERROR: Unsupported cell type $sdffce ... please run dffunmap before write_smt2.
+Fix: Run dffunmap after memory_map and opt -full to lower synchronous
+reset/enable flip-flop forms for the SMT2 backend.
+
+Formal-005
+Performance finding: Preserving SMT arrays in this design creates large
+write chains, including reset writes for every data memory word. With
+mapped memories the SMT2 file is smaller and all engines finish the checks.
+The array build plus Bitwuzla is faster for a single-solver boot run. Mapping
+adds build time but gives a reliable three-solver baseline within this budget.
+Fix: Use mapped memories by default for this RISC-V baseline. Keep the
+array representation available via --memory-model arrays. Measure both
+representations before choosing a default for other designs.
+No DUT RTL changes were needed for the completed checks.
+
+ENGINE BEHAVIOR AND VLSI SUITE 101
+The BMC driver builds successive copies of the transition relation. At each
+depth it searches for a trace that satisfies the assumptions and violates
+an assertion. A satisfiable violation query yields a counterexample.
+Covers use reachability queries to check that the boot scenarios can occur.
+- Bitwuzla rewrites fixed-size bit-vector terms and translates them into
+  SAT constraints. It can abstract expensive arithmetic and refine it when
+  a candidate needs more exact reasoning. Use it first for fast feedback on this benchmark.
+- Boolector rewrites bit-vector terms, bit-blasts them to SAT, and uses
+  lemmas on demand for arrays. Keep it as a second engine for cross-checks.
+- Z3 is a general-purpose SMT solver. Its standard bit-vector backend
+  bit-blasts. Word size and the selected model representation can change
+  the Boolean problem size, including when the RTL has no complex math.
+
+Suite design: Reuse the model, retain per-property and per-depth timing,
+and benchmark with pinned versions and equal budgets. For larger designs,
+slice the model to the state and logic each property depends on, and prove
+ALU, decode, and memory behavior with focused harnesses. Keep integrated
+boot properties and reachability checks for the composed design. Use
+assertion mutation in regression to verify that the flow emits a trace.
+Track timeout, cover unreachable, inconsistent assumptions, counterexample,
+and tool error as distinct outcomes. Compare solver portfolios across
+representative designs before making suite-wide defaults.
+
+References:
+  https://bitwuzla.github.io/data/smtcomp2025/paper.pdf
+  https://boolector.github.io/papers/BrummayerBiere-TACAS09.pdf
+  https://microsoft.github.io/z3guide/programming/Parameters/
+  https://symbiyosys.readthedocs.io/en/latest/verilog.html
+
+REPRODUCE FROM REPOSITORY ROOT (LINUX)
+Use a Yosys and yosys-smtbmc installation compatible with the three solver
+versions, with all executables on PATH.
+  python3 Formal/run_formal.py /tmp/riscv-formal-mapped --timeout 60
+  python3 Formal/run_formal.py /tmp/riscv-formal-arrays --timeout 60 --memory-model arrays
+Choose fresh output directories. Each run saves yosys.log, individual
+solver logs, summary.json, and VCD traces when generated.
+
+LOCAL SOLVER RESULTS
+Times are wall seconds. Build time is reported separately.
+The mapped rerun verified 7 assertions, 1 assumption and 2 covers.
+Timings are from single runs and include solver process startup.
+
+Mapped memories | Build: 16.447s | SMT2: 662646 bytes
+SMT2 SHA-256: 0b5bcde3558b2549c2f19c9df0e501b4f686fba209fc53cbf21140537b0957c5
+Solver      BMC status   BMC (s)  Cover status Cover (s)
+bitwuzla    PASS           2.206  PASS             0.931
+z3          PASS          19.535  PASS             5.835
+boolector   PASS           2.623  PASS             0.867
+bitwuzla log excerpts:
+  bmc   ##   0:00:02  Status: PASSED
+  cover ##   0:00:00  Reached cover statement in step 5 at riscv_core_formal_top: reach_boot_store
+  cover ##   0:00:00  Reached cover statement in step 6 at riscv_core_formal_top: reach_boot_value
+  cover ##   0:00:00  Status: PASSED
+z3 log excerpts:
+  bmc   ##   0:00:19  Status: PASSED
+  cover ##   0:00:02  Reached cover statement in step 5 at riscv_core_formal_top: reach_boot_store
+  cover ##   0:00:05  Reached cover statement in step 6 at riscv_core_formal_top: reach_boot_value
+  cover ##   0:00:05  Status: PASSED
+boolector log excerpts:
+  bmc   ##   0:00:02  Status: PASSED
+  cover ##   0:00:00  Reached cover statement in step 5 at riscv_core_formal_top: reach_boot_store
+  cover ##   0:00:00  Reached cover statement in step 6 at riscv_core_formal_top: reach_boot_value
+  cover ##   0:00:00  Status: PASSED
+
+SMT arrays | Build: 0.566s | SMT2: 1581887 bytes
+SMT2 SHA-256: 0a21109aecc991127a718fb50900000ddb278b03be731e7031862e10a8a4c067
+Solver      BMC status   BMC (s)  Cover status Cover (s)
+bitwuzla    PASS           4.734  PASS             3.839
+z3          ERROR         16.488  TIMEOUT         60.006
+boolector   TIMEOUT       60.005  PASS             7.649
+bitwuzla log excerpts:
+  bmc   ##   0:00:04  Status: PASSED
+  cover ##   0:00:01  Reached cover statement in step 5 at riscv_core_formal_top: reach_boot_store
+  cover ##   0:00:02  Reached cover statement in step 6 at riscv_core_formal_top: reach_boot_value
+  cover ##   0:00:03  Status: PASSED
+z3 log excerpts:
+  bmc   ##   0:00:16  Unexpected EOF response from solver.
+  cover Runner timeout after 60s
+boolector log excerpts:
+  bmc   Runner timeout after 60s
+  cover ##   0:00:03  Reached cover statement in step 5 at riscv_core_formal_top: reach_boot_store
+  cover ##   0:00:07  Reached cover statement in step 6 at riscv_core_formal_top: reach_boot_value
+  cover ##   0:00:07  Status: PASSED
+
+Mapped run: no warnings or errors in the build or the six solver logs.
+Array run: Z3's driver reported unexpected EOF during the step 1
+assumption check. The underlying exit cause is unknown. Its cover run
+hit the runner timeout after starting the step 3 reachability check.
+Boolector reached the step 5 assumption check before its BMC timeout.
+
+NEGATIVE CONTROL
+Changed only the expected MMIO value in store_updates_mmio to 0x00005554
+in a temporary harness. Each solver returned exit code 1, flagged
+store_updates_mmio at step 6, and wrote a nonempty counterexample VCD.
+The committed harness uses the intended value 0x00005555.
