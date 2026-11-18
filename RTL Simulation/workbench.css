@@ -128,7 +128,16 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .circuit-svg { display: block; max-width: none; }
 .schematic-outline { fill: #17272055; stroke: #5f8273; stroke-width: 1.5; }
 .port-leads .terminal-dot { fill: #c6e5d3; stroke: #172720; pointer-events: none; }
-.wire-connection > :is(.data-wire, .clock-wire { fill: none; stroke: #a6cdb9; stroke-width: 1.35; stroke-linejoin: round; }
+.wire-connection > :is(.data-wire, .clock-wire), .wire-junction { pointer-events: none; }
+.wire-hit { fill: none; stroke: transparent; stroke-width: 9;
+  pointer-events: stroke; cursor: pointer; }
+.wire-connection:focus-visible { outline: none; }
+.wire-connection:is(:hover, :focus-visible) > :is(.data-wire, .clock-wire) {
+  stroke: #f4f9f6; stroke-width: 2.6; opacity: 1;
+}
+.symbol-body { fill: #203a31; stroke: #d1eadc; stroke-width: 1.65; stroke-linejoin: round; }
+.symbol-line { fill: none; stroke: #d1eadc; stroke-width: 1.45; }
+.data-wire, .clock-wire { fill: none; stroke: #a6cdb9; stroke-width: 1.35; stroke-linejoin: round; }
 .wire-connection > .bus-wire { stroke-width: 2.35; }
 .clock-wire { stroke: #7dd7ff; stroke-width: 1.9; }
 .wire-junction { fill: #c5e6d5; }
