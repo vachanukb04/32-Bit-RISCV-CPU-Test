@@ -11,6 +11,9 @@ from pathlib import Path
 import re
 import subprocess
 from tempfile import TemporaryDirectory
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, quote, urlsplit
+from urllib.request import urlopen
 
 
 try:
@@ -24,6 +27,7 @@ except ModuleNotFoundError as exc:
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 GITHUB = re.compile(r"https://github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?(?:/tree/([\w.-]+))?/?", re.ASCII)
+ARCHIVE_LIMIT = 32 * 1024 * 1024
 ASSETS = {
     "/": ("index.html", "text/html"),
     "/workbench.html": ("workbench.html", "text/html"),
@@ -95,11 +99,45 @@ class Workbench(BaseHTTPRequestHandler):
         self.send_body(status, json.dumps(value, ensure_ascii=True).encode(), "application/json")
 
     def do_GET(self):
-        if self.path not in ASSETS:
+        url = urlsplit(self.path)
+        if url.path == "/api/github-archive":
+            self.send_github_archive(url.query)
+            return
+        if url.path not in ASSETS:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
-        asset, mime = ASSETS[self.path]
+        asset, mime = ASSETS[url.path]
         self.send_body(HTTPStatus.OK, (HERE / asset).read_bytes(), mime)
+
+    def send_github_archive(self, query):
+        if self.headers.get("Sec-Fetch-Site") == "cross-site":
+            self.send_json(HTTPStatus.FORBIDDEN, {"error": "Open the repository from the workbench."})
+            return
+        parameters = parse_qs(query)
+        owner, repo, ref = (parameters.get(key, [default])[0] for key, default in
+                            (("owner", ""), ("repo", ""), ("ref", "HEAD")))
+        if (any(not re.fullmatch(r"[\w.-]{1,100}", part, re.ASCII) or part in (".", "..") for part in (owner, repo))
+                or not re.fullmatch(r"[\w./-]{1,250}", ref, re.ASCII)
+                or any(part in ("", ".", "..") for part in ref.split("/"))):
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Use a valid GitHub repository and revision."})
+            return
+        target = f"https://codeload.github.com/{owner}/{repo}/zip/{quote(ref)}"
+        try:
+            with urlopen(target, timeout=20) as response:
+                if response.headers.get_content_type() != "application/zip":
+                    self.send_json(HTTPStatus.BAD_GATEWAY, {"error": "GitHub did not return a repository ZIP archive."})
+                    return
+                archive = response.read(ARCHIVE_LIMIT + 1)
+        except HTTPError as error:
+            self.send_json(error.code, {"error": "GitHub could not download the public repository archive."})
+            return
+        except (URLError, OSError):
+            self.send_json(HTTPStatus.BAD_GATEWAY, {"error": "GitHub’s archive download could not be reached."})
+            return
+        if len(archive) > ARCHIVE_LIMIT:
+            self.send_json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "The public repository archive exceeds 32 MB."})
+            return
+        self.send_body(HTTPStatus.OK, archive, "application/zip")
 
     def do_POST(self):
         if self.path not in ("/api/scan", "/api/compile"):

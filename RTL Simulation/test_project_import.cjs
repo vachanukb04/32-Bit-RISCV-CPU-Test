@@ -1,6 +1,7 @@
 "use strict";
 
 const {readFileSync} = require("node:fs");
+const {execFileSync} = require("node:child_process");
 const path = require("node:path");
 const vm = require("node:vm");
 const {test} = require("node:test");
@@ -32,6 +33,27 @@ test("preserves folder-relative paths and ignores commented-out module declarati
   assert.equal(loaded.name, "project");
   assert.deepEqual(Object.keys(loaded.sources), ["rtl/core.sv", "include/width.svh"]);
   assert.deepEqual(simple(indexRtl(loaded.sources)), [{name: "core", file: "rtl/core.sv"}]);
+});
+
+test("loads a public GitHub archive and pins the source commit without any GitHub API requests", async () => {
+  const root = path.dirname(__dirname);
+  const directory = "RiscV-32bit/RiscV-32bit.srcs/sources_1/new";
+  const file = directory + "/alu.v";
+  const commit = execFileSync("git", ["rev-parse", "HEAD"], {cwd: root, encoding: "utf8"}).trim();
+  const archive = execFileSync("git", ["archive", "--format=zip", "--prefix=design-HEAD/", commit, "--", file], {cwd: root});
+  const requests = [];
+  const {loadGitHub} = vm.runInNewContext(io + "\n({loadGitHub})", {
+    URLSearchParams, TextDecoder, DecompressionStream, AbortSignal, Blob, fetch: async url => {
+      requests.push(url);
+      if (!url.startsWith("/api/github-archive?")) throw new Error("GitHub API rate limit exhausted");
+      return new Response(archive);
+    }
+  });
+  const result = await loadGitHub({owner: "example", repo: "design", ref: "", directory}, "", () => {});
+  assert.deepEqual(requests, ["/api/github-archive?owner=example&repo=design&ref=HEAD"]);
+  assert.equal(result.commit, commit);
+  assert.deepEqual(Object.keys(result.sources), [file]);
+  assert.match(result.sources[file], /module alu\b/);
 });
 
 test("converts named buses, child-port bindings, constants, and a clocked cell to connected schematic data", async () => {

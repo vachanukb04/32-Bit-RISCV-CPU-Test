@@ -7,6 +7,8 @@ const MAX_FILES = 600;
 const MAX_BYTES = 12 * 1024 * 1024;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const encodedPath = path => path.split("/").map(encodeURIComponent).join("/");
+class GitHubQuotaError extends Error {}
+class GitHubArchiveError extends Error {}
 
 function rtlPath(path) {
   return path.length <= 500 && path.split("/").every(part =>
@@ -42,7 +44,7 @@ async function githubResponse(url, token, accept = "application/vnd.github+json"
   if (response.status === 401) throw new Error("GitHub rejected the token. Check whether it has expired.");
   if (response.status === 404) throw new Error("GitHub could not find the repository, ref, or file. For a private repository, check the token’s repository access.");
   if (response.status === 429 || (!response.ok && response.headers.get("X-RateLimit-Remaining") === "0")) {
-    throw new Error("GitHub’s request limit was reached. Try again later or use a read-only token.");
+    throw new GitHubQuotaError("GitHub’s API request limit was reached. Try again after the limit resets or use a read-only token.");
   }
   if (!response.ok) throw new Error("GitHub could not complete the import (HTTP " + response.status + ").");
   return response;
@@ -58,10 +60,110 @@ function sourceLimits(files) {
   }
 }
 
-async function loadGitHub(settings, token, progress) {
+function archiveIndex(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const decoder = new TextDecoder();
+  const u16 = at => view.getUint16(at, true);
+  const u32 = at => view.getUint32(at, true);
+  const invalid = () => new GitHubArchiveError("GitHub’s ZIP archive could not be read.");
+  let end = bytes.length - 22;
+  while (end >= Math.max(0, bytes.length - 65557) &&
+    (u32(end) !== 0x06054b50 || end + 22 + u16(end + 20) !== bytes.length)) end--;
+  if (end < Math.max(0, bytes.length - 65557)) throw invalid();
+  const commit = decoder.decode(bytes.subarray(end + 22)).trim();
+  if (!/^[a-f0-9]{40}$/i.test(commit)) throw new GitHubArchiveError("GitHub’s archive did not identify its commit.");
+
+  const centralEnd = u32(end + 16) + u32(end + 12);
+  let record = u32(end + 16);
+  const count = u16(end + 10);
+  if (centralEnd !== end || count === 0xffff || u16(end + 4) || u16(end + 6)) throw invalid();
+  const files = [];
+  for (let i = 0; i < count; i++) {
+    if (record + 46 > centralEnd || u32(record) !== 0x02014b50) throw invalid();
+    const nameSize = u16(record + 28);
+    const name = decoder.decode(bytes.subarray(record + 46, record + 46 + nameSize));
+    const slash = name.indexOf("/");
+    const path = slash > 0 ? name.slice(slash + 1) : "";
+    const symlink = ((u32(record + 38) >>> 16) & 0xf000) === 0xa000;
+    if (!symlink && RTL_FILE.test(path) && rtlPath(path)) {
+      files.push({path, flags: u16(record + 8), method: u16(record + 10), packed: u32(record + 20),
+        size: u32(record + 24), offset: u32(record + 42)});
+    }
+    record += 46 + nameSize + u16(record + 30) + u16(record + 32);
+  }
+  if (record !== centralEnd) throw invalid();
+  return {commit, files, end: u32(end + 16)};
+}
+
+async function archiveText(bytes, entry, end) {
+  const {offset, packed, size, method, flags} = entry;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const invalid = () => new GitHubArchiveError("A file in GitHub’s ZIP archive could not be read.");
+  if (offset + 30 > end || view.getUint32(offset, true) !== 0x04034b50 || flags & 1) throw invalid();
+  const start = offset + 30 + view.getUint16(offset + 26, true) + view.getUint16(offset + 28, true);
+  if (start + packed > end || ![0, 8].includes(method)) throw invalid();
+  const raw = bytes.subarray(start, start + packed);
+  const decoder = new TextDecoder();
+  if (method === 0) {
+    if (raw.length !== size) throw invalid();
+    return decoder.decode(raw);
+  }
+  const expanded = new Uint8Array(size);
+  let written = 0;
+  try {
+    const stream = new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    for await (const chunk of stream) {
+      if (written + chunk.byteLength > size) throw invalid();
+      expanded.set(chunk, written);
+      written += chunk.byteLength;
+    }
+  } catch {
+    throw invalid();
+  }
+  if (written !== size) throw invalid();
+  return decoder.decode(expanded);
+}
+
+function gitHubProject(settings, ref, commit, sources) {
+  const {owner, repo} = settings;
+  const repositoryUrl = "https://github.com/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo);
+  return {kind: "github", name: owner + "/" + repo, sources, ref, commit, repositoryUrl};
+}
+
+async function loadGitHubArchive(settings, progress) {
+  const {owner, repo, directory} = settings;
+  const ref = settings.ref || "HEAD";
+  const query = new URLSearchParams({owner, repo, ref});
+  let bytes;
+  try {
+    const response = await fetch("/api/github-archive?" + query, {cache: "no-store", signal: AbortSignal.timeout(30000)});
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new GitHubArchiveError(payload.error || "The public archive could not be downloaded.");
+    }
+    bytes = new Uint8Array(await response.arrayBuffer());
+  } catch (error) {
+    if (error instanceof GitHubArchiveError) throw error;
+    throw new GitHubArchiveError("The public archive download did not complete.");
+  }
+  const {commit, files, end} = archiveIndex(bytes);
+  const selected = files.filter(file => !directory || file.path.startsWith(directory + "/"));
+  sourceLimits(selected);
+  if (!selected.some(file => HDL_SOURCE.test(file.path))) throw new Error("The selected GitHub folder has no .v or .sv files.");
+  if (new Set(selected.map(file => file.path)).size !== selected.length) {
+    throw new GitHubArchiveError("The public archive contains duplicate RTL paths.");
+  }
+  const sources = {};
+  for (const [i, file] of selected.entries()) {
+    sources[file.path] = await archiveText(bytes, file, end);
+    progress(i + 1, selected.length);
+  }
+  return gitHubProject(settings, ref, commit, sources);
+}
+
+async function loadGitHubApi(settings, token, progress) {
   const {owner, repo, directory} = settings;
   const endpoint = "https://api.github.com/repos/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo);
-  const repositoryUrl = "https://github.com/" + encodeURIComponent(owner) + "/" + encodeURIComponent(repo);
   const api = async path => (await githubResponse(endpoint + path, token)).json();
   const ref = settings.ref || (await api("")).default_branch;
   const revision = await api("/commits/" + encodeURIComponent(ref));
@@ -95,7 +197,24 @@ async function loadGitHub(settings, token, progress) {
     const failed = batch.find(item => item.status === "rejected");
     if (failed) throw failed.reason;
   }
-  return {kind: "github", name: owner + "/" + repo, sources, ref, commit, repositoryUrl};
+  return gitHubProject(settings, ref, commit, sources);
+}
+
+async function loadGitHub(settings, token, progress) {
+  if (token) return loadGitHubApi(settings, token, progress);
+  let archiveError;
+  try {
+    return await loadGitHubArchive(settings, progress);
+  } catch (error) {
+    if (!(error instanceof GitHubArchiveError)) throw error;
+    archiveError = error;
+  }
+  try {
+    return await loadGitHubApi(settings, "", progress);
+  } catch (error) {
+    if (error instanceof GitHubQuotaError) throw new Error(archiveError.message + " " + error.message);
+    throw error;
+  }
 }
 
 async function loadSelectedFiles(selection, folder = false) {

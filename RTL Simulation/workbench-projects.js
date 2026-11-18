@@ -49,7 +49,7 @@ function activate(next, preferred) {
   byId("active-project").hidden = false;
   byId("project-name").textContent = next.name;
   byId("project-meta").textContent = next.kind === "github" ?
-    next.ref + " · " + next.commit.slice(0, 10) + " · Read-only import" :
+    (next.ref === "HEAD" ? "Default branch" : next.ref) + " · " + next.commit.slice(0, 10) + " · Read-only import" :
     next.kind === "example" ? "Bundled example" : "Local project";
   const fromGitHub = next.kind === "github";
   byId("github-actions").hidden = !fromGitHub;

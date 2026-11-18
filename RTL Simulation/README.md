@@ -23,6 +23,8 @@ pinned to the resolved commit. **Refresh from GitHub** reads the current ref
 and re-elaborates a previously compiled top if it is still available. A private
 repository requires a fine-grained token with read access to its contents.
 The page holds the token in memory until the project closes or the page reloads.
+Public imports use GitHub ZIP archives up to 32 MB and fall back to the GitHub
+API when an archive is unavailable. ZIP imports preserve commit-pinned links.
 
 **Open RTL folder** preserves file paths and includes. **Open RTL files** is
 convenient for a source set within one directory. Both load sources into the
