@@ -63,11 +63,10 @@ all come from the project sources.
   into circuit symbols. Concatenations show destination bit ranges and their
   operands in MSB-to-LSB order. Supported combinational processes show their
   external data and control inputs, guards, selectors, and driven outputs.
-  The schematic opens with each supported combinational block's compact gate
-  view. Select an output and case arm to see its data and enable paths, or
-  choose **Full output network** to inspect the whole mux chain. A wide operand
-  uses one bus with its range, and bit-field mappings expand on demand. Click a
-  net label to trace connections with the same label. Initialization
+  The module schematic draws these gates and their connectivity directly,
+  with the case arm labeled at its multiplexer. A wide signal uses one bus
+  with its range. Matching wire labels connect distant pins, and selecting
+  a wire highlights its matching connections. Initialization
   shows known writes and statically resolved memory index sweeps. The process
   blocks link to the original RTL. Synthesis determines the final cells and
   memory mapping.

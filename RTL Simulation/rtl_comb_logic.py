@@ -185,7 +185,9 @@ class RuleDrawing(Drawing):
                 alternate = self.outcome(outcome)
                 zero_bits = self.nodes[result].get("bits")
                 one_bits = self.nodes[alternate].get("bits")
-                result = self.mux(result, alternate, condition, branch=branch,
+                fallback = ("Else" if match is None else
+                            "No match" if index == len(value.arms) - 1 else "Next case arm")
+                result = self.mux(result, alternate, condition, branch=branch, fallback=fallback,
                                   bits=one_bits if zero_bits == one_bits else None)
         self.cached[key] = result
         return result

@@ -6,7 +6,7 @@ const { runInNewContext } = require("node:vm");
 
 const scripts = ["schematic-graph.js", "schematic-layout.js"];
 const api = runInNewContext(scripts.map(file => readFileSync(join(__dirname, file), "utf8")).join("\n") +
-  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey, compactCircuitRows});");
+  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey});");
 
 const location = line => ({file: "rom.v", line, column: 1});
 const terminal = (label, net) => ({kind: "terminal", label, pins: [], nets: net ? [net] : []});
@@ -121,43 +121,48 @@ test("uses one trace selection for a named net's driver and fanout wires", () =>
   assert.notEqual(api.wireTraceKey(named[0]), api.wireTraceKey({from: driver, output: "Q"}));
 });
 
-test("keeps assignment constants inside the output rules instead of wiring them as inputs", () => {
+test("draws an always @* case directly on the module canvas", () => {
   const source = location(2);
-  const summary = {inputs: ["op"], controls: ["op"], dataInputs: [], conditions: [], selectors: ["op"],
-    outputs: [{net: "code", name: "code", range: "[4:0]", rules: [{value: "5'b01001"}]}]};
-  const graph = render({
-    nets: ["op", "code"], ports: [], structures: [], children: [], clockUses: [],
-    logic: [{source, kind: "Always", inputs: ["op"], outputs: ["code"],
-      view: {kind: "combinational", summary}}],
-    schematics: [{source: location(4), processSource: source, expressionOnly: true, processKind: "Always",
-      nodes: [terminal("5'b01001"), output("code", 0)]}]
-  });
-  const process = graph.nodes.find(node => node.kind === "process");
-  assert.ok(process.summary);
-  assert.deepEqual(Array.from(process.inputs.values()), ["Control · op"]);
-  assert.deepEqual(Array.from(process.outputs.values()), ["code [4:0]"]);
-  assert.deepEqual(Array.from(graph.edges, edge => edge.from.label + " → " + edge.to.label),
-    ["op → Combinational", "Combinational → code"]);
-});
-
-test("compact gate rows preserve bus connections and mux pin roles", () => {
-  const sheet = {nodes: [
+  const caseNodes = [
+    terminal("op", "op"),
     {...terminal("a", "a"), bits: 32, range: "[31:0]"},
     {...terminal("b", "b"), bits: 32, range: "[31:0]"},
-    terminal("select", "select"),
-    {kind: "gate", label: "AND", symbol: "&", bits: 32,
-      pins: [{pin: "A", source: 0}, {pin: "B", source: 1}]},
-    {kind: "mux", label: "MUX", branch: "case 1'b1", bits: 32,
-      pins: [{pin: "0", source: 0}, {pin: "1", source: 3}, {pin: "S", source: 2}]},
-    {...output("result", 4), range: "[31:0]"}
-  ]};
-  const {signals, rows} = api.compactCircuitRows(sheet);
-  const [gate, mux, drive] = rows;
-  assert.equal(gate.inputs.length, 2);
-  assert.deepEqual(Array.from(gate.inputs, pin => signals[pin.source].label), ["a", "b"]);
-  assert.equal(signals[gate.output].range, "[31:0]");
-  assert.deepEqual(Array.from(mux.inputs, pin => pin.label), ["Other", "Match", "Select"]);
-  assert.equal(gate.output, mux.inputs[1].source);
-  assert.equal(mux.output, drive.inputs[0].source);
-  assert.equal(signals[drive.output].range, "[31:0]");
+    terminal("1'b1"),
+    {kind: "operator", label: "Case equality", symbol: "===",
+      pins: [{pin: "A", source: 0}, {pin: "B", source: 3}]},
+    {kind: "gate", label: "AND", symbol: "&", pins: [{pin: "A", source: 1}, {pin: "B", source: 2}]},
+    {kind: "gate", label: "OR", symbol: "|", pins: [{pin: "A", source: 1}, {pin: "B", source: 2}]},
+    {kind: "mux", label: "MUX", branch: "case 1'b1", fallback: "No match",
+      pins: [{pin: "0", source: 5}, {pin: "1", source: 6}, {pin: "S", source: 4}]},
+    {...output("$result", 7), bits: 32, range: "[31:0]"}
+  ];
+  const summary = {
+    outputs: ["code", "copy"].map(net => ({net, circuit: {nodes: caseNodes}}))
+  };
+  const graph = render({
+    nets: ["op", "a", "b", "code", "copy"], ports: [], structures: [], children: [], clockUses: [],
+    logic: [{source, kind: "Always", inputs: ["op", "a", "b"], outputs: ["code", "copy"],
+      view: {kind: "combinational", header: "always @*", summary}}],
+    schematics: [{source: location(4), processSource: source, expressionOnly: true, processKind: "Always",
+      nodes: [terminal("1'b0"), output("code", 0)]}]
+  });
+  const feeds = (from, to, input) => graph.edges.some(edge =>
+    edge.from.label === from && edge.to.label === to && edge.input === input);
+  assert.ok(!graph.nodes.some(node => node.kind === "process" || node.label === "1'b0"));
+  assert.equal(graph.nodes.filter(node => node.kind === "mux").length, 1);
+  const mux = graph.nodes.find(node => node.kind === "mux");
+  assert.equal(mux.branch, "case 1'b1");
+  assert.equal(mux.processLabel, "always @*");
+  assert.ok(feeds("op", "Case equality", "A"));
+  assert.ok(feeds("Case equality", "MUX", "S"));
+  assert.ok(feeds("a", "AND", "A"));
+  assert.ok(feeds("b", "OR", "B"));
+  assert.ok(feeds("AND", "MUX", "0"));
+  assert.ok(feeds("OR", "MUX", "1"));
+  assert.ok(feeds("MUX", "code", "IN"));
+  assert.ok(feeds("MUX", "copy", "IN"));
+  assert.ok(!graph.anchors.has("$result"));
+  assert.equal(graph.anchors.get("a").caption, "[31:0]");
+  assert.equal(graph.anchors.get("code").bits, 32);
+  assert.equal(graph.anchors.get("code").caption, "[31:0]");
 });

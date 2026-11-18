@@ -106,12 +106,12 @@ function usesBox(node) {
 
 function pinPosition(node, pin, outgoing) {
   if (usesBox(node)) {
-    if (node.fields && outgoing) {
+    if (node.fields && !node.compactFields && outgoing) {
       return {x: node.x + node.width, y: node.y - node.height / 2 + 48 + 12 * (node.fields.length - 1)};
     }
     const pins = outgoing ? node.outputs : node.inputs;
     const index = [...pins.keys()].indexOf(pin);
-    return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + (node.pinInset || 48) + index * 24};
+    return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + 48 + index * 24};
   }
   if (["net", "tap", "literal"].includes(node.kind)) {
     return {x: node.x + (outgoing ? node.width : 0), y: node.y};
@@ -126,6 +126,7 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
   const paths = svgNode("g");
   const junctions = svgNode("g");
   layer.append(paths, junctions);
+  let aliases = 0;
   const route = createWireRouter(graph, layout);
   const groups = new Map();
   for (const edge of graph.edges) {
@@ -137,6 +138,8 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
   for (const edges of groups.values()) {
     id++;
     const points = new Map();
+    let alias;
+    let aliasSource;
     const record = (point, neighbor, edge) => {
       const key = point.x + "," + point.y;
       if (!points.has(key)) points.set(key, {point, neighbors: new Set(), selections: new Set(), clock: false});
@@ -153,7 +156,41 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
         x: edge.to.leftChannel,
         y: end.bottom ? snap(edge.to.y + edge.to.height / 2 + 12) : snap(end.y)
       };
-      const pointsOnGrid = route(launch, land, id);
+      const key = wireTraceKey(edge);
+      const name = edge.net && signalLabel(edge.net);
+      const prefix = name && name !== edge.from.label ? name + " · " : "";
+      const caption = prefix + edge.from.label + " to " + edge.to.label +
+        (edge.input === "IN" ? "" : " " + edge.input);
+      const distance = Math.abs(start.x - end.x) + Math.abs(start.y - end.y);
+      const insideCombinational = edge.from.processLabel || edge.to.processLabel;
+      const pointsOnGrid = insideCombinational && distance > 280 ? [] : route(launch, land, id);
+      const useAlias = insideCombinational && (!pointsOnGrid.length || pointsOnGrid.length > 30);
+      let commands;
+      if (useAlias) {
+        const choose = () => chooseWire(edge.net, key);
+        if (!alias) {
+          alias = "W" + ++aliases;
+          const sourceEnd = start.x + 24;
+          aliasSource = drawWire(`M${start.x} ${start.y} H${sourceEnd}`, edge.clock,
+            alias + " · " + edge.from.label, choose);
+          svgText(aliasSource, sourceEnd, start.y - 5, alias, "wire-alias", "end");
+          paths.append(aliasSource);
+        }
+        const targetStart = end.bottom ? {x: end.x, y: end.y + 21} : {x: end.x - 24, y: end.y};
+        const connection = drawWire(`M${targetStart.x} ${targetStart.y} L${end.x} ${end.y}`,
+          edge.clock, alias + " · " + caption, choose);
+        svgText(connection, targetStart.x + (end.bottom ? 5 : 0), targetStart.y - (end.bottom ? 2 : 5),
+          alias, "wire-alias");
+        paths.append(connection);
+        for (const group of [aliasSource, connection]) {
+          const wire = group.querySelector("path");
+          if (edge.from.bits > 1) wire.classList.add("bus-wire");
+          track(wire, key);
+          track(group, key);
+        }
+        continue;
+      }
+
       const path = [start, {x: launch.x, y: start.y}, ...pointsOnGrid];
       if (end.bottom) path.push({x: end.x, y: land.y});
       else path.push({x: land.x, y: end.y});
@@ -164,14 +201,10 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
         const a = distinct[i - 1], b = distinct[i + 1];
         return !(a.x === point.x && point.x === b.x) && !(a.y === point.y && point.y === b.y);
       });
-      const commands = corners.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
-      const key = wireTraceKey(edge);
-      const name = edge.net && signalLabel(edge.net);
-      const prefix = name && name !== edge.from.label ? name + " · " : "";
-      const caption = prefix + edge.from.label + " to " + edge.to.label +
-        (edge.input === "IN" ? "" : " " + edge.input);
+      commands = corners.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
       const connection = drawWire(commands, edge.clock, caption, () => chooseWire(edge.net, key));
       const wire = connection.querySelector("path");
+      if (edge.from.bits > 1) wire.classList.add("bus-wire");
       wire.setAttribute("data-from", edge.from.label);
       wire.setAttribute("data-to", edge.to.label);
       paths.append(connection);
@@ -193,6 +226,7 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
       for (const key of selections) track(dot, key);
     }
   }
+  if (aliases) layer.setAttribute("data-wire-aliases", aliases);
   return layer;
 }
 
@@ -232,165 +266,6 @@ function drawBitFields(group, node, top) {
   }
 }
 
-function drawOutputSummary(group, node, top) {
-  let y = top + 43;
-  const {conditions, selectors, outputs} = node.summary;
-  for (const [label, values] of [["CONDITION", conditions], ["SELECT", selectors]]) {
-    if (!values.length) continue;
-    const display = values.join(" · ");
-    const line = svgNode("g", {class: "logic-control-row"});
-    svgText(line, 12, y + 7, label, "logic-control-label");
-    svgText(line, 94, y + 7, shorten(display, 44), "logic-control-value");
-    line.append(svgNode("title", {}, display));
-    group.append(line);
-    y += 22;
-  }
-  svgPath(group, `M10 ${y} H${node.width - 10}`, "logic-divider");
-  svgText(group, 12, y + 15, "INPUTS", "logic-rail-label");
-  svgText(group, node.width - 12, y + 15, "OUTPUTS", "logic-rail-label", "end");
-  svgText(group, node.width / 2, y + 15, "GATES ↗", "logic-rule-action", "middle");
-  for (const result of outputs) {
-    const at = pinPosition(node, result.net, true).y - node.y;
-    const variants = new Set(result.rules.map(rule => JSON.stringify([rule.value, rule.locals])));
-    const hasFields = result.rules.some(rule => rule.fields.length);
-    const caption = hasFields ? "Assemble bit fields" : variants.size === 1
-      ? shorten(result.rules[0].value, 23) : variants.size + " alternatives";
-    svgText(group, node.width / 2 + 6, at + 3, caption, "logic-outcome", "middle");
-  }
-}
-
-function drawCompactCircuit(sheet, title) {
-  const card = make("section", "compact-circuit");
-  card.append(make("h5", "", title));
-  const {signals, rows} = compactCircuitRows(sheet);
-  const labels = new Map();
-  let selected;
-
-  function netChip(index) {
-    const {label, range, key} = signals[index];
-    const chip = make("button", "compact-net", label);
-    chip.type = "button";
-    chip.setAttribute("aria-pressed", "false");
-    if (range) chip.append(make("span", "bus-range", range));
-    chip.addEventListener("click", () => {
-      for (const match of labels.get(selected) || []) match.setAttribute("aria-pressed", "false");
-      selected = key === selected ? undefined : key;
-      for (const match of labels.get(selected) || []) match.setAttribute("aria-pressed", "true");
-    });
-    if (!labels.has(key)) labels.set(key, []);
-    labels.get(key).push(chip);
-    return chip;
-  }
-
-  const list = make("ol", "compact-gates");
-  for (const {node, inputs, output} of rows) {
-    const row = make("li", "compact-gate");
-    const incoming = make("div", "gate-inputs");
-    for (const {label, source} of inputs) {
-      const pin = make("span", "gate-pin");
-      if (inputs.length > 1 && label) pin.append(make("span", "gate-pin-name", label));
-      pin.append(netChip(source));
-      incoming.append(pin);
-    }
-
-    const operation = make("div", "gate-operation");
-    if (["gate", "operator", "mux"].includes(node.kind)) {
-      const icon = svgNode("svg", {viewBox: "-9 -34 87 68", width: 50, height: 42, "aria-hidden": "true"});
-      symbol(icon, node.kind, node.label, node.edge, node.symbol);
-      operation.append(icon);
-    }
-    const name = node.kind === "output" ? "Drive" : node.label;
-    operation.append(make("span", "", node.symbol ? `${name} (${node.symbol})` : name));
-    if (node.branch) operation.append(make("small", "source", node.branch));
-
-    const cell = make("div", "gate-cell");
-    cell.append(incoming, operation, netChip(output));
-    row.append(cell);
-    if (node.fields?.length) {
-      const fields = make("details", "gate-fields");
-      fields.append(make("summary", "", `${node.fields.length} bit fields`));
-      const values = make("ul");
-      for (const field of node.fields) values.append(make("li", "", `${field.range} ← ${field.text}`));
-      fields.append(values);
-      row.append(fields);
-    }
-    list.append(row);
-  }
-  card.append(list);
-  return card;
-}
-
-function drawCombinationalBlock(logic) {
-  const {outputs} = logic.view.summary;
-  const panel = make("section", "comb-block");
-  const heading = make("div", "comb-heading");
-  const procedure = logic.view.header || {
-    Always: "always", AlwaysComb: "always_comb", AlwaysLatch: "always_latch"
-  }[logic.kind] || "Combinational";
-  const title = make("h4", "", procedure);
-  title.tabIndex = -1;
-  heading.append(title, sourceLink(logic.source));
-  const controls = make("div", "comb-controls");
-  const outputLabel = make("label", "", "Output");
-  const outputPicker = make("select");
-  const hasGate = rule => rule.circuits?.data.nodes.some(node => node.kind === "gate");
-  outputs.forEach((output, index) => {
-    outputPicker.append(new Option([output.name, output.range].filter(Boolean).join(" "), index));
-  });
-  const primary = outputs.findIndex(output => output.rules.some(hasGate));
-  outputPicker.value = String(Math.max(0, primary));
-  outputLabel.append(outputPicker);
-  const caseLabel = make("label", "", "Case arm");
-  const casePicker = make("select");
-  caseLabel.append(casePicker);
-  controls.append(outputLabel, caseLabel);
-  const body = make("div", "comb-body");
-  panel.append(heading, controls, body);
-
-  function showSelection() {
-    const output = outputs[Number(outputPicker.value)];
-    const diagrams = make("div", "comb-diagrams");
-    if (casePicker.value === "all") {
-      diagrams.append(drawCompactCircuit(output.circuit, "Output network"));
-      body.replaceChildren(diagrams);
-      return;
-    }
-    const rule = output.rules[Number(casePicker.value)];
-    const expression = make("code", "comb-expression", `${output.name} ← ${rule.value}`);
-    const {data, selection} = rule.circuits;
-    diagrams.append(drawCompactCircuit(data, "Data path"));
-    if (selection) diagrams.append(drawCompactCircuit(selection, "Branch enable"));
-    const resultLine = make("div", "comb-result");
-    resultLine.append(expression);
-    if (rule.source) resultLine.append(sourceLink(rule.source));
-    const condition = rule.when.length ? make("p", "comb-condition", rule.when.join(" · ")) : null;
-    body.replaceChildren(...(condition ? [condition, resultLine, diagrams] : [resultLine, diagrams]));
-  }
-
-  function selectOutput() {
-    const output = outputs[Number(outputPicker.value)];
-    casePicker.replaceChildren();
-    output.rules.forEach((rule, index) => {
-      const condition = rule.when.join(" · ") || "Unconditional";
-      casePicker.append(new Option(condition, index));
-    });
-    if (output.rules.length > 1 && output.circuit) {
-      casePicker.append(new Option("Full output network", "all"));
-    }
-    caseLabel.hidden = output.rules.length === 1 && !output.rules[0].when.length;
-    const directGate = output.rules.findIndex(rule => {
-      const shapes = rule.circuits?.data.nodes;
-      return shapes?.[shapes.at(-1).pins[0].source]?.kind === "gate";
-    });
-    casePicker.value = String(directGate >= 0 ? directGate : Math.max(0, output.rules.findIndex(hasGate)));
-    showSelection();
-  }
-  outputPicker.addEventListener("change", selectOutput);
-  casePicker.addEventListener("change", showSelection);
-  selectOutput();
-  return {panel, reveal() { title.focus({preventScroll: true}); panel.scrollIntoView({block: "nearest"}); }};
-}
-
 function drawSchematicSymbol(node) {
   const group = svgNode("g", {class: "circuit-node " + node.kind, "data-label": node.label});
   const local = svgNode("g", {transform: `translate(${node.x} ${node.y})`});
@@ -408,9 +283,8 @@ function drawSchematicSymbol(node) {
       class: "symbol-body"}));
     svgText(local, 9, top + 16, shorten(node.label, 27), "net-label");
     if (node.caption) svgText(local, 9, top + 31, shorten(node.caption, 31), "pin-label");
-    if (node.summary) drawOutputSummary(local, node, top);
     if (node.rows?.length) drawDecisionRows(local, node, top);
-    if (node.fields) drawBitFields(local, node, top);
+    if (node.fields && !node.compactFields) drawBitFields(local, node, top);
     for (const outgoing of [false, true]) {
       const pins = outgoing ? node.outputs : node.inputs;
       for (const [key, label] of pins) {
@@ -418,7 +292,7 @@ function drawSchematicSymbol(node) {
         const x = point.x - node.x;
         const y = point.y - node.y;
         local.append(svgNode("circle", {cx: x, cy: y, r: 2.8, class: "terminal-dot"}));
-        if (!(node.fields && outgoing)) {
+        if (!(node.fields && !node.compactFields && outgoing)) {
           svgText(local, x + (outgoing ? -7 : 7), y + 3, shorten(label, outgoing ? 18 : 24),
             "pin-label", outgoing ? "end" : "start");
         }
@@ -431,22 +305,29 @@ function drawSchematicSymbol(node) {
     }
   } else {
     symbol(local, node.kind, node.label, node.kind === "expression" ? node.height / 2 - 7 : node.edge, node.symbol);
-    if (node.kind === "gate" && node.bits > 1) {
-      svgText(local, 34, -37, node.bits + " bits", "pin-label", "middle");
+    if (node.bits > 1) {
+      svgText(local, 34, -37, busRange(node), "pin-label", "middle");
     }
-    const label = node.kind === "gate" && node.symbol ? `${node.label} (${node.symbol})` : node.label;
-    if (node.kind !== "mux") svgText(local, 34, node.height / 2 + 9, shorten(label, 24), "net-label", "middle");
+    const label = node.branch || (node.kind === "gate" && node.symbol
+      ? `${node.label} (${node.symbol})` : node.label);
+    if (node.kind !== "mux" || node.branch) {
+      svgText(local, 34, node.height / 2 + 9, shorten(label, 24), "net-label", "middle");
+    }
     if (["flop", "latch", "mux"].includes(node.kind)) {
       for (const pin of node.inputs.keys()) {
         const point = pinGeometry(node, pin);
-        const x = point.bottom ? point.x + 6 : point.x - 6;
-        const y = point.bottom ? point.y + 12 : point.y - 4;
-        svgText(local, x, y, pin, point.clock ? "clock-ink" : "pin-label", point.bottom ? "start" : "end");
+        const inside = Boolean(node.branch && pin !== "S");
+        const x = point.x + (point.bottom || inside ? 6 : -6);
+        const y = point.y + (point.bottom ? 12 : inside ? 3 : -4);
+        svgText(local, x, y, pin, point.clock ? "clock-ink" : "pin-label",
+          point.bottom || inside ? "start" : "end");
       }
     }
   }
   group.append(svgNode("title", {}, [node.kind === "gate" && node.symbol ? `${node.label} (${node.symbol})` : node.label,
-    node.caption, node.port?.binding &&
+    node.caption, node.compactFields && node.fields.map(field => field.range + " ← " + field.text).join("\n"),
+    node.processLabel && node.processLabel + " · line " + node.source.line,
+    node.branch && `1: ${node.branch} · 0: ${node.fallback}`, node.port?.binding &&
     "Parent connection " + node.port.binding].filter(Boolean).join("\n")));
   return group;
 }
@@ -479,13 +360,6 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   const header = make("div", "schematic-heading");
   header.append(make("h3", "", "Data schematic"), make("span", "source", signals.size + " signals"));
   section.append(header);
-  const combinational = new Map();
-  for (const logic of scope.logic) {
-    if (!logic.view?.summary?.outputs.every(output => output.rules.every(rule => rule.circuits))) continue;
-    const block = drawCombinationalBlock(logic);
-    combinational.set(sourceKey(logic.source), block);
-    section.append(block.panel);
-  }
 
   const graph = buildSchematicGraph(scope, signals, signalLabel);
   if (!graph.nodes.length) {
@@ -494,11 +368,6 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   }
 
   const layout = layoutSchematic(graph);
-  const overview = combinational.size ? make("div", "schematic-heading") : header;
-  if (combinational.size) {
-    overview.append(make("h4", "", "Module overview"));
-    section.append(overview);
-  }
   const zoomBar = make("div", "schematic-tools");
   const minus = make("button", "schematic-tool", "−");
   const plus = make("button", "schematic-tool", "+");
@@ -510,9 +379,9 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   fit.setAttribute("aria-label", "Fit schematic");
   normal.setAttribute("aria-label", "Actual size");
   zoomBar.append(minus, readout, plus, fit, normal);
-  overview.append(zoomBar);
+  header.append(zoomBar);
   if (graph.edges.some(edge => edge.clock)) {
-    overview.append(make("span", "clock-key", "Clock"));
+    header.append(make("span", "clock-key", "Clock"));
   }
 
   const viewport = make("div", "schematic-scroll");
@@ -548,8 +417,12 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   const outline = 12;
   svg.append(svgNode("rect", {x: outline, y: outline, width: layout.width - 2 * outline,
     height: layout.height - 2 * outline, rx: 12, class: "schematic-outline"}));
-  svg.append(routeSchematic(graph, layout, track, (net, key) =>
-    selectSignal(net, {key, reveal: false}), signalLabel));
+  const wires = routeSchematic(graph, layout, track, (net, key) =>
+    selectSignal(net, {key, reveal: false}), signalLabel);
+  svg.append(wires);
+  if (wires.hasAttribute("data-wire-aliases")) {
+    header.append(make("span", "source", "Matching wire labels connect"));
+  }
   const portLeads = svgNode("g", {class: "port-leads"});
   svg.append(portLeads);
   const symbols = new Map();
@@ -578,8 +451,6 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
       group.setAttribute("aria-pressed", "false");
     } else if (node.child) {
       makeInteractive(group, "Open " + node.label + " " + node.caption, () => openChild(node.child));
-    } else if (node.summary && combinational.has(sourceKey(node.source))) {
-      makeInteractive(group, "Jump to " + node.caption + " gates", combinational.get(sourceKey(node.source)).reveal);
     } else if (node.sourceRows?.length || node.sources?.length || node.initializers?.length) {
       makeInteractive(group, "View " + node.label + " RTL sources", () => {
         details.replaceChildren(make("strong", "", node.label));
@@ -636,7 +507,14 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   requestAnimationFrame(() => {
     if (!viewport.isConnected || manuallyZoomed) return;
     if (graph.nodes.length <= 25 && viewport.clientWidth >= 680) zoomToFit();
-    else setZoom(.9, false);
+    else {
+      setZoom(.9, false);
+      const gate = graph.nodes.find(node => node.processLabel && node.kind === "gate");
+      if (gate) {
+        viewport.scrollLeft = gate.x * zoom - viewport.clientWidth / 2;
+        viewport.scrollTop = gate.y * zoom - viewport.clientHeight / 2;
+      }
+    }
   });
 
   return {section, highlight(net, {key = signalTraceKey(net), reveal = true} = {}) {
