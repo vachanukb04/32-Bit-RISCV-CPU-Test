@@ -61,13 +61,12 @@ all come from the project sources.
   and child blocks open their own schematics. Tracing works at signal granularity.
 - Continuous expressions and supported single-destination processes expand
   into circuit symbols. Concatenations show destination bit ranges and their
-  operands in MSB-to-LSB order. Supported combinational processes show their
-  external data and control inputs, guards, selectors, and driven outputs.
-  Click the block to inspect each output's rules. **Show gates** draws the
-  selected rule's RTL data path and branch enable separately, using logic
-  symbols, case comparators, and prior-arm exclusions where required. **Show
-  output circuit** draws the full decision and data network for that output. Initialization
-  shows known writes and statically resolved memory index sweeps. The process
+  operands in MSB-to-LSB order. Supported combinational processes, including
+  `always @*`, draw gates and their wiring directly on the data schematic.
+  Each case arm has a labeled multiplexer. Follow its Match input to the gates
+  that compute that arm's value, its S input to the selector comparison, and the
+  remaining input to the next arm or the fallback value. Initialization shows known
+  writes and statically resolved memory index sweeps. The process
   blocks link to the original RTL. Synthesis determines the final cells and
   memory mapping.
 - Quoted headers found by the compiler are listed in the UI. Discovery parses

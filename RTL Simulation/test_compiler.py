@@ -45,7 +45,12 @@ class CompilerTests(unittest.TestCase):
         full = y["circuit"]["nodes"]
         self.assertEqual({n["label"] for n in full if n["kind"] == "gate"},
                          {"AND", "OR", "Logical NOT", "XOR"})
-        self.assertIn("mux", {n["kind"] for n in full})
+        branches = {n["branch"]: n for n in full if n["kind"] == "mux"}
+        self.assertIn("if !reset", branches)
+        arm = branches["case 2'b00, 2'b01"]
+        self.assertEqual(arm["fallback"], "Next case arm")
+        self.assertEqual(full[arm["pins"][1]["source"]]["label"], "OR")
+        self.assertEqual(full[arm["pins"][2]["source"]]["label"], "OR")
         circuits = y["rules"][0]["circuits"]
         data = circuits["data"]["nodes"]
         out = data[-1]
