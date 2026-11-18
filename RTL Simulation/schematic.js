@@ -122,7 +122,7 @@ function pinPosition(node, pin, outgoing) {
     const index = [...pins.keys()].indexOf(pin);
     return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + 48 + index * 24};
   }
-  if (["net", "tap", "literal"].includes(node.kind)) {
+  if (["net", "tap"].includes(node.kind)) {
     return {x: node.x + (outgoing ? node.width : 0), y: node.y};
   }
   if (outgoing) return {x: node.x + outputX(node), y: node.y};
@@ -134,10 +134,30 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
   const layer = svgNode("g", {class: "wire-layer"});
   const paths = svgNode("g");
   const junctions = svgNode("g");
-  layer.append(paths, junctions);
+  const localValues = svgNode("g", {class: "local-values"});
+  layer.append(paths, junctions, localValues);
   const route = createWireRouter(graph, layout);
   const groups = new Map();
   for (const edge of graph.edges) {
+    if (edge.from.kind === "literal") {
+      const pin = pinPosition(edge.to, edge.input, false);
+      const key = wireTraceKey(edge);
+      const caption = edge.from.label + " to " + edge.to.label + " " + edge.input;
+      const x = pin.bottom ? pin.x : pin.x - VALUE_STUB;
+      const y = pin.bottom ? pin.y + VALUE_STUB : pin.y;
+      const value = drawWire(`M${x} ${y} L${pin.x} ${pin.y}`, edge.clock, caption,
+        () => chooseWire(edge.net, key));
+      value.classList.add("local-value");
+      const wire = value.querySelector("path");
+      wire.setAttribute("data-from", edge.from.label);
+      wire.setAttribute("data-to", edge.to.label);
+      svgText(value, pin.bottom ? x : x - 4, pin.bottom ? y + 12 : y + 3,
+        localValueLabel(edge.from.label), "local-value-label", pin.bottom ? "middle" : "end");
+      localValues.append(value);
+      track(wire, key);
+      track(value, key);
+      continue;
+    }
     const key = edge.from.id + ":" + edge.output;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(edge);
@@ -248,7 +268,7 @@ function drawSchematicSymbol(node) {
   const local = svgNode("g", {transform: `translate(${node.x} ${node.y})`});
   group.append(local);
 
-  if (["net", "literal", "tap"].includes(node.kind)) {
+  if (["net", "tap"].includes(node.kind)) {
     const half = node.height / 2;
     local.append(svgNode("rect", {x: 0, y: -half, width: node.width, height: node.height, rx: 4,
       class: node.kind === "net" ? "net-body" : "terminal-body"}));
@@ -419,6 +439,7 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   svg.append(portLeads);
   const symbols = new Map();
   for (const node of graph.nodes) {
+    if (node.kind === "literal") continue;
     const group = drawSchematicSymbol(node);
     const side = portSide(node);
     if (side) {
@@ -463,7 +484,9 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     svg.append(group);
   }
   for (const edge of graph.edges) {
-    markEndpoint(edge.from, edge.output, true, wireTraceKey(edge), edge.net);
+    if (edge.from.kind !== "literal") {
+      markEndpoint(edge.from, edge.output, true, wireTraceKey(edge), edge.net);
+    }
     markEndpoint(edge.to, edge.input, false, wireTraceKey(edge), edge.net);
   }
   viewport.append(svg);

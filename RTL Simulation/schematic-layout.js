@@ -10,7 +10,11 @@ const portSide = node => {
   return "";
 };
 
-const railSide = node => node.kind === "literal" ? "left" : portSide(node);
+const VALUE_STUB = 16;
+
+function localValueLabel(text) {
+  return text.length <= 24 ? text : text.slice(0, 14) + "…" + text.slice(-9);
+}
 
 const BOX_KINDS = ["instance", "bank", "process", "binding"];
 const DECISION_ROW = 19;
@@ -20,15 +24,20 @@ function concatenationLabel(fields) {
 }
 
 function layoutSchematic(graph) {
-  const {nodes, edges} = graph;
-  const incoming = nodes.map(() => []);
-  const outgoing = nodes.map(() => []);
+  const nodes = graph.nodes.filter(node => node.kind !== "literal");
+  const incoming = graph.nodes.map(() => []);
+  const outgoing = graph.nodes.map(() => []);
   const readingOrder = new Map();
   const levels = new Map();
 
-  for (const edge of edges) {
-    incoming[edge.to.id].push(edge);
-    outgoing[edge.from.id].push(edge);
+  for (const edge of graph.edges) {
+    if (edge.from.kind === "literal") {
+      const inset = VALUE_STUB + 8 + Math.ceil(localValueLabel(edge.from.label).length * 7);
+      edge.to.valueInset = Math.max(edge.to.valueInset || 0, inset);
+    } else {
+      incoming[edge.to.id].push(edge);
+      outgoing[edge.from.id].push(edge);
+    }
   }
 
   // Keep feedback in the wiring graph while removing it from placement constraints.
@@ -46,11 +55,11 @@ function layoutSchematic(graph) {
     active.delete(node);
     order.push(node);
   }
-  const boundary = nodes.filter(node => railSide(node) === "left");
+  const boundary = nodes.filter(node => portSide(node) === "left");
   for (const node of [...boundary, ...nodes]) visit(node);
 
   for (const node of order.reverse()) {
-    const predecessors = incoming[node.id].filter(edge => !feedback.has(edge) && edge.from.kind !== "literal");
+    const predecessors = incoming[node.id].filter(edge => !feedback.has(edge));
     const level = Math.max(0, ...predecessors.map(edge => levels.get(edge.from) + 1));
     levels.set(node, level);
   }
@@ -60,12 +69,11 @@ function layoutSchematic(graph) {
   const lastLevel = Math.max(...levels.values());
   const step = Math.max(1, Math.ceil((lastLevel + 1) / 12));
   for (const node of nodes) {
-    const side = railSide(node);
+    const side = portSide(node);
     if (side === "left") inputs.push(node);
     else if (side === "right") outputs.push(node);
     else (ranked[Math.floor(levels.get(node) / step)] ||= []).push(node);
   }
-  inputs.sort((a, b) => Number(a.kind === "literal") - Number(b.kind === "literal"));
   const columns = [inputs, ...ranked, outputs].filter(column => column?.length);
 
   const row = new Map(nodes.map(node => [node, 0.5]));
@@ -104,7 +112,7 @@ function layoutSchematic(graph) {
     } else if (node.kind === "bitfields") {
       node.width = ceilTile(Math.max(84, concatenationLabel(node.fields).length * 7 + 16));
       node.height = ceilTile(48 + node.fields.length * TILE);
-    } else if (["net", "tap", "literal"].includes(node.kind)) {
+    } else if (["net", "tap"].includes(node.kind)) {
       node.width = ceilTile(Math.max(48, Math.min(27, node.label.length) * 7 + 24,
         node.caption ? Math.min(27, node.caption.length) * 6 + 20 : 0));
       node.height = node.caption ? 48 : 24;
@@ -155,8 +163,10 @@ function layoutSchematic(graph) {
   }
 
   let x = inputs.length ? 36 : 60;
-  for (const column of columns) {
+  for (const [index, column] of columns.entries()) {
     const width = Math.max(...column.map(node => node.width));
+    const inset = Math.max(...column.map(node => node.valueInset || 0));
+    if (inset) x += Math.max(0, ceilTile(inset + 36) - (index ? gap : x));
     if (isBoundary(column)) {
       for (const node of column) node.width = width;
       place(column, x, width, 60, rowGap(column));
@@ -179,7 +189,7 @@ function layoutSchematic(graph) {
     let start = firstRegion ? Math.min(firstRegion.top - 12, 60 + bodyHeight - remaining) : 60;
     for (const node of column) {
       const peers = (isInput ? outgoing : incoming)[node.id]
-        .map(edge => isInput ? edge.to : edge.from).filter(peer => !railSide(peer));
+        .map(edge => isInput ? edge.to : edge.from).filter(peer => !portSide(peer));
       const positions = peers.map(peer => peer.y).sort((a, b) => a - b);
       const preferred = positions.length && !firstRegion
         ? snap(positions[Math.floor(positions.length / 2)] - node.height / 2) : start;
@@ -191,7 +201,7 @@ function layoutSchematic(graph) {
     }
   }
   const regions = partitions.filter(band => band.region).map(band => {
-    const left = Math.min(...band.nodes.map(node => node.x)) - 24;
+    const left = Math.min(...band.nodes.map(node => node.x - (node.valueInset || 0))) - 24;
     const right = Math.max(...band.nodes.map(node => node.x + node.width)) + 24;
     const top = Math.min(...band.nodes.map(node => node.y - node.height / 2)) - 36;
     const bottom = Math.max(...band.nodes.map(node => node.y + node.height / 2)) + 24;
@@ -246,6 +256,7 @@ function createWireRouter(graph, layout) {
   let run = 0;
 
   for (const node of graph.nodes) {
+    if (node.kind === "literal") continue;
     const left = Math.ceil((node.x - 4) / TILE);
     const right = Math.floor((node.x + node.width + 4) / TILE);
     const top = Math.ceil((node.y - node.height / 2 - 4) / TILE);

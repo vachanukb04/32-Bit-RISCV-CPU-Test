@@ -143,7 +143,11 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 }
 .symbol-body { fill: #203a31; stroke: #d1eadc; stroke-width: 1.65; stroke-linejoin: round; }
 .symbol-line { fill: none; stroke: #d1eadc; stroke-width: 1.45; }
+.local-value-label { fill: #ffad60; font: 700 11px var(--mono); paint-order: stroke;
+  stroke: #172720; stroke-width: 3px; cursor: pointer; }
+.circuit-svg.has-trace .local-value:not(.net-highlight) .local-value-label { opacity: .52; }
 .data-wire, .clock-wire { fill: none; stroke: #a6cdb9; stroke-width: 1.35; stroke-linejoin: round; }
+.local-value > .data-wire { stroke: #e59151; }
 .wire-connection > .bus-wire { stroke-width: 2.35; }
 .clock-wire { stroke: #7dd7ff; stroke-width: 1.9; }
 .wire-junction { fill: #c5e6d5; }

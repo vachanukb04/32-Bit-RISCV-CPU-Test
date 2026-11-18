@@ -5,7 +5,7 @@ description: Build and verify source-linked RTL Workbench schematics showing com
 
 - Read the elaborated Slang AST. Follow procedural assignments in execution order and preserve the last blocking assignment on each path. Changes to inputs read by an `always @*` block re-evaluate that block. Use clock events and hold paths to identify flip-flops and latches.
 - Draw a dotted region for each implicit-sensitivity combinational process. Route data and selector inputs into the inferred logic. Route live values to the output and local signal nodes. Keep reset-path values and procedural defaults tied to the mux pins that actually use them.
-- Place the input ports and constant values on the left. Preserve literal widths and distinct values for power-up writes, procedural defaults, and case comparisons. Show output ports on the right.
+- Place input ports on the left and output ports on the right. Draw constant values in orange with a short stub at the consuming pin. Preserve literal widths and distinct values for power-up writes, procedural defaults, and case comparisons.
 - Draw arithmetic and comparisons as circles with their operator marks. Keep standard gate shapes, a mux wedge, and sequential cell symbols. Preserve the exact `==` or `===` distinction and render concatenations in RTL bit order.
 - Trace from a clicked wire or pin to its driver, junctions, and loads within the module. Follow direct connections and named nets. Stop at gates that compute a new value.
 

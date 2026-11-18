@@ -64,8 +64,8 @@ all come from the project sources.
   operands in MSB-to-LSB order. Supported combinational processes show their
   external data and control inputs, guards, selectors, and driven outputs.
   The module schematic encloses the inferred `always @*` and `always_comb`
-  logic in dotted boundaries. Input ports and constant values, including
-  initial writes, are on the left rail. Case arms are labeled at their muxes
+  logic in dotted boundaries. Input ports are on the left rail. Literal values,
+  including initial writes, appear in orange at their consuming pins. Case arms are labeled at their muxes
   and arithmetic and comparisons use circular symbols. Clicking a wire or
   pin highlights the driver and all loads in the displayed scope. A wide signal uses one bus
   with its range. Concatenations join their fields with a brace label such as

@@ -170,7 +170,8 @@ test("draws an always @* case directly on the module canvas", () => {
   assert.equal(region.label, "always @*");
   assert.ok(mux.x > region.x && mux.x + mux.width < region.x + region.width);
   const literal = graph.nodes.find(node => node.kind === "literal");
-  assert.ok(literal.x + literal.width < region.x);
+  assert.equal(literal.x, undefined);
+  assert.ok(graph.edges.find(edge => edge.from === literal).to.valueInset > 16);
   const trace = api.connectedTraceKeys(graph);
   assert.ok(trace("net:code").has("net:copy"));
   assert.ok(!trace("net:code").has("net:a"));
@@ -180,7 +181,7 @@ test("formats concatenation ranges in declared order", () => {
   assert.equal(api.concatenationLabel([{range: "[0:2]"}, {range: "[3:9]"}]), "{[0:2] [3:9]}");
 });
 
-test("initial values enter the initialization process from the input rail", () => {
+test("initial values reserve space next to their consuming pins", () => {
   const source = location(2);
   const graph = render({
     nets: ["q"], ports: [], structures: [], children: [], clockUses: [], schematics: [],
@@ -190,7 +191,9 @@ test("initial values enter the initialization process from the input rail", () =
   api.layoutSchematic(graph);
   const [feed, drive] = graph.edges;
   assert.equal(feed.from.label, "4'b0010");
-  assert.equal(feed.from.x, 36);
+  assert.equal(feed.from.x, undefined);
+  assert.ok(feed.to.valueInset > 16);
+  assert.ok(feed.to.x > feed.to.valueInset);
   assert.equal(feed.to, drive.from);
   assert.equal(drive.to, graph.anchors.get("q"));
 });
