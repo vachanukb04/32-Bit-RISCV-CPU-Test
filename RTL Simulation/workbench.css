@@ -113,6 +113,40 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .source-head { padding: .8rem .9rem; display: flex; justify-content: space-between; gap: .5rem; border-bottom: 1px solid var(--border); }
 .source-head form { display: block; margin: 0; }
 .source-head p { margin: .35rem 0 0; }
+.project-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+.project-heading h2 { font-size: 1.1rem; }
+.project-hint { margin: .35rem 0 0; color: var(--muted); font-size: .85rem; }
+.project-actions, .source-actions { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; }
+.project-actions .button, .source-actions .button { display: inline-flex; align-items: center; text-decoration: none; }
+.project-actions a.button:hover, .source-actions a.button:hover { border-color: var(--accent); }
+.project-actions a.button:focus-visible, .source-actions a.button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.active-project { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .65rem .8rem;
+  align-items: center; padding-top: .9rem; margin-top: .9rem; border-top: 1px solid var(--border); }
+.active-project[hidden], .project-actions[hidden], .source-actions .button[hidden] { display: none; }
+.project-identity { display: grid; gap: .2rem; overflow-wrap: anywhere; }
+.project-identity strong { color: var(--accent); font: 650 .92rem var(--mono); }
+.active-project #compile { grid-column: 1 / -1; margin: 0; }
+.native-project { margin-top: .7rem; color: var(--muted); font-size: .8rem; }
+.project-sidebar { display: grid; gap: 1rem; min-width: 0; }
+.project-files .section-head { padding: .85rem 1rem; border-bottom: 1px solid var(--border); }
+#project-files { display: grid; gap: .15rem; list-style: none; max-height: 19rem; overflow: auto; margin: 0; padding: .45rem; }
+.project-file { width: 100%; padding: .35rem .45rem; border: 1px solid transparent; border-radius: 4px;
+  background: none; color: var(--text); font: .76rem var(--mono); text-align: left; overflow-wrap: anywhere; }
+.project-file:hover { background: #24374d; }
+#github-dialog { width: min(40rem, 95vw); max-height: 90dvh; padding: 0; background: #151c25;
+  color: var(--text); border: 1px solid #617794; border-radius: 10px; }
+#github-dialog::backdrop { background: #080b10c9; }
+.github-import { display: grid; grid-template-columns: minmax(0, 1fr); gap: .85rem; margin: 0; padding: 1rem; }
+.github-import .status { margin: 0; }
+.github-import .status:empty { display: none; }
+.github-import .primary { justify-self: end; }
+.github-fields { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.github-import details label { margin-top: .65rem; }
+.github-import details summary { color: var(--accent); font-size: .8rem; }
+@media (max-width: 610px) {
+  .active-project { grid-template-columns: minmax(0, 1fr); }
+  .github-fields { grid-template-columns: minmax(0, 1fr); }
+}
 #source-lines { height: min(65vh, 38rem); overflow: auto; padding: .5rem 0;
   font: .8rem/1.5 var(--mono); tab-size: 4; }
 .source-line { display: flex; width: max-content; min-width: 100%; white-space: pre; }

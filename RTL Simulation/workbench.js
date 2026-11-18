@@ -8,7 +8,6 @@ const make = (tag, className, text) => {
   return item;
 };
 
-let candidates = [];
 let result;
 let chain = [];
 const expanded = new Set();
@@ -18,37 +17,12 @@ function status(message, error = false) {
   byId("status").dataset.error = error;
 }
 
-function inputs() {
-  return {project: byId("project").value, scope: byId("scope").value};
-}
-
-async function request(kind, data) {
-  const reply = await fetch("/api/" + kind, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(data),
-  });
-  const payload = await reply.json();
-  if (!reply.ok) throw new Error(payload.error || reply.statusText);
-  return payload;
-}
-
-function busy(value) {
-  for (const item of document.querySelectorAll("form input, form select, form button")) {
-    item.disabled = value;
-  }
-  if (!value) {
-    byId("top").disabled = candidates.length === 0;
-    byId("compile-button").disabled = candidates.length === 0;
-  }
-}
-
 function resetDisplay() {
   result = undefined;
   chain = [];
   expanded.clear();
   byId("tree").replaceChildren(make("p", "empty", "Elaborated instances appear here."));
-  byId("diagram").replaceChildren(make("div", "empty stage-empty", "Select a top module to inspect its blocks and signals."));
+  byId("diagram").replaceChildren(make("div", "empty stage-empty", "Load a project and elaborate a top module to inspect its blocks and signals."));
   for (const id of ["instance-count", "crumbs", "inspector", "sources", "file-count", "includes", "issues"]) {
     byId(id).replaceChildren();
   }
@@ -58,68 +32,6 @@ function resetDisplay() {
   byId("diagnostic-panel").open = false;
   byId("file-panel").open = false;
 }
-
-byId("scan").addEventListener("submit", async event => {
-  event.preventDefault();
-  resetDisplay();
-  candidates = [];
-  busy(true);
-  byId("scan-summary").textContent = "";
-  byId("top").replaceChildren(new Option("Select a top module"));
-  status("Scanning source files…");
-  try {
-    const scan = await request("scan", inputs());
-    candidates = scan.tops;
-    const roots = make("optgroup");
-    roots.label = "Uninstantiated module candidates";
-    const remaining = make("optgroup");
-    remaining.label = "All other modules";
-    for (const [index, item] of candidates.entries()) {
-      const option = new Option(item.name + " — " + item.file, String(index));
-      (item.rootCandidate ? roots : remaining).append(option);
-    }
-    if (roots.children.length) byId("top").append(roots);
-    if (remaining.children.length) byId("top").append(remaining);
-    byId("directories").replaceChildren(...scan.directories.map(path => new Option(path)));
-    byId("scan-summary").textContent = scan.count + " RTL files found";
-    status("Select a module and its source path.");
-  } catch (error) {
-    status(error.message, true);
-  } finally {
-    busy(false);
-  }
-});
-
-for (const id of ["project", "scope"]) {
-  byId(id).addEventListener("input", () => {
-    if (!candidates.length) return;
-    candidates = [];
-    byId("top").replaceChildren(new Option("Scan the updated source directory"));
-    byId("scan-summary").textContent = "";
-    status("Scan sources to apply the new project settings.");
-    busy(false);
-  });
-}
-
-byId("compile").addEventListener("submit", async event => {
-  event.preventDefault();
-  const selected = candidates[byId("top").value];
-  if (!selected) {
-    status("Select a top module and source path.", true);
-    return;
-  }
-  resetDisplay();
-  busy(true);
-  status("Compiling " + selected.name + "…");
-  try {
-    result = await request("compile", {...inputs(), top: selected.name, file: selected.file});
-    showResult(result);
-  } catch (error) {
-    status(error.message, true);
-  } finally {
-    busy(false);
-  }
-});
 
 function showResult(compiled) {
   result = compiled;
@@ -137,7 +49,7 @@ function showResult(compiled) {
     status("Compilation failed. See compiler diagnostics.", true);
     return;
   }
-  status("Compiled and elaborated " + result.top + " · " + result.files.length + " source files.");
+  status("Elaborated " + result.top + " with " + (result.engine || "Slang") + " · " + result.files.length + " source files.");
   byId("instance-count").textContent = count(result.hierarchy) + " instances";
   focus([result.hierarchy]);
 }
@@ -173,12 +85,17 @@ function drawDiagnostics(compiled) {
   byId("diagnostic-panel").open = !compiled.hierarchy || compiled.issues.length > 0;
 }
 
-function openSource(source) {
+function openSource(source, sources = result?.sourceText) {
   const view = byId("source-view");
   const listing = byId("source-lines");
   byId("source-path").textContent = sourceLabel(source);
   const fragment = document.createDocumentFragment();
-  const lines = result.sourceText[source.file].split(/\r?\n/);
+  const github = byId("source-github");
+  const url = projectSourceUrl(source);
+  github.hidden = !url;
+  if (url) github.href = url;
+  else github.removeAttribute("href");
+  const lines = sources[source.file].split(/\r?\n/);
   let target;
   for (const [index, text] of lines.entries()) {
     const line = make("div", "source-line");

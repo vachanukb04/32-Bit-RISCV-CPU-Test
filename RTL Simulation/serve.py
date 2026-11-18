@@ -34,6 +34,10 @@ ASSETS = {
     "/schematic-layout.js": ("schematic-layout.js", "text/javascript"),
     "/schematic.js": ("schematic.js", "text/javascript"),
     "/workbench.js": ("workbench.js", "text/javascript"),
+    "/workbench-projects.js": ("workbench-projects.js", "text/javascript"),
+    "/rtl-project-io.js": ("rtl-project-io.js", "text/javascript"),
+    "/rtl-compile-worker.js": ("rtl-compile-worker.js", "text/javascript"),
+    "/rtl-netlist.js": ("rtl-netlist.js", "text/javascript"),
 }
 
 

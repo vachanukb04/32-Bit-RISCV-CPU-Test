@@ -1,8 +1,8 @@
 # RTL2GDS Cockpit
 
-The first RTL Simulation milestone discovers Verilog and SystemVerilog sources,
-compiles and elaborates a selected top with Slang, and displays the resulting
-design in a browser. The Python service runs on the same machine as the browser.
+The design workbench discovers Verilog and SystemVerilog sources and displays
+the chosen top module as a hierarchy and connected schematic. It starts with
+an empty project. The RISC-V example opens on demand.
 
 ## Run
 
@@ -16,16 +16,26 @@ python3 -m venv "RTL Simulation/.venv"
 
 Open the cockpit and select **Understanding your design**. [localhost:8080](http://127.0.0.1:8080)
 
-For **RTL root directory**, enter a local directory, leave `.` for the current
-repository checkout, or paste a
-public GitHub repository URL such as
-[32-Bit-RISCV-CPU-Test](https://github.com/vachanukb04/32-Bit-RISCV-CPU-Test/tree/main).
-GitHub input requires Git. A repository URL uses its default branch and a
-`/tree/<branch>` URL selects a simple branch or tag name.
+Use **Connect GitHub** with a repository URL or `owner/repository`. Choose a
+branch, tag, commit, or source folder when needed. Use the revision field for
+branch names containing slashes. The imported files and their source links are
+pinned to the resolved commit. **Refresh from GitHub** reads the current ref
+and re-elaborates a previously compiled top if it is still available. A private
+repository requires a fine-grained token with read access to its contents.
+The page holds the token in memory until the project closes or the page reloads.
 
-1. Click **Scan sources**. Use **Source directory** to scope the scan to a
-   subfolder of the project when it contains multiple RTL trees.
-2. Select a top and definition path. For the current RISC-V core, select
+**Open RTL folder** preserves file paths and includes. **Open RTL files** is
+convenient for a source set within one directory. Both load sources into the
+browser. The local Python service also offers **Open a directory on this machine**
+for direct Slang elaboration of a working tree, where `.` means this checkout.
+
+GitHub and browser-selected projects use the browser build of Yosys for
+synthesizable RTL. They show the lowered netlist with source links. The bundled
+example and local Slang flow also show source-level process and case regions.
+
+1. Load a project. Use **Source folder** in the GitHub dialog or
+   **Source directory** in the local Slang flow to scope a project with multiple RTL trees.
+2. Select a top and definition path. For the RISC-V core, select
    `riscv_core` from `RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v`.
    For the simulation hierarchy, select `tb_riscv_core` from the same directory.
 3. Click **Compile & elaborate**. Click a block to enter it. The breadcrumbs
