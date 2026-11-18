@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RTL Workbench · VLSI Suite 101</title>
+  <link rel="stylesheet" href="/workbench.css">
+  <script src="/workbench.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="mark" aria-hidden="true"></div>
+    <div><span class="suite">VLSI SUITE 101</span><h1>RTL Workbench</h1></div>
+  </header>
+  <main>
+    <section class="project panel" aria-labelledby="project-title">
+      <div class="section-head"><h2 id="project-title">Project setup</h2><span id="scan-summary"></span></div>
+      <form id="scan">
+        <label>RTL root directory or GitHub URL
+          <input id="project" value="." spellcheck="false" placeholder="/path/to/rtl or https://github.com/owner/repo">
+        </label>
+        <label>Source directory (optional)
+          <input id="scope" list="directories" placeholder="All source folders" spellcheck="false">
+          <datalist id="directories"></datalist>
+        </label>
+        <button class="button" type="submit">Scan sources</button>
+      </form>
+      <form id="compile">
+        <label>Top module
+          <select id="top" disabled><option>Scan sources to find top modules</option></select>
+        </label>
+        <button class="button primary" id="compile-button" disabled type="submit">Compile &amp; elaborate</button>
+      </form>
+      <p id="status" class="status" role="status"></p>
+    </section>
+
+    <div class="workspace">
+      <aside class="panel hierarchy" aria-labelledby="hierarchy-title">
+        <div class="section-head"><h2 id="hierarchy-title">Design hierarchy</h2><span id="instance-count"></span></div>
+        <div id="tree"><p class="empty">Elaborated instances appear here.</p></div>
+      </aside>
+      <section class="panel design" aria-labelledby="design-title">
+        <div class="section-head"><h2 id="design-title">Block diagram</h2><nav id="crumbs" aria-label="Instance path"></nav></div>
+        <div id="diagram"><div class="empty stage-empty">Select a top module to inspect its blocks and signals.</div></div>
+        <div id="inspector"></div>
+      </section>
+    </div>
+
+    <details class="panel output" id="file-panel">
+      <summary>Generated file list <span id="file-count"></span></summary>
+      <button id="download" type="button" class="button" disabled>Download sources.f</button>
+      <ol id="sources"></ol>
+      <div id="includes"></div>
+    </details>
+    <details class="panel output" id="diagnostic-panel">
+      <summary>Compiler diagnostics</summary>
+      <pre id="diagnostics">No compile has been run.</pre>
+    </details>
+  </main>
+</body>
+</html>
