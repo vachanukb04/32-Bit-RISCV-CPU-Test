@@ -158,7 +158,12 @@ def known_assignment(stmt):
 
 
 def initialization_view(member, locate, text):
-    rows, outputs, indices = [], {}, {}
+    rows, outputs, indices, values = [], {}, {}, []
+
+    def record(target, item, part):
+        values.append({"target": target, "value": expression_label(item.right, text),
+                       "bits": item.right.type.bitWidth, "source": locate(part.sourceRange.start)})
+
     for stmt in statements(member.body):
         if isinstance(stmt, ast.ForLoopStatement):
             sweep = counted_sweep(stmt)
@@ -184,7 +189,9 @@ def initialization_view(member, locate, text):
                 net = target.hierarchicalPath
                 outputs[net] = target.name
                 address = f"{start}..{last}" if step == 1 else index.name
-                fill_rows.append(row("fill", f"{target.name}[{address}] ← {expression_label(item.right, text)}",
+                marker = f"{target.name}[{address}]"
+                record(marker, item, part)
+                fill_rows.append(row("fill", f"{marker} ← {expression_label(item.right, text)}",
                                      1, part, locate))
             if not stmt.loopVars:
                 indices[index.hierarchicalPath] = {"name": index.name, "start": start, "last": last,
@@ -212,10 +219,12 @@ def initialization_view(member, locate, text):
         for target, _ in targets(lhs):
             outputs[target.hierarchicalPath] = target.name
             indices.pop(target.hierarchicalPath, None)
-        rows.append(row("set", f"{expression_label(lhs, text)} ← {expression_label(item.right, text)}", 0, stmt, locate))
+        marker = expression_label(lhs, text)
+        record(marker, item, stmt)
+        rows.append(row("set", f"{marker} ← {expression_label(item.right, text)}", 0, stmt, locate))
     if not rows:
         return None
-    return {"kind": "initialization", "rows": rows, "outputs": outputs, "indices": indices}
+    return {"kind": "initialization", "rows": rows, "outputs": outputs, "indices": indices, "values": values}
 
 
 def procedure_local_reads(body):

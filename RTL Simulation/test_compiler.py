@@ -18,6 +18,24 @@ class CompilerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
 
+    def test_elaborated_operator_marks_and_initial_value(self):
+        self.write("values.sv", """
+            module values(input logic [3:0] a, b, output logic [3:0] result,
+                          output logic [3:0] init_value);
+                initial init_value = 4'b0011;
+                always @* result = (a == b) ? a + b : 4'd0;
+            endmodule
+        """)
+        model = compile_design(self.root, self.root, "values", "values.sv")["hierarchy"]
+        initial, proc = [entry["view"] for entry in model["logic"]]
+        self.assertEqual(initial["values"][0]["target"], "init_value")
+        self.assertEqual(initial["values"][0]["value"], "4'b0011")
+        self.assertEqual(initial["values"][0]["bits"], 4)
+        self.assertEqual(proc["header"], "always @*")
+        nodes = proc["summary"]["outputs"][0]["circuit"]["nodes"]
+        marks = {node["label"]: node["symbol"] for node in nodes if node["kind"] == "operator"}
+        self.assertEqual(marks, {"Equal": "==", "Adder": "+"})
+
     def test_storage_symbols_follow_edge_level_and_reset_semantics(self):
         self.write("storage.sv", """
             module storage(input logic clk, rst_n, en, a, b, selector,

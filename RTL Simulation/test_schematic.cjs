@@ -6,7 +6,7 @@ const { runInNewContext } = require("node:vm");
 
 const scripts = ["schematic-graph.js", "schematic-layout.js"];
 const api = runInNewContext(scripts.map(file => readFileSync(join(__dirname, file), "utf8")).join("\n") +
-  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey, concatenationLabel});");
+  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey, connectedTraceKeys, concatenationLabel});");
 
 const location = line => ({file: "rom.v", line, column: 1});
 const terminal = (label, net) => ({kind: "terminal", label, pins: [], nets: net ? [net] : []});
@@ -165,8 +165,32 @@ test("draws an always @* case directly on the module canvas", () => {
   assert.equal(graph.anchors.get("a").caption, "[31:0]");
   assert.equal(graph.anchors.get("code").bits, 32);
   assert.equal(graph.anchors.get("code").caption, "[31:0]");
+  const layout = api.layoutSchematic(graph);
+  const [region] = layout.regions;
+  assert.equal(region.label, "always @*");
+  assert.ok(mux.x > region.x && mux.x + mux.width < region.x + region.width);
+  const literal = graph.nodes.find(node => node.kind === "literal");
+  assert.ok(literal.x + literal.width < region.x);
+  const trace = api.connectedTraceKeys(graph);
+  assert.ok(trace("net:code").has("net:copy"));
+  assert.ok(!trace("net:code").has("net:a"));
 });
 
 test("formats concatenation ranges in declared order", () => {
   assert.equal(api.concatenationLabel([{range: "[0:2]"}, {range: "[3:9]"}]), "{[0:2] [3:9]}");
+});
+
+test("initial values enter the initialization process from the input rail", () => {
+  const source = location(2);
+  const graph = render({
+    nets: ["q"], ports: [], structures: [], children: [], clockUses: [], schematics: [],
+    logic: [{source, kind: "Initial", inputs: [], outputs: ["q"], view: {kind: "initialization",
+      rows: [], outputs: {q: "q"}, indices: {}, values: [{target: "q", value: "4'b0010", bits: 4, source}]}}]
+  });
+  api.layoutSchematic(graph);
+  const [feed, drive] = graph.edges;
+  assert.equal(feed.from.label, "4'b0010");
+  assert.equal(feed.from.x, 36);
+  assert.equal(feed.to, drive.from);
+  assert.equal(drive.to, graph.anchors.get("q"));
 });

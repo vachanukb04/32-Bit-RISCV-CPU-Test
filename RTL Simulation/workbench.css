@@ -127,6 +127,12 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .schematic-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .circuit-svg { display: block; max-width: none; }
 .schematic-outline { fill: #17272055; stroke: #5f8273; stroke-width: 1.5; }
+.process-region { pointer-events: none; }
+.process-outline { fill: #1f45321f; stroke: #90caad; stroke-width: 1.3;
+  stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
+.process-region-title { fill: #d1fae5; font: 700 15px var(--mono);
+  paint-order: stroke; stroke: #172720; stroke-width: 4px; }
+.pin-hit { fill: transparent; pointer-events: all; cursor: pointer; }
 .port-leads .terminal-dot { fill: #c6e5d3; stroke: #172720; pointer-events: none; }
 .wire-connection > :is(.data-wire, .clock-wire), .wire-junction { pointer-events: none; }
 .wire-hit { fill: none; stroke: transparent; stroke-width: 9;

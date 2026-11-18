@@ -1,7 +1,34 @@
 "use strict";
 
 const signalTraceKey = net => net ? "net:" + net : "";
-const wireTraceKey = edge => signalTraceKey(edge.net) || "wire:" + edge.from.id + ":" + edge.output;
+const driverTraceKey = edge => "wire:" + edge.from.id + ":" + edge.output;
+const wireTraceKey = edge => signalTraceKey(edge.net) || driverTraceKey(edge);
+
+function connectedTraceKeys(graph) {
+  const peers = new Map();
+  function link(left, right) {
+    if (!peers.has(left)) peers.set(left, new Set());
+    if (!peers.has(right)) peers.set(right, new Set());
+    peers.get(left).add(right);
+    peers.get(right).add(left);
+  }
+
+  for (const edge of graph.edges) {
+    link(wireTraceKey(edge), driverTraceKey(edge));
+    if (edge.to.traceThrough) {
+      link(wireTraceKey(edge), driverTraceKey({from: edge.to, output: "OUT"}));
+    }
+  }
+
+  return key => {
+    if (!key) return new Set();
+    const connected = new Set([key]);
+    for (const current of connected) {
+      for (const peer of peers.get(current) || []) connected.add(peer);
+    }
+    return connected;
+  };
+}
 
 function busRange(signal) {
   return signal.range || (signal.bits > 1 ? `[${signal.bits - 1}:0]` : "");
@@ -23,12 +50,17 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   const clocks = new Set();
   const views = new Map(scope.logic.filter(item => item.view)
     .map(item => [sourceKey(item.source), item.view]));
+  const regions = new Map();
   const illustrated = new Map();
   const retained = new Set(scope.schematics.filter(sheet => sheet.nodes.some(shape =>
     shape.kind === "memory" && shape.write))
     .map(sheet => sourceKey(sheet.processSource || sheet.source)));
   for (const logic of scope.logic) {
     const key = sourceKey(logic.source);
+    const label = logic.view?.header;
+    if (label === "always @*" || label === "always_comb") {
+      regions.set(key, {key, label, source: logic.source});
+    }
     const outputs = logic.view?.summary?.outputs;
     if (outputs?.length && outputs.every(result => result.circuit) && !retained.has(key)) {
       illustrated.set(key, outputs.map(result => ({
@@ -142,7 +174,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         initial: "Initial process"}[view?.kind] || procedure;
       const caption = site?.line ? [view && procedure, "line " + site.line].filter(Boolean).join(" · ") : "";
       const rows = view?.kind === "combinational" ? undefined : view?.rows;
-      const item = add("process", title, {caption, source: site, rows,
+      const item = add("process", title, {caption, source: site, rows, region: regions.get(key),
         sourceRows: view?.rows});
       processes.set(key, {item, inputs: new Set(view?.localReads || []),
         localReads: new Set(view?.localReads || []), writes: new Set()});
@@ -200,6 +232,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   for (const sheet of sheets) {
     const site = sheet.processSource || sheet.source;
     const key = sourceKey(site);
+    const region = regions.get(key);
     if (views.get(key)?.kind === "initialization") continue;
     const root = sheet.nodes.at(-1);
     if (sheet.expressionOnly && views.get(key)?.kind === "combinational" && root.kind === "output" &&
@@ -245,7 +278,13 @@ function buildSchematicGraph(scope, signals, signalLabel) {
             (fallback.item.sources ||= []).push({source: sheet.source, label: sheet.title});
             fallback.writes.add(net);
           } else {
-            output(value, net, sheet.destination ? signalLabel(net) : shape.label, sheet.destination && shape);
+            let driver = value;
+            if (region && sheet.destination && !value.item.region && value.item !== anchor(net)) {
+              const item = add("tap", signalLabel(net), {region, traceThrough: true, source: site, bits: shape.bits});
+              feed(value, item);
+              driver = {item};
+            }
+            output(driver, net, sheet.destination ? signalLabel(net) : shape.label, sheet.destination && shape);
           }
         }
       } else if (shape.kind === "memory") {
@@ -275,7 +314,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         if (!item) {
           item = add(shape.kind, shape.label, {
             edge: shape.edge, resetLow: shape.resetLow, resetValue: shape.resetValue,
-            enableLow: shape.enableLow, source: sheet.source, fields, bits: shape.bits, symbol: shape.symbol,
+            enableLow: shape.enableLow, source: sheet.source, region, fields, bits: shape.bits, symbol: shape.symbol,
             branch: shape.branch, fallback: shape.fallback, processLabel: sheet.processLabel,
             caption: fields ? busRange(shape) : undefined
           });
@@ -298,6 +337,10 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     if (!logic.inputs.length && !logic.outputs.length && !processes.has(key)) continue;
     const entry = process(logic.source, logic.kind);
     if (logic.view?.kind === "initialization") {
+      for (const [index, initial] of (logic.view.values || []).entries()) {
+        const item = add("literal", initial.value, {bits: initial.bits, source: initial.source, caption: "Initial value"});
+        connect(item, entry.item, {input: String(index), inputLabel: initial.target});
+      }
       for (const [net, caption] of Object.entries(logic.view.outputs)) {
         const node = anchor(net);
         const index = logic.view.indices[net];
@@ -322,6 +365,28 @@ function buildSchematicGraph(scope, signals, signalLabel) {
       } else {
         connect(entry.item, item, {net, output: net, outputLabel: signalLabel(net)});
       }
+    }
+  }
+  const outgoing = new Map();
+  const incoming = new Map();
+  for (const edge of edges) {
+    if (!outgoing.has(edge.from)) outgoing.set(edge.from, []);
+    if (!incoming.has(edge.to)) incoming.set(edge.to, []);
+    outgoing.get(edge.from).push(edge.to);
+    incoming.get(edge.to).push(edge.from);
+  }
+  for (const node of taps.values()) {
+    const consumers = outgoing.get(node) || [];
+    if (consumers.length && consumers.every(consumer => consumer.region === consumers[0].region)) {
+      node.region = consumers[0].region;
+    }
+  }
+  for (const node of anchors.values()) {
+    if (node.kind !== "net" || portsBySignal.has(node.net)) continue;
+    const drivers = incoming.get(node) || [];
+    const region = drivers[0]?.region;
+    if (region && [...drivers, ...(outgoing.get(node) || [])].every(peer => peer.region === region)) {
+      node.region = region;
     }
   }
   return {nodes, edges, anchors, clocks};

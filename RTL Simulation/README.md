@@ -63,11 +63,13 @@ all come from the project sources.
   into circuit symbols. Concatenations show destination bit ranges and their
   operands in MSB-to-LSB order. Supported combinational processes show their
   external data and control inputs, guards, selectors, and driven outputs.
-  The module schematic draws these gates and their connectivity directly,
-  with the case arm labeled at its multiplexer. A wide signal uses one bus
+  The module schematic encloses the inferred `always @*` and `always_comb`
+  logic in dotted boundaries. Input ports and constant values, including
+  initial writes, are on the left rail. Case arms are labeled at their muxes
+  and arithmetic and comparisons use circular symbols. Clicking a wire or
+  pin highlights the driver and all loads in the displayed scope. A wide signal uses one bus
   with its range. Concatenations join their fields with a brace label such as
-  `{[31:16] [15:0]}`, in RTL order. Wires are continuous and clicking a net
-  highlights its driver and fanout. Initialization
+  `{[31:16] [15:0]}`, in RTL order. Initialization
   shows known writes and statically resolved memory index sweeps. The process
   blocks link to the original RTL. Synthesis determines the final cells and
   memory mapping.

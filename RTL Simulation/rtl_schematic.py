@@ -14,6 +14,15 @@ GATE_OPERATORS = {
 }
 
 
+OPERATOR_MARKS = {
+    "Add": "+", "Subtract": "−", "Multiply": "×", "Divide": "÷", "Mod": "%",
+    "Power": "**", "Minus": "−", "Equality": "==", "Inequality": "!=",
+    "CaseEquality": "===", "CaseInequality": "!==", "LessThan": "<", "GreaterThan": ">",
+    "LessThanEqual": "<=", "GreaterThanEqual": ">=", "LogicalShiftLeft": "<<",
+    "LogicalShiftRight": ">>", "ArithmeticShiftLeft": "<<<", "ArithmeticShiftRight": ">>>",
+}
+
+
 CASE_OPERATORS = {"Normal": ("Case equality", "==="), "WildcardXOrZ": ("Casex match", "?="),
                   "WildcardJustZ": ("Casez match", "?=")}
 
@@ -129,7 +138,7 @@ class Drawing:
                 kind = "gate" if operation in BITWISE else "operator"
                 return self.add(kind, (BITWISE | OPERATORS)[operation],
                                 zip(("A", "B"), map(self.expression, operands)),
-                                bits=node.type.bitWidth, symbol=GATE_OPERATORS.get(operation))
+                                bits=node.type.bitWidth, symbol=(GATE_OPERATORS if kind == "gate" else OPERATOR_MARKS).get(operation))
         if isinstance(node, ast.ElementSelectExpression):
             symbol = node.value.getSymbolReference()
             if symbol is not None and symbol.type.isUnpackedArray:

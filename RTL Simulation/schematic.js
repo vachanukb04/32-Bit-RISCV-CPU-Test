@@ -65,11 +65,8 @@ function symbol(parent, kind, label, edge, mark, node) {
       svgText(parent, 33, 4, "RTL", "pin-name", "middle");
       break;
     case "operator": {
-      const signs = {Adder:"+", Subtractor:"−", Multiplier:"×", Equal:"=",
-        "Not equal":"≠", "Less than":"<", "Greater than":">", "Left shift":"≪",
-        "Right shift":"≫", "Arithmetic right shift":"≫", Divider:"÷"};
-      svgPath(parent, "M0 -27 L25 -16 L53 -27 L71 0 L53 27 L25 16 L0 27 Z");
-      svgText(parent, 41, 5, mark || signs[label] || "ƒ", "symbol-sign", "middle");
+      parent.append(svgNode("circle", {cx: 34, cy: 0, r: 27, class: "symbol-body operator-body"}));
+      svgText(parent, 34, 5, mark || "ƒ", "symbol-sign", "middle");
       break;
     }
   }
@@ -80,7 +77,7 @@ function outputX(node) {
     const gate = node.label.replace(/^(Logical|Reduction) /, "");
     return {AND:59, NAND:69, OR:64, NOR:74, XOR:64, XNOR:74, NOT:71, BUF:61}[gate] || 67;
   }
-  return {mux:64, flop:68, latch:68, operator:71, expression:67}[node.kind] || 0;
+  return {mux:64, flop:68, latch:68, operator:61, expression:67}[node.kind] || 0;
 }
 
 function pinGeometry(node, pin) {
@@ -97,7 +94,8 @@ function pinGeometry(node, pin) {
   if (node.kind === "expression") {
     return {x:0, y: 24 * (parseInt(pin, 10) - (node.inputs.size + 1) / 2)};
   }
-  if (node.kind === "operator") return {x:0, y: pin === "A" ? -17 : 17};
+  if (node.kind === "operator") return node.inputs.size === 1 ? {x: 7, y: 0} :
+    {x: 10, y: pin === "A" ? -13 : 13};
   if (node.kind === "gate") {
     const gate = node.label.replace(/^(Logical|Reduction) /, "");
     if (node.inputs.size === 1) return {x: gate.includes("OR") ? 9 : 0, y:0};
@@ -373,6 +371,7 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     "aria-label": "Connected RTL schematic for " + scope.name});
   const details = make("div", "schematic-source");
   const highlighted = new Map();
+  const traceKeys = connectedTraceKeys(graph);
   function track(element, key, style = "net-highlight") {
     if (!highlighted.has(key)) highlighted.set(key, new Map());
     const elements = highlighted.get(key);
@@ -380,7 +379,7 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     elements.get(element).add(style);
   }
 
-  function markEndpoint(node, pin, outgoing, key) {
+  function markEndpoint(node, pin, outgoing, key, net) {
     const {group, inputs, outputs} = symbols.get(node);
     const pins = outgoing ? outputs : inputs;
     const role = outgoing ? "trace-driver" : "trace-load";
@@ -389,6 +388,13 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
       const marker = svgNode("circle", {cx: point.x, cy: point.y, r: 4,
         class: "trace-pin " + (outgoing ? "driver-pin" : "load-pin")});
       group.append(marker);
+      const hit = svgNode("circle", {cx: point.x, cy: point.y, r: 7, class: "pin-hit",
+        "data-pin": pin, "data-direction": outgoing ? "output" : "input"});
+      hit.addEventListener("click", event => {
+        event.stopPropagation();
+        selectSignal(net, {key, reveal: false});
+      });
+      group.append(hit);
       pins.set(pin, marker);
     }
     track(group, key, role);
@@ -398,6 +404,14 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   const outline = 12;
   svg.append(svgNode("rect", {x: outline, y: outline, width: layout.width - 2 * outline,
     height: layout.height - 2 * outline, rx: 12, class: "schematic-outline"}));
+  for (const region of layout.regions) {
+    const box = svgNode("g", {class: "process-region", "aria-label": region.label + " combinational logic"});
+    box.append(svgNode("rect", {x: region.x, y: region.y, width: region.width, height: region.height,
+      rx: 9, class: "process-outline"}));
+    svgText(box, region.x + 14, region.y + 23, region.label, "process-region-title");
+    box.append(svgNode("title", {}, "Combinational logic · inputs re-evaluate the block · line " + region.source.line));
+    svg.append(box);
+  }
   const wires = routeSchematic(graph, layout, track, (net, key) =>
     selectSignal(net, {key, reveal: false}), signalLabel);
   svg.append(wires);
@@ -449,8 +463,8 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     svg.append(group);
   }
   for (const edge of graph.edges) {
-    markEndpoint(edge.from, edge.output, true, wireTraceKey(edge));
-    markEndpoint(edge.to, edge.input, false, wireTraceKey(edge));
+    markEndpoint(edge.from, edge.output, true, wireTraceKey(edge), edge.net);
+    markEndpoint(edge.to, edge.input, false, wireTraceKey(edge), edge.net);
   }
   viewport.append(svg);
   section.append(viewport, details);
@@ -487,24 +501,27 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     if (graph.nodes.length <= 25 && viewport.clientWidth >= 680) zoomToFit();
     else {
       setZoom(.9, false);
-      const gate = graph.nodes.find(node => node.processLabel && node.kind === "gate");
-      if (gate) {
-        viewport.scrollLeft = gate.x * zoom - viewport.clientWidth / 2;
-        viewport.scrollTop = gate.y * zoom - viewport.clientHeight / 2;
+      const region = layout.regions[0];
+      if (region) {
+        viewport.scrollTop = Math.max(0, (region.y - 18) * zoom);
       }
     }
   });
 
   return {section, highlight(net, {key = signalTraceKey(net), reveal = true} = {}) {
-    for (const [element, styles] of highlighted.get(selected) || []) {
-      element.classList.remove(...styles);
-      if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
+    for (const related of traceKeys(selected)) {
+      for (const [element, styles] of highlighted.get(related) || []) {
+        element.classList.remove(...styles);
+        if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
+      }
     }
     selected = key;
     svg.classList.toggle("has-trace", Boolean(key));
-    for (const [element, styles] of highlighted.get(key) || []) {
-      element.classList.add(...styles);
-      if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "true");
+    for (const related of traceKeys(key)) {
+      for (const [element, styles] of highlighted.get(related) || []) {
+        element.classList.add(...styles);
+        if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "true");
+      }
     }
     const node = reveal && graph.anchors.get(net);
     if (node) {

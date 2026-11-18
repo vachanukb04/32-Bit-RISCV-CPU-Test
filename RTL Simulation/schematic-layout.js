@@ -10,6 +10,8 @@ const portSide = node => {
   return "";
 };
 
+const railSide = node => node.kind === "literal" ? "left" : portSide(node);
+
 const BOX_KINDS = ["instance", "bank", "process", "binding"];
 const DECISION_ROW = 19;
 
@@ -44,7 +46,7 @@ function layoutSchematic(graph) {
     active.delete(node);
     order.push(node);
   }
-  const boundary = nodes.filter(node => portSide(node) === "left");
+  const boundary = nodes.filter(node => railSide(node) === "left");
   for (const node of [...boundary, ...nodes]) visit(node);
 
   for (const node of order.reverse()) {
@@ -58,15 +60,12 @@ function layoutSchematic(graph) {
   const lastLevel = Math.max(...levels.values());
   const step = Math.max(1, Math.ceil((lastLevel + 1) / 12));
   for (const node of nodes) {
-    if (node.kind === "literal") {
-      const destinations = outgoing[node.id].map(edge => levels.get(edge.to));
-      if (destinations.length) levels.set(node, Math.max(0, Math.min(...destinations) - 1));
-    }
-    const side = portSide(node);
+    const side = railSide(node);
     if (side === "left") inputs.push(node);
     else if (side === "right") outputs.push(node);
     else (ranked[Math.floor(levels.get(node) / step)] ||= []).push(node);
   }
+  inputs.sort((a, b) => Number(a.kind === "literal") - Number(b.kind === "literal"));
   const columns = [inputs, ...ranked, outputs].filter(column => column?.length);
 
   const row = new Map(nodes.map(node => [node, 0.5]));
@@ -119,32 +118,71 @@ function layoutSchematic(graph) {
   const gap = nodes.length > 45 ? 120 : 84;
   const isBoundary = column => column === inputs || column === outputs;
   const rowGap = column => isBoundary(column) ? 24 : 36;
-  const packedHeight = column => column.reduce((total, node) => total + node.height + rowGap(column), 0);
-  const bodyHeight = Math.max(0, ...columns.map(packedHeight));
-  let x = inputs.length ? 36 : 60;
-  for (const column of columns) {
-    const width = Math.max(...column.map(node => node.width));
-    let y = 60 + (isBoundary(column) ? 0 : snap((bodyHeight - packedHeight(column)) / 2));
+  const packedHeight = (column, spacing = rowGap(column)) =>
+    column.reduce((total, node) => total + node.height + spacing, 0);
+
+  const innerColumns = columns.filter(column => !isBoundary(column));
+  const bands = new Map();
+  for (const column of innerColumns) {
     for (const node of column) {
-      if (isBoundary(column)) node.width = width;
+      const region = node.region;
+      const key = region?.key || "";
+      if (!bands.has(key)) bands.set(key, {region, columns: new Map(), nodes: []});
+      const band = bands.get(key);
+      if (!band.columns.has(column)) band.columns.set(column, []);
+      band.columns.get(column).push(node);
+      band.nodes.push(node);
+    }
+  }
+  const partitions = [...bands.values()].sort((a, b) =>
+    (a.region?.source.line || 0) - (b.region?.source.line || 0));
+  let occupied = 0;
+  for (const band of partitions) {
+    band.height = Math.max(...[...band.columns.values()].map(column => packedHeight(column, 36)));
+    band.top = 60 + occupied + (band.region ? 48 : 0);
+    occupied += band.height + (band.region ? 72 : 0);
+  }
+  const bodyHeight = Math.max(occupied, packedHeight(inputs), packedHeight(outputs));
+
+  function place(column, x, width, y, spacing) {
+    for (const node of column) {
       node.x = x;
       node.y = y + node.height / 2;
       node.leftChannel = x - 24;
       node.rightChannel = x + width + 24;
-      y += node.height + rowGap(column);
+      y += node.height + spacing;
+    }
+  }
+
+  let x = inputs.length ? 36 : 60;
+  for (const column of columns) {
+    const width = Math.max(...column.map(node => node.width));
+    if (isBoundary(column)) {
+      for (const node of column) node.width = width;
+      place(column, x, width, 60, rowGap(column));
+    } else {
+      for (const band of partitions) {
+        const members = band.columns.get(column);
+        if (!members) continue;
+        const spare = partitions.length === 1 ? bodyHeight - occupied : 0;
+        const top = band.top + snap((band.height - packedHeight(members, 36) + spare) / 2);
+        place(members, x, width, top, 36);
+      }
     }
     x += width + gap;
   }
   // Align the I/O rails to nearby circuitry without reordering module ports.
   for (const column of [inputs, outputs]) {
-    let start = 60;
     let remaining = packedHeight(column);
     const isInput = column === inputs;
+    const firstRegion = isInput && partitions.find(band => band.region);
+    let start = firstRegion ? Math.min(firstRegion.top - 12, 60 + bodyHeight - remaining) : 60;
     for (const node of column) {
       const peers = (isInput ? outgoing : incoming)[node.id]
-        .map(edge => isInput ? edge.to : edge.from).filter(peer => !portSide(peer));
+        .map(edge => isInput ? edge.to : edge.from).filter(peer => !railSide(peer));
       const positions = peers.map(peer => peer.y).sort((a, b) => a - b);
-      const preferred = positions.length ? snap(positions[Math.floor(positions.length / 2)] - node.height / 2) : start;
+      const preferred = positions.length && !firstRegion
+        ? snap(positions[Math.floor(positions.length / 2)] - node.height / 2) : start;
       const top = Math.max(start, Math.min(preferred, 60 + bodyHeight - remaining));
       node.y = top + node.height / 2;
       const occupied = node.height + rowGap(column);
@@ -152,7 +190,14 @@ function layoutSchematic(graph) {
       remaining -= occupied;
     }
   }
-  return {width: x - gap + (outputs.length ? 36 : 60), height: bodyHeight + 108};
+  const regions = partitions.filter(band => band.region).map(band => {
+    const left = Math.min(...band.nodes.map(node => node.x)) - 24;
+    const right = Math.max(...band.nodes.map(node => node.x + node.width)) + 24;
+    const top = Math.min(...band.nodes.map(node => node.y - node.height / 2)) - 36;
+    const bottom = Math.max(...band.nodes.map(node => node.y + node.height / 2)) + 24;
+    return {...band.region, x: left, y: top, width: right - left, height: bottom - top};
+  });
+  return {width: x - gap + (outputs.length ? 36 : 60), height: bodyHeight + 108, regions};
 }
 
 class RouteQueue {
