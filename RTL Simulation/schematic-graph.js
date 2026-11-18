@@ -238,7 +238,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
       } else {
         const fields = shape.fields;
         const item = add(shape.kind, shape.label, {
-          edge: shape.edge, source: sheet.source, fields,
+          edge: shape.edge, source: sheet.source, fields, bits: shape.bits, symbol: shape.symbol,
           caption: fields ? "[" + (shape.bits - 1) + ":0] · MSB to LSB" : undefined
         });
         for (const pin of shape.pins) {

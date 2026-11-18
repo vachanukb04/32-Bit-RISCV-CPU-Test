@@ -15,8 +15,9 @@ def value_name(node, text):
 
 
 class Drawing:
-    def __init__(self, text):
+    def __init__(self, text, resolver=None):
         self.text = text
+        self.resolver = resolver
         self.nodes = []
 
     def add(self, kind, label, inputs=(), **fields):
@@ -32,6 +33,10 @@ class Drawing:
         return self.add("output", label, [("IN", driver)], nets=list(nets))
 
     def expression(self, node):
+        if self.resolver:
+            resolved = self.resolver(node)
+            if resolved is not None:
+                return resolved
         if isinstance(node, ast.ConversionExpression):
             operand = self.expression(node.operand)
             if isinstance(node.operand, ast.IntegerLiteral) or (
@@ -80,7 +85,7 @@ class Drawing:
             if operation in BITWISE or operation in OPERATORS:
                 kind = "gate" if operation in BITWISE else "operator"
                 return self.add(kind, (BITWISE | OPERATORS)[operation],
-                                zip(("A", "B"), map(self.expression, operands)))
+                                zip(("A", "B"), map(self.expression, operands)), bits=node.type.bitWidth)
         if isinstance(node, ast.ElementSelectExpression):
             symbol = node.value.getSymbolReference()
             if symbol is not None and symbol.type.isUnpackedArray:

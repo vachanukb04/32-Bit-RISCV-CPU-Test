@@ -63,8 +63,10 @@ all come from the project sources.
   into circuit symbols. Concatenations show destination bit ranges and their
   operands in MSB-to-LSB order. Supported combinational processes show their
   external data and control inputs, guards, selectors, and driven outputs.
-  Click the block to see each output's ordered decisions, values, and bit
-  fields. Initialization
+  Click the block to inspect each output's rules. **Show gates** draws the
+  selected rule's RTL data path and branch enable separately, using logic
+  symbols, case comparators, and prior-arm exclusions where required. **Show
+  output circuit** draws the full decision and data network for that output. Initialization
   shows known writes and statically resolved memory index sweeps. The process
   blocks link to the original RTL. Synthesis determines the final cells and
   memory mapping.

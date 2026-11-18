@@ -18,6 +18,69 @@ class CompilerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
 
+    def test_case_diagrams_show_data_gates_and_combine_nested_branch_conditions(self):
+        self.write("mix.sv", """
+            module mix(input logic reset, input logic [1:0] op,
+                       input logic [3:0] a, b, mask, output logic [3:0] y);
+                logic [3:0] partial;
+                always @* begin
+                    y = 0;
+                    partial = 0;
+                    if (!reset) begin
+                        case (op)
+                            2'b00, 2'b01: begin
+                                partial = a & b;
+                                y = partial | mask;
+                            end
+                            2'b10: y = a ^ b;
+                            default: ;
+                        endcase
+                    end
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "mix", "mix.sv")["hierarchy"]
+        summary = scope["logic"][0]["view"]["summary"]
+        y = next(output for output in summary["outputs"] if output["name"] == "y")
+        full = y["circuit"]["nodes"]
+        self.assertEqual({n["label"] for n in full if n["kind"] == "gate"},
+                         {"AND", "OR", "Logical NOT", "XOR"})
+        self.assertIn("mux", {n["kind"] for n in full})
+        circuits = y["rules"][0]["circuits"]
+        data = circuits["data"]["nodes"]
+        out = data[-1]
+        gate_or = data[out["pins"][0]["source"]]
+        gate_and = data[gate_or["pins"][0]["source"]]
+        self.assertEqual([(gate["label"], gate["bits"]) for gate in [gate_and, gate_or]], [("AND", 4), ("OR", 4)])
+        self.assertEqual([data[pin["source"]]["label"] for pin in gate_and["pins"]], ["a", "b"])
+        self.assertEqual(data[gate_or["pins"][1]["source"]]["label"], "mask")
+        control = circuits["selection"]["nodes"]
+        self.assertEqual(sum(node.get("symbol") == "===" for node in control), 2)
+        self.assertEqual(control[control[-1]["pins"][0]["source"]]["label"], "AND")
+        self.assertIn("OR", {node["label"] for node in control})
+        self.assertTrue(any(node["label"] == "XOR" for node in y["rules"][1]["circuits"]["data"]["nodes"]))
+
+    def test_wildcard_case_shows_exclusion_of_an_earlier_overlapping_arm(self):
+        self.write("priority.sv", """
+            module priority_case(input logic [1:0] key, output logic y, z);
+                always @* begin
+                    z = 0;
+                    casez (key)
+                        2'b0?: y = 1;
+                        2'b?0: y = 0;
+                        default: y = 1;
+                    endcase
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "priority_case", "priority.sv")["hierarchy"]
+        y = next(output for output in scope["logic"][0]["view"]["summary"]["outputs"] if output["name"] == "y")
+        nodes = y["rules"][1]["circuits"]["selection"]["nodes"]
+        label = [node["label"] for node in nodes]
+        self.assertEqual(label.count("Casez match"), 2)
+        self.assertIn("NOT", label)
+        self.assertEqual(nodes[nodes[-1]["pins"][0]["source"]]["label"], "AND")
+
     def test_combinational_summary_tracks_inputs_and_the_latest_value_per_branch(self):
         self.write("dispatch.sv", """
             module dispatch(input logic [2:0] op, input logic submode, blocked,
