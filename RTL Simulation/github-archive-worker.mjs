@@ -19,10 +19,15 @@ async function githubArchive(request, url) {
   const target = "https://codeload.github.com/" + encodeURIComponent(owner) + "/" +
     encodeURIComponent(repo) + "/zip/" + revision;
   let archive;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
   try {
-    archive = await fetch(target, {redirect: "error", signal: AbortSignal.timeout(20000)});
-  } catch {
+    archive = await fetch(target, {redirect: "manual", signal: controller.signal});
+  } catch (error) {
+    console.warn("GitHub public archive request failed", error.message);
     return archiveError(502, "GitHub’s archive download could not be reached.");
+  } finally {
+    clearTimeout(timer);
   }
   if (archive.status === 404) return archiveError(404, "GitHub could not find a public archive for this repository and revision.");
   if (!archive.ok || !archive.body || !archive.headers.get("Content-Type")?.includes("application/zip")) {
