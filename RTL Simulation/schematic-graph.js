@@ -1,5 +1,8 @@
 "use strict";
 
+const signalTraceKey = net => net ? "net:" + net : "";
+const wireTraceKey = edge => signalTraceKey(edge.net) || "wire:" + edge.from.id + ":" + edge.output;
+
 function sourceKey(source) {
   return source ? [source.file, source.line, source.column].join(":") : "";
 }
@@ -14,6 +17,14 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   const represented = new Set();
   const memories = new Map();
   const clocks = new Set();
+  const portsBySignal = new Map();
+  for (const port of scope.ports) {
+    const peers = portsBySignal.get(port.internal) || [];
+    peers.push(port);
+    portsBySignal.set(port.internal, peers);
+  }
+  const portCaption = port => [port.direction, port.bits > 1 ? port.bits + " bits" : ""]
+    .filter(Boolean).join(" · ");
   for (const use of scope.clockUses) {
     if (["CLK", "Clock input"].includes(use.pin)) {
       for (const net of use.traceRefs) clocks.add(net);
@@ -33,10 +44,9 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     if (!anchors.has(net)) {
       const memory = memories.get(net);
       const kind = memory ? "bank" : "net";
-      const port = scope.ports.find(candidate => candidate.internal === net);
-      const caption = memory?.detail.split(" · ")[0] || (port && [
-        port.direction, port.bits > 1 ? port.bits + " bits" : ""
-      ].filter(Boolean).join(" · "));
+      const [candidate, other] = portsBySignal.get(net) || [];
+      const port = !memory && !other && candidate?.name === signalLabel(net) ? candidate : undefined;
+      const caption = memory?.detail.split(" · ")[0] || (port && portCaption(port));
       anchors.set(net, add(kind, signalLabel(net), {net, port, caption,
         sources: memory?.occurrences.map(item => ({source: item.source, label: "Declaration"})) || []}));
     }
@@ -101,6 +111,14 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   }
 
   for (const net of signals.keys()) anchor(net);
+  for (const port of scope.ports) {
+    const net = port.internal;
+    const internal = anchor(net);
+    if (internal.port === port) continue;
+    const pin = add("net", port.name, {net, port, caption: portCaption(port)});
+    if (port.direction === "output") feed(signalOutput(net), pin);
+    else connect(pin, internal, {net});
+  }
   const clockPins = new Set(scope.clockUses.filter(use => use.pin === "Clock input").map(use => use.label));
   for (const child of scope.children) {
     const item = add("instance", child.name, {caption: child.module, source: child.source, child});

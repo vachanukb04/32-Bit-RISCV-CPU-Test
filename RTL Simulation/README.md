@@ -30,8 +30,9 @@ GitHub input requires Git. A repository URL uses its default branch and a
    return to any parent, and the tree supports independent expand and collapse.
 4. Open **Data schematic** to see one wired canvas for the selected instance.
    Module ports, child pins, gates, memory, and clock fanout appear on the same
-   canvas. Select a net from **Trace signal** or click a signal label to light
-   up its driver and branches. Use **Fit** for an overview and **100%** to read
+   canvas. Module inputs and bidirectional ports sit on the left edge, and
+   outputs sit on the right. Click a wire, click a signal label, or select a
+   net from **Trace signal** to highlight its driver and endpoints. Use **Fit** for an overview and **100%** to read
    pin names on a larger schematic.
 5. Click a file location under **Compiler diagnostics** to open the source
    read-only at the highlighted line and column.

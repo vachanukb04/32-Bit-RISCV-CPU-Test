@@ -115,7 +115,7 @@ function pinPosition(node, pin, outgoing) {
   return {x: node.x + point.x, y: node.y + point.y, bottom: point.bottom};
 }
 
-function routeSchematic(graph, layout, track) {
+function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
   const layer = svgNode("g", {class: "wire-layer"});
   const paths = svgNode("g");
   const junctions = svgNode("g");
@@ -133,10 +133,10 @@ function routeSchematic(graph, layout, track) {
     const points = new Map();
     const record = (point, neighbor, edge) => {
       const key = point.x + "," + point.y;
-      if (!points.has(key)) points.set(key, {point, neighbors: new Set(), nets: new Set(), clock: false});
+      if (!points.has(key)) points.set(key, {point, neighbors: new Set(), selections: new Set(), clock: false});
       const item = points.get(key);
       item.neighbors.add(neighbor.x + "," + neighbor.y);
-      if (edge.net) item.nets.add(edge.net);
+      item.selections.add(wireTraceKey(edge));
       item.clock ||= edge.clock;
     };
     for (const edge of edges) {
@@ -159,10 +159,18 @@ function routeSchematic(graph, layout, track) {
         return !(a.x === point.x && point.x === b.x) && !(a.y === point.y && point.y === b.y);
       });
       const commands = corners.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
-      const wire = svgPath(paths, commands, edge.clock ? "clock-wire" : "data-wire");
+      const key = wireTraceKey(edge);
+      const name = edge.net && signalLabel(edge.net);
+      const prefix = name && name !== edge.from.label ? name + " · " : "";
+      const caption = prefix + edge.from.label + " to " + edge.to.label +
+        (edge.input === "IN" ? "" : " " + edge.input);
+      const connection = drawWire(commands, edge.clock, caption, () => chooseWire(edge.net, key));
+      const wire = connection.querySelector("path");
       wire.setAttribute("data-from", edge.from.label);
       wire.setAttribute("data-to", edge.to.label);
-      if (edge.net) track(wire, edge.net);
+      paths.append(connection);
+      track(wire, key);
+      track(connection, key);
       if (edges.length > 1) {
         for (let i = 1; i < pointsOnGrid.length; i++) {
           const a = pointsOnGrid[i - 1], b = pointsOnGrid[i];
@@ -171,12 +179,12 @@ function routeSchematic(graph, layout, track) {
         }
       }
     }
-    for (const {point, neighbors, nets, clock} of points.values()) {
+    for (const {point, neighbors, selections, clock} of points.values()) {
       if (neighbors.size < 3) continue;
       const dot = svgNode("circle", {cx: point.x, cy: point.y, r: 3,
         class: "wire-junction" + (clock ? " clock-junction" : "")});
       junctions.append(dot);
-      for (const net of nets) track(dot, net);
+      for (const key of selections) track(dot, key);
     }
   }
   return layer;
@@ -245,6 +253,16 @@ function makeInteractive(group, label, action) {
   });
 }
 
+function drawWire(commands, clock, caption, choose) {
+  const connection = svgNode("g", {class: "wire-connection"});
+  makeInteractive(connection, "Trace wire " + caption, choose);
+  connection.setAttribute("aria-pressed", "false");
+  connection.append(svgNode("title", {}, caption));
+  svgPath(connection, commands, clock ? "clock-wire" : "data-wire");
+  svgPath(connection, commands, "wire-hit");
+  return connection;
+}
+
 function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild) {
   const section = make("section", "schematic-section");
   const header = make("div", "schematic-heading");
@@ -282,15 +300,56 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     "aria-label": "Connected RTL schematic for " + scope.name});
   const details = make("div", "schematic-source");
   const highlighted = new Map();
-  function track(element, net) {
-    if (!highlighted.has(net)) highlighted.set(net, []);
-    highlighted.get(net).push(element);
+  function track(element, key, style = "net-highlight") {
+    if (!highlighted.has(key)) highlighted.set(key, new Map());
+    const elements = highlighted.get(key);
+    if (!elements.has(element)) elements.set(element, new Set());
+    elements.get(element).add(style);
   }
 
-  svg.append(routeSchematic(graph, layout, track));
+  function markEndpoint(node, pin, outgoing, key) {
+    const {group, inputs, outputs} = symbols.get(node);
+    const pins = outgoing ? outputs : inputs;
+    const role = outgoing ? "trace-driver" : "trace-load";
+    if (!pins.has(pin)) {
+      const point = pinPosition(node, pin, outgoing);
+      const marker = svgNode("circle", {cx: point.x, cy: point.y, r: 4,
+        class: "trace-pin " + (outgoing ? "driver-pin" : "load-pin")});
+      group.append(marker);
+      pins.set(pin, marker);
+    }
+    track(group, key, role);
+    track(pins.get(pin), key);
+  }
+
+  const outline = 12;
+  svg.append(svgNode("rect", {x: outline, y: outline, width: layout.width - 2 * outline,
+    height: layout.height - 2 * outline, rx: 12, class: "schematic-outline"}));
+  svg.append(routeSchematic(graph, layout, track, (net, key) =>
+    selectSignal(net, {key, reveal: false}), signalLabel));
+  const portLeads = svgNode("g", {class: "port-leads"});
+  svg.append(portLeads);
+  const symbols = new Map();
   for (const node of graph.nodes) {
     const group = drawSchematicSymbol(node);
-    if (node.net) track(group, node.net);
+    const side = portSide(node);
+    if (side) {
+      group.setAttribute("data-port-side", side);
+      const right = side === "right";
+      const outside = right ? layout.width - outline : outline;
+      const inside = node.x + (right ? node.width : 0);
+      const key = signalTraceKey(node.net);
+      const lead = drawWire(`M${outside} ${node.y} H${inside}`, graph.clocks.has(node.net),
+        node.port.direction + " port " + node.label, () => selectSignal(node.net, {key, reveal: false}));
+      const terminal = svgNode("circle", {cx: outside, cy: node.y, r: 3.6, class: "terminal-dot"});
+      lead.append(terminal);
+      portLeads.append(lead);
+      track(lead, key);
+      track(lead.querySelector("path"), key);
+      track(terminal, key);
+    }
+    if (node.net) track(group, signalTraceKey(node.net));
+    symbols.set(node, {group, inputs: new Map(), outputs: new Map()});
     if (node.kind === "net") {
       makeInteractive(group, "Trace " + node.label, () => selectSignal(node.net));
       group.setAttribute("aria-pressed", "false");
@@ -311,6 +370,10 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
       makeInteractive(group, "Open RTL for " + node.label, () => openSource(node.source));
     }
     svg.append(group);
+  }
+  for (const edge of graph.edges) {
+    markEndpoint(edge.from, edge.output, true, wireTraceKey(edge));
+    markEndpoint(edge.to, edge.input, false, wireTraceKey(edge));
   }
   viewport.append(svg);
   section.append(viewport, details);
@@ -348,18 +411,18 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     else setZoom(.9, false);
   });
 
-  return {section, highlight(net) {
-    for (const element of highlighted.get(selected) || []) {
-      element.classList.remove("net-highlight");
+  return {section, highlight(net, {key = signalTraceKey(net), reveal = true} = {}) {
+    for (const [element, styles] of highlighted.get(selected) || []) {
+      element.classList.remove(...styles);
       if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
     }
-    selected = net;
-    svg.classList.toggle("has-trace", Boolean(net));
-    for (const element of highlighted.get(net) || []) {
-      element.classList.add("net-highlight");
+    selected = key;
+    svg.classList.toggle("has-trace", Boolean(key));
+    for (const [element, styles] of highlighted.get(key) || []) {
+      element.classList.add(...styles);
       if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "true");
     }
-    const node = graph.anchors.get(net);
+    const node = reveal && graph.anchors.get(net);
     if (node) {
       const x = (node.x + node.width / 2) * zoom;
       const y = node.y * zoom;

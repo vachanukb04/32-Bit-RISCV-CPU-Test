@@ -3,6 +3,12 @@
 const TILE = 12;
 const snap = value => Math.round(value / TILE) * TILE;
 const ceilTile = value => Math.ceil(value / TILE) * TILE;
+const portSide = node => {
+  const direction = node.port?.direction;
+  if (direction === "output") return "right";
+  if (direction === "input" || direction === "inout") return "left";
+  return "";
+};
 
 function layoutSchematic(graph) {
   const {nodes, edges} = graph;
@@ -31,7 +37,7 @@ function layoutSchematic(graph) {
     active.delete(node);
     order.push(node);
   }
-  const boundary = nodes.filter(node => node.port?.direction === "input");
+  const boundary = nodes.filter(node => portSide(node) === "left");
   for (const node of [...boundary, ...nodes]) visit(node);
 
   for (const node of order.reverse()) {
@@ -39,7 +45,9 @@ function layoutSchematic(graph) {
     const level = Math.max(0, ...predecessors.map(edge => levels.get(edge.from) + 1));
     levels.set(node, level);
   }
-  const columns = [];
+  const inputs = [];
+  const outputs = [];
+  const ranked = [];
   const lastLevel = Math.max(...levels.values());
   const step = Math.max(1, Math.ceil((lastLevel + 1) / 12));
   for (const node of nodes) {
@@ -47,9 +55,12 @@ function layoutSchematic(graph) {
       const destinations = outgoing[node.id].map(edge => levels.get(edge.to));
       if (destinations.length) levels.set(node, Math.max(0, Math.min(...destinations) - 1));
     }
-    const column = Math.floor(levels.get(node) / step);
-    (columns[column] ||= []).push(node);
+    const side = portSide(node);
+    if (side === "left") inputs.push(node);
+    else if (side === "right") outputs.push(node);
+    else (ranked[Math.floor(levels.get(node) / step)] ||= []).push(node);
   }
+  const columns = [inputs, ...ranked, outputs].filter(column => column?.length);
 
   const row = new Map(nodes.map(node => [node, 0.5]));
   for (let pass = 0; pass < 6; pass++) {
@@ -63,7 +74,9 @@ function layoutSchematic(graph) {
           : row.get(node);
         return [node, average];
       }));
-      column.sort((a, b) => score.get(a) - score.get(b) || readingOrder.get(a) - readingOrder.get(b));
+      if (column !== inputs && column !== outputs) {
+        column.sort((a, b) => score.get(a) - score.get(b) || readingOrder.get(a) - readingOrder.get(b));
+      }
       column.forEach((node, index) => row.set(node, (index + .5) / column.length));
     }
   }
@@ -91,9 +104,10 @@ function layoutSchematic(graph) {
   let x = 60;
   for (const column of columns) {
     const width = Math.max(...column.map(node => node.width));
-    let y = 60 + snap((bodyHeight - packedHeight(column)) / 2);
+    const isBoundary = column === inputs || column === outputs;
+    let y = 60 + (isBoundary ? 0 : snap((bodyHeight - packedHeight(column)) / 2));
     for (const node of column) {
-      node.x = x;
+      node.x = portSide(node) === "right" ? x + width - node.width : x;
       node.y = y + node.height / 2;
       node.leftChannel = x - 24;
       node.rightChannel = x + width + 24;

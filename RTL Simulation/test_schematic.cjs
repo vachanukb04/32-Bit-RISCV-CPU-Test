@@ -6,7 +6,7 @@ const { runInNewContext } = require("node:vm");
 
 const scripts = ["schematic-graph.js", "schematic-layout.js"];
 const api = runInNewContext(scripts.map(file => readFileSync(join(__dirname, file), "utf8")).join("\n") +
-  "\n({buildSchematicGraph, layoutSchematic, createWireRouter});");
+  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey});");
 
 const location = line => ({file: "rom.v", line, column: 1});
 const terminal = (label, net) => ({kind: "terminal", label, pins: [], nets: net ? [net] : []});
@@ -79,4 +79,41 @@ test("keeps clock fanout and feedback when placing child instances on the same g
   assert.equal(path.at(-1).x, end.x);
   assert.ok(path.every((point, i) => i === 0 ||
     Math.abs(point.x - path[i - 1].x) + Math.abs(point.y - path[i - 1].y) === 12));
+});
+
+test("pins module inputs and outputs to opposite edges, including output ports used internally", () => {
+  const graph = render({
+    nets: ["input_a", "mid", "out_b", "out_c"],
+    ports: [
+      {name: "input_a", direction: "input", internal: "input_a", bits: 1},
+      {name: "out_b", direction: "output", internal: "out_b", bits: 1},
+      {name: "out_c", direction: "output", internal: "out_c", bits: 1},
+      {name: "alias_b", direction: "output", internal: "out_b", bits: 1}
+    ],
+    structures: [], children: [], logic: [], clockUses: [],
+    schematics: [
+      {source: location(1), nodes: [terminal("input_a", "input_a"), output("mid", 0)]},
+      {source: location(2), nodes: [terminal("mid", "mid"), output("out_b", 0)]},
+      {source: location(3), nodes: [terminal("out_b", "out_b"), output("out_c", 0)]}
+    ]
+  });
+  const layout = api.layoutSchematic(graph);
+  const input = graph.nodes.find(node => node.port?.name === "input_a");
+  const outputs = graph.nodes.filter(node => node.port?.direction === "output");
+  assert.equal(input.x, Math.min(...graph.nodes.map(node => node.x)));
+  assert.equal(outputs.length, 3);
+  assert.ok(outputs.every(node => node.x + node.width === layout.width - 60));
+  assert.ok(graph.nodes.filter(node => !node.port).every(node => node.x > input.x &&
+    node.x + node.width < outputs[0].x));
+});
+
+test("uses one trace selection for a named net's driver and fanout wires", () => {
+  const driver = {id: 1};
+  const anchor = {id: 2};
+  const named = [{from: driver, output: "Q", net: "m.d"},
+    {from: anchor, output: "OUT", net: "m.d"}, {from: anchor, output: "OUT", net: "m.d"}];
+  assert.equal(new Set(named.map(api.wireTraceKey)).size, 1);
+  assert.equal(api.wireTraceKey({from: driver, output: "Q", net: ""}),
+    api.wireTraceKey({from: driver, output: "Q"}));
+  assert.notEqual(api.wireTraceKey(named[0]), api.wireTraceKey({from: driver, output: "Q"}));
 });

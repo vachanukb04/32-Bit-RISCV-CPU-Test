@@ -351,19 +351,19 @@ function drawDiagram() {
   picker.disabled = !endpoints.size;
   chip.append(title, bar);
   if (grid.children.length) chip.append(grid);
-  const schematic = drawDataSchematic(node, endpoints, label, signal => {
+  const schematic = drawDataSchematic(node, endpoints, label, (signal, options) => {
     picker.value = signal;
-    highlight(signal);
+    highlight(signal, options);
   }, child => focus([...chain, child]));
   chip.append(schematic.section);
   byId("diagram").replaceChildren(chip);
   drawInspector(node);
 
-  function highlight(signal) {
+  function highlight(signal, options) {
     const hits = endpoints.get(signal) || [];
     const touched = new Set(hits.map(hit => hit.card));
     for (const card of grid.querySelectorAll(".block")) card.dataset.hit = touched.has(card);
-    schematic.highlight(signal);
+    schematic.highlight(signal, options);
   }
 
   picker.addEventListener("change", () => highlight(picker.value));
