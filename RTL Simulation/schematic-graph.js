@@ -51,6 +51,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   const views = new Map(scope.logic.filter(item => item.view)
     .map(item => [sourceKey(item.source), item.view]));
   const regions = new Map();
+  const regionKey = (process, local) => process + "/" + local;
   const illustrated = new Map();
   const retained = new Set(scope.schematics.filter(sheet => sheet.nodes.some(shape =>
     shape.kind === "memory" && shape.write))
@@ -59,7 +60,12 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     const key = sourceKey(logic.source);
     const label = logic.view?.header;
     if (label === "always @*" || label === "always_comb") {
-      regions.set(key, {key, label, source: logic.source});
+      regions.set(key, {key, label, source: logic.source, kind: "process"});
+    }
+    for (const region of logic.caseRegions || []) {
+      const id = regionKey(key, region.key);
+      const parent = region.parent ? regionKey(key, region.parent) : regions.has(key) ? key : null;
+      regions.set(id, {...region, key: id, parent});
     }
     const outputs = logic.view?.summary?.outputs;
     if (outputs?.length && outputs.every(result => result.circuit) && !retained.has(key)) {
@@ -235,7 +241,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     const region = regions.get(key);
     if (views.get(key)?.kind === "initialization") continue;
     const root = sheet.nodes.at(-1);
-    if (sheet.expressionOnly && views.get(key)?.kind === "combinational" && root.kind === "output" &&
+    if (sheet.expressionOnly && !sheet.nodes.some(shape => shape.caseRegion) && views.get(key)?.kind === "combinational" && root.kind === "output" &&
         sheet.nodes.slice(0, -1).every(node => !node.nets?.length && node.kind !== "memory")) {
       continue;
     }
@@ -304,8 +310,9 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         wire = {item: bank, output: "Q" + index, net};
       } else {
         const fields = shape.fields;
+        const owner = regions.get(regionKey(key, shape.caseRegion)) || region;
         // Outputs of one combinational process can share the same elaborated subexpression.
-        const signature = sheet.destination && JSON.stringify([key, shape.kind, shape.label, fields,
+        const signature = sheet.destination && JSON.stringify([key, shape.caseRegion, shape.kind, shape.label, fields,
           shape.bits, shape.symbol, shape.branch, shape.fallback, shape.enableLow, shape.pins.map(pin => {
             const value = pinInput(pin);
             return [pin.pin, value.item.id, value.output];
@@ -314,7 +321,8 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         if (!item) {
           item = add(shape.kind, shape.label, {
             edge: shape.edge, resetLow: shape.resetLow, resetValue: shape.resetValue,
-            enableLow: shape.enableLow, source: sheet.source, region, fields, bits: shape.bits, symbol: shape.symbol,
+            enableLow: shape.enableLow, source: owner?.source || sheet.source, region: owner, fields, bits: shape.bits,
+            symbol: shape.symbol, traceThrough: shape.traceThrough,
             branch: shape.branch, fallback: shape.fallback, processLabel: sheet.processLabel,
             caption: fields ? busRange(shape) : undefined
           });
@@ -389,5 +397,5 @@ function buildSchematicGraph(scope, signals, signalLabel) {
       node.region = region;
     }
   }
-  return {nodes, edges, anchors, clocks};
+  return {nodes, edges, anchors, clocks, regions: [...regions.values()]};
 }

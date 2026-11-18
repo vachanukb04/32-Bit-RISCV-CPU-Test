@@ -141,6 +141,58 @@ class CompilerTests(unittest.TestCase):
         self.assertIn("OR", {node["label"] for node in control})
         self.assertTrue(any(node["label"] == "XOR" for node in y["rules"][1]["circuits"]["data"]["nodes"]))
 
+    def test_case_regions_follow_source_nesting_in_generic_combinational_and_clocked_logic(self):
+        self.write("dispatch.sv", """
+            module dispatch(input logic clk, a, b, input logic [1:0] cmd, mode,
+                            output logic y, w, q);
+                localparam logic [1:0] COMMAND = 2'b01;
+                always @* begin
+                    y = 0;
+                    w = 0;
+                    case (cmd)
+                        COMMAND: begin
+                            y = 1;
+                            casez (mode)
+                                2'b0?, 2'b11: w = a ^ b;
+                                default: w = b;
+                            endcase
+                        end
+                        2'b10: y = 1;
+                        default: ;
+                    endcase
+                end
+                always @(posedge clk)
+                    case (mode)
+                        2'b00: q <= a;
+                        default: q <= b;
+                    endcase
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "dispatch", "dispatch.sv")["hierarchy"]
+        comb, clocked = [entry for entry in scope["logic"] if entry.get("caseRegions")]
+        outer, command, other, default, inner, wildcard, nested_default = comb["caseRegions"]
+        self.assertEqual(outer["label"], "case (cmd)")
+        self.assertEqual(command["label"], "COMMAND (2'b01)")
+        self.assertEqual(other["label"], "2'b10")
+        self.assertTrue(default["empty"])
+        self.assertTrue(all(arm["parent"] == outer["key"] for arm in (command, other, default)))
+        self.assertEqual((inner["label"], inner["parent"]), ("casez (mode)", command["key"]))
+        self.assertEqual((wildcard["label"], wildcard["parent"]), ("2'b0?, 2'b11", inner["key"]))
+        self.assertEqual((nested_default["label"], nested_default["parent"]), ("default", inner["key"]))
+        by_output = {entry["name"]: entry["circuit"]["nodes"] for entry in comb["view"]["summary"]["outputs"]}
+        self.assertTrue(any(node["label"] == "XOR" and node.get("caseRegion") == wildcard["key"]
+                            for node in by_output["w"]))
+        self.assertTrue(any(node["kind"] == "mux" and node.get("caseRegion") == inner["key"]
+                            for node in by_output["w"]))
+        y_arms = {node.get("caseRegion") for node in by_output["y"] if node["kind"] == "tap"}
+        self.assertTrue({command["key"], other["key"]} <= y_arms)
+        case, match, fallback = clocked["caseRegions"]
+        nodes = next(sheet["nodes"] for sheet in scope["schematics"] if sheet["title"] == "q")
+        self.assertEqual((case["label"], match["label"], fallback["label"]), ("case (mode)", "2'b00", "default"))
+        self.assertTrue(any(node["kind"] == "mux" and node.get("caseRegion") == case["key"] for node in nodes))
+        self.assertTrue(any(node.get("symbol") == "===" and node.get("caseRegion") == match["key"] for node in nodes))
+        self.assertTrue(any(node["kind"] == "flop" and "caseRegion" not in node for node in nodes))
+
     def test_case_expression_gates_connect_to_the_branch_comparator(self):
         self.write("dynamic.sv", """
             module dynamic_case(input logic key, a, b, c, output logic y);

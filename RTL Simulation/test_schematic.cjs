@@ -123,16 +123,25 @@ test("uses one trace selection for a named net's driver and fanout wires", () =>
 
 test("draws an always @* case directly on the module canvas", () => {
   const source = location(2);
+  const caseRegions = [
+    {key: "case-0", kind: "case", label: "case (op)", source},
+    {key: "match", parent: "case-0", kind: "arm", label: "1'b1", color: 0, source},
+    {key: "fallback", parent: "case-0", kind: "arm", label: "default", color: 1, source},
+    {key: "nested", parent: "match", kind: "case", label: "case (a)", source},
+    {key: "nested-arm", parent: "nested", kind: "arm", label: "default", color: 0, source, empty: true}
+  ];
   const caseNodes = [
     terminal("op", "op"),
     {...terminal("a", "a"), bits: 32, range: "[31:0]"},
     {...terminal("b", "b"), bits: 32, range: "[31:0]"},
     terminal("1'b1"),
-    {kind: "operator", label: "Case equality", symbol: "===",
+    {kind: "operator", label: "Case equality", symbol: "===", caseRegion: "match",
       pins: [{pin: "A", source: 0}, {pin: "B", source: 3}]},
-    {kind: "gate", label: "AND", symbol: "&", pins: [{pin: "A", source: 1}, {pin: "B", source: 2}]},
-    {kind: "gate", label: "OR", symbol: "|", pins: [{pin: "A", source: 1}, {pin: "B", source: 2}]},
-    {kind: "mux", label: "MUX", branch: "case 1'b1", fallback: "No match",
+    {kind: "gate", label: "AND", symbol: "&", caseRegion: "fallback",
+      pins: [{pin: "A", source: 1}, {pin: "B", source: 2}]},
+    {kind: "gate", label: "OR", symbol: "|", caseRegion: "match",
+      pins: [{pin: "A", source: 1}, {pin: "B", source: 2}]},
+    {kind: "mux", label: "MUX", branch: "case 1'b1", fallback: "No match", caseRegion: "case-0",
       pins: [{pin: "0", source: 5}, {pin: "1", source: 6}, {pin: "S", source: 4}]},
     {...output("$result", 7), bits: 32, range: "[31:0]"}
   ];
@@ -141,7 +150,7 @@ test("draws an always @* case directly on the module canvas", () => {
   };
   const graph = render({
     nets: ["op", "a", "b", "code", "copy"], ports: [], structures: [], children: [], clockUses: [],
-    logic: [{source, kind: "Always", inputs: ["op", "a", "b"], outputs: ["code", "copy"],
+    logic: [{source, caseRegions, kind: "Always", inputs: ["op", "a", "b"], outputs: ["code", "copy"],
       view: {kind: "combinational", header: "always @*", summary}}],
     schematics: [{source: location(4), processSource: source, expressionOnly: true, processKind: "Always",
       nodes: [terminal("1'b0"), output("code", 0)]}]
@@ -166,9 +175,21 @@ test("draws an always @* case directly on the module canvas", () => {
   assert.equal(graph.anchors.get("code").bits, 32);
   assert.equal(graph.anchors.get("code").caption, "[31:0]");
   const layout = api.layoutSchematic(graph);
-  const [region] = layout.regions;
-  assert.equal(region.label, "always @*");
-  assert.ok(mux.x > region.x && mux.x + mux.width < region.x + region.width);
+  const [process, dispatch, arm, inner, empty, fallback] = layout.regions;
+  assert.equal(process.label, "always @*");
+  function contains(outer, contained) {
+    assert.ok(contained.x >= outer.x && contained.x + contained.width <= outer.x + outer.width);
+    assert.ok(contained.y >= outer.y && contained.y + contained.height <= outer.y + outer.height);
+  }
+  contains(process, dispatch);
+  contains(dispatch, arm);
+  contains(dispatch, fallback);
+  contains(arm, inner);
+  contains(inner, empty);
+  assert.equal(empty.hasContent, false);
+  assert.ok(arm.y + arm.height < fallback.y);
+  assert.ok(mux.x > Math.max(arm.x + arm.width, fallback.x + fallback.width));
+  contains(dispatch, {...mux, y: mux.y - mux.height / 2});
   const literal = graph.nodes.find(node => node.kind === "literal");
   assert.equal(literal.x, undefined);
   assert.ok(graph.edges.find(edge => edge.from === literal).to.valueInset > 16);

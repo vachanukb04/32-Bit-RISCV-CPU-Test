@@ -5,6 +5,7 @@ from itertools import islice
 
 from pyslang import SVInt, ast
 
+from rtl_case_regions import CASE_NAMES, case_label
 from rtl_process_view import expression_label, statements, unconverted
 from rtl_schematic import Drawing, level_control
 from rtl_structure import VALUE_EXPRESSIONS, integer_literal, signal_refs
@@ -27,6 +28,7 @@ class Match:
     label: str
     values: tuple
     keys: tuple
+    region: str | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,9 @@ class Decision:
     inputs: frozenset
     controls: frozenset
     priority: bool = False
+    region: str | None = field(default=None, compare=False)
+    default_region: str | None = field(default=None, compare=False)
+    arm_writes: tuple = field(default=(), compare=False)
 
 
 class UnsupportedProcess(Exception):
@@ -105,19 +110,6 @@ def value(expr, state, locate, text, reuse_decision=False):
                  source=source, bindings=bindings, expression=expr)
 
 
-def case_label(expr, fallback):
-    bare = unconverted(expr)
-    symbol = bare.symbol if isinstance(bare, VALUE_EXPRESSIONS) else None
-    if not isinstance(symbol, ast.ParameterSymbol):
-        return fallback
-    val = symbol.value.value
-    bits = symbol.type.bitWidth
-    if isinstance(val, SVInt) and not val.hasUnknown and 0 < bits <= 64:
-        encoded = int(val) & ((1 << bits) - 1)
-        return f"{fallback} ({bits}'b{encoded:0{bits}b})"
-    return fallback
-
-
 def case_key(expr, selector_width):
     if expr.type.bitWidth != selector_width:
         return None
@@ -133,8 +125,8 @@ def case_key(expr, selector_width):
 
 
 class RuleDrawing(Drawing):
-    def __init__(self, text):
-        super().__init__(text, self.resolve)
+    def __init__(self, text, cases=None, destination=None):
+        super().__init__(text, self.resolve, cases, destination)
         self.locals = {}
         self.cached = {}
 
@@ -178,17 +170,25 @@ class RuleDrawing(Drawing):
                     self.locals = previous
         else:
             result = self.outcome(value.fallback)
+            if value.default_region:
+                result = self.arm_value(value.default_region, result)
             for index in reversed(range(len(value.arms))):
-                condition = self.arm_match(value, index)
                 match, outcome = value.arms[index]
+                if (self.cases and match is not None and not value.priority and
+                        not value.arm_writes[index] and outcome == value.fallback):
+                    continue
+                condition = self.arm_match(value, index)
                 branch = f"if {value.selector.text}" if match is None else f"{value.kind} {match.label}"
                 alternate = self.outcome(outcome)
+                if match is not None:
+                    alternate = self.arm_value(match.region, alternate)
                 zero_bits = self.nodes[result].get("bits")
                 one_bits = self.nodes[alternate].get("bits")
                 fallback = ("Else" if match is None else
                             "No match" if index == len(value.arms) - 1 else "Next case arm")
-                result = self.mux(result, alternate, condition, branch=branch, fallback=fallback,
-                                  bits=one_bits if zero_bits == one_bits else None)
+                with self.in_region(value.region):
+                    result = self.mux(result, alternate, condition, branch=branch, fallback=fallback,
+                                      bits=one_bits if zero_bits == one_bits else None)
         self.cached[key] = result
         return result
 
@@ -201,25 +201,34 @@ class RuleDrawing(Drawing):
             result = (None, None) if value.retained and net in value.inputs else (self.outcome(value), None)
         else:
             data, enable = self.latched_value(value.fallback, net, saved)
+            if data is not None:
+                data = self.arm_value(value.default_region, data)
             for index in reversed(range(len(value.arms))):
                 branch, write = self.latched_value(value.arms[index][1], net, saved)
                 if branch is None and data is None:
                     continue
                 select = self.arm_match(value, index)
-                if data is None:
-                    data, enable = branch, self.combine([select, write] if write is not None else [select], "AND")
-                elif branch is None:
-                    reject = self.add("gate", "NOT", [("A", select)], bits=1)
-                    enable = self.combine([reject, enable] if enable is not None else [reject], "AND")
-                else:
-                    data = self.mux(data, branch, select)
-                    if enable is not None or write is not None:
-                        yes = self.terminal("1'b1", bits=1)
-                        enable = self.mux(yes if enable is None else enable, yes if write is None else write, select,
-                                          bits=1)
+                match = value.arms[index][0]
+                if branch is not None and match is not None:
+                    branch = self.arm_value(match.region, branch)
+                with self.in_region(value.region):
+                    data, enable = self.merge_latch(data, enable, branch, write, select)
             result = (data, enable)
         saved[key] = result
         return result
+
+    def merge_latch(self, data, enable, branch, write, select):
+        if data is None:
+            return branch, self.combine([select, write] if write is not None else [select], "AND")
+        if branch is None:
+            reject = self.add("gate", "NOT", [("A", select)], bits=1)
+            return data, self.combine([reject, enable] if enable is not None else [reject], "AND")
+        data = self.mux(data, branch, select)
+        if enable is not None or write is not None:
+            yes = self.terminal("1'b1", bits=1)
+            enable = self.mux(yes if enable is None else enable, yes if write is None else write, select,
+                              bits=1)
+        return data, enable
 
     def latch(self, value, symbol):
         net = symbol.hierarchicalPath
@@ -237,6 +246,10 @@ class RuleDrawing(Drawing):
         return self.outcome(value)
 
     def match_operand(self, match):
+        bare = unconverted(match.expression)
+        if (isinstance(bare, (ast.ConcatenationExpression, ast.ReplicationExpression))
+                and not match.inputs and not match.controls and not match.bindings):
+            return self.terminal(self.text(bare) or match.text, bits=bare.type.bitWidth)
         label = case_label(match.expression, match.text)
         if label != match.text:
             return self.terminal(label)
@@ -245,13 +258,15 @@ class RuleDrawing(Drawing):
     def arm_match(self, decision, index):
         selector = self.outcome(decision.selector)
         if decision.kind == "if":
-            return self.add("operator", "If condition is true", [("A", selector)], symbol="true", bits=1)
+            with self.in_region(decision.region):
+                return self.add("operator", "If condition is true", [("A", selector)], symbol="true", bits=1)
         compare = {"case": ("Case equality", "==="), "casez": ("Casez match", "?="),
                    "casex": ("Casex match", "?=")}[decision.kind]
         match = decision.arms[index][0]
-        tests = [self.add("operator", compare[0], [("A", selector), ("B", self.match_operand(value))],
-                          symbol=compare[1], bits=1) for value in match.values]
-        return self.combine(tests, "OR")
+        with self.in_region(match.region):
+            tests = [self.add("operator", compare[0], [("A", selector), ("B", self.match_operand(value))],
+                              symbol=compare[1], bits=1) for value in match.values]
+            return self.combine(tests, "OR")
 
     def selected(self, decision, index):
         count = len(decision.arms)
@@ -266,8 +281,8 @@ class RuleDrawing(Drawing):
         return self.combine(terms, "AND")
 
 
-def data_circuit(value, symbol, text, source, latch=False):
-    drawing = RuleDrawing(text)
+def data_circuit(value, symbol, text, source, latch=False, cases=None):
+    drawing = RuleDrawing(text, cases, symbol.name if cases else None)
     driver = drawing.latch(value, symbol) if latch else drawing.outcome(value)
     # Keep a distinct endpoint for an output whose previous value is retained.
     width = symbol.type.bitWidth
@@ -325,7 +340,7 @@ def collect_roles(node, seen, conditions, dispatches, data_nets):
     collect_roles(node.fallback, seen, conditions, dispatches, data_nets)
 
 
-def summarize_combinational(body, locate, text, latch_outputs):
+def summarize_combinational(body, locate, text, latch_outputs, cases=None):
     symbols = {}
     initial = {}
 
@@ -334,7 +349,7 @@ def summarize_combinational(body, locate, text, latch_outputs):
             initial.setdefault(net, Value("Retain " + symbols[net].name, frozenset({net}), retained=True))
         return state[net] if net in state else initial[net]
 
-    def merge(state, kind, control, arms, otherwise):
+    def merge(state, kind, control, arms, otherwise, region=None, default_region=None):
         keys = [key for match, _ in arms if match for key in match.keys]
         priority = kind != "case" or None in keys or len(keys) != len(set(keys))
         merged = state.copy()
@@ -353,7 +368,9 @@ def summarize_combinational(body, locate, text, latch_outputs):
                     controls = controls.union(*(item.inputs | item.controls for item in match.values))
             merged[net] = Decision(kind, control, choices, fallback,
                                    controls.union(*(result.inputs for result in results)),
-                                   controls.union(*(result.controls for result in results)), priority)
+                                   controls.union(*(result.controls for result in results)), priority, region,
+                                   default_region if otherwise.get(net) is not state.get(net) else None,
+                                   tuple(branch.get(net) is not state.get(net) for _, branch in arms))
         return merged
 
     def evaluate(stmt, state):
@@ -367,22 +384,24 @@ def summarize_combinational(body, locate, text, latch_outputs):
                     raise UnsupportedProcess()
                 predicate = value(part.conditions[0].expr, state, locate, text)
                 state = merge(state, "if", predicate,
-                              [(None, evaluate(part.ifTrue, state))], evaluate(part.ifFalse, state))
+                              [(None, evaluate(part.ifTrue, state))], evaluate(part.ifFalse, state),
+                              cases.owner(part) if cases else None)
             elif isinstance(part, ast.CaseStatement):
-                kinds = {"Normal": "case", "WildcardXOrZ": "casex", "WildcardJustZ": "casez"}
-                kind = kinds.get(part.condition.name)
-                if kind is None:
+                kind = CASE_NAMES.get(part.condition.name)
+                if kind not in {"case", "casez", "casex"}:
                     raise UnsupportedProcess()
                 select = value(part.expr, state, locate, text)
                 arms = []
-                for arm in part.items:
+                for index, arm in enumerate(part.items):
                     matches = [value(expr, state, locate, text) for expr in arm.expressions]
                     labels = ", ".join(case_label(expr, match.text)
                                        for expr, match in zip(arm.expressions, matches))
                     keys = tuple(case_key(expr, part.expr.type.bitWidth) for expr in arm.expressions)
-                    match = Match(labels, tuple(matches), keys)
+                    match = Match(labels, tuple(matches), keys, cases.arm(part, index) if cases else None)
                     arms.append((match, evaluate(arm.stmt, state)))
-                state = merge(state, kind, select, arms, evaluate(part.defaultCase, state))
+                case_region = cases.case(part) if cases else None
+                default_region = cases.arm(part, len(part.items)) if cases and part.defaultCase is not None else None
+                state = merge(state, kind, select, arms, evaluate(part.defaultCase, state), case_region, default_region)
             elif isinstance(part, ast.ExpressionStatement) and isinstance(part.expr, ast.AssignmentExpression):
                 item = part.expr
                 if (not isinstance(item.left, VALUE_EXPRESSIONS) or not item.left.type.isIntegral or
@@ -417,7 +436,7 @@ def summarize_combinational(body, locate, text, latch_outputs):
                         "range": str(symbol.type.fixedRange) if symbol.type.bitWidth > 1 else "",
                         "inputs": sorted(outcome.inputs), "controls": sorted(outcome.controls),
                         "circuit": data_circuit(outcome, symbol, text, rows[0]["source"],
-                                                latch=latch_outputs.get(net) == symbol.type.bitWidth),
+                                                latch=latch_outputs.get(net) == symbol.type.bitWidth, cases=cases),
                         "rules": rows})
     return {"inputs": sorted(dependencies), "controls": sorted(control_nets), "dataInputs": sorted(data_nets),
             "conditions": list(conditions), "selectors": list(dispatches), "outputs": outputs}

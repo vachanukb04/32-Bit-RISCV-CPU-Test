@@ -1,6 +1,10 @@
 """Lower supported elaborated RTL expressions to connected schematic symbols."""
 
+from contextlib import contextmanager
+
 from pyslang import SVInt, ast
+
+from rtl_case_regions import CASE_NAMES, case_label
 
 from rtl_process_view import expression_label, unconverted
 from rtl_structure import BITWISE, OPERATORS, VALUE_EXPRESSIONS, access, assignments, definite_writes, integer_literal, process_timing, signal_refs, span, targets
@@ -67,15 +71,36 @@ def value_name(node, text):
 
 
 class Drawing:
-    def __init__(self, text, resolver=None):
+    def __init__(self, text, resolver=None, cases=None, destination=None):
         self.text = text
         self.resolver = resolver
         self.nodes = []
+        self.cases = cases
+        self.case_region = None
+        self.destination = destination
+
+    @contextmanager
+    def in_region(self, region):
+        previous, self.case_region = self.case_region, region
+        try:
+            yield
+        finally:
+            self.case_region = previous
+
+    def arm_value(self, region, driver, label=None):
+        label = label or self.destination
+        if not region or not label:
+            return driver
+        return self.add("tap", label, [("IN", driver)], caseRegion=region,
+                        bits=self.nodes[driver].get("bits"), traceThrough=True)
 
     def add(self, kind, label, inputs=(), **fields):
         pins = [{"pin": pin, "source": source} for pin, source in inputs]
         index = len(self.nodes)
-        self.nodes.append({"kind": kind, "label": label, "pins": pins, **fields})
+        shape = {"kind": kind, "label": label, "pins": pins, **fields}
+        if self.case_region:
+            shape.setdefault("caseRegion", self.case_region)
+        self.nodes.append(shape)
         return index
 
     def terminal(self, label, nets=(), **fields):
@@ -85,6 +110,12 @@ class Drawing:
         return self.add("output", label, [("IN", driver)], nets=list(nets), **fields)
 
     def expression(self, node):
+        if self.cases:
+            with self.in_region(self.cases.owner(node)):
+                return self.lower_expression(node)
+        return self.lower_expression(node)
+
+    def lower_expression(self, node):
         if self.resolver:
             resolved = self.resolver(node)
             if resolved is not None:
@@ -199,22 +230,37 @@ class Drawing:
                 one = self.next_value(statement.ifTrue, name, current)
                 if zero == one:
                     return zero
-                return self.mux(zero, one, self.expression(condition.expr))
+                region = self.cases.owner(statement) if self.cases else None
+                with self.in_region(region):
+                    return self.mux(zero, one, self.expression(condition.expr))
         if isinstance(statement, ast.CaseStatement) and statement.condition.name in CASE_OPERATORS:
             label, symbol = CASE_OPERATORS[statement.condition.name]
             selector = self.expression(statement.expr)
             fallback = self.next_value(statement.defaultCase, name, current)
+            case = self.cases.case(statement) if self.cases else None
+            if self.cases and statement.defaultCase is not None and fallback != current:
+                fallback = self.arm_value(self.cases.arm(statement, len(statement.items)), fallback)
             for index, arm in reversed(list(enumerate(statement.items))):
                 branch = self.next_value(arm.stmt, name, current)
                 if branch == fallback:
                     continue
-                matches = [self.add("operator", label, [("A", selector), ("B", self.expression(item))],
-                                    symbol=symbol, bits=1) for item in arm.expressions]
-                condition = self.combine(matches, "OR")
+                region = self.cases.arm(statement, index) if self.cases else None
+                with self.in_region(region):
+                    matches = []
+                    for item in arm.expressions:
+                        operand = self.expression(item)
+                        label_text = case_label(item, expression_label(item, self.text))
+                        if label_text != expression_label(item, self.text):
+                            operand = self.terminal(label_text)
+                        matches.append(self.add("operator", label, [("A", selector), ("B", operand)],
+                                                symbol=symbol, bits=1))
+                    condition = self.combine(matches, "OR")
+                    alternate = self.arm_value(region, branch)
                 match = ", ".join(expression_label(item, self.text) for item in arm.expressions)
-                mode = {"Normal": "case", "WildcardXOrZ": "casex", "WildcardJustZ": "casez"}[statement.condition.name]
+                mode = CASE_NAMES[statement.condition.name]
                 otherwise = "No match" if index == len(statement.items) - 1 else "Next case arm"
-                fallback = self.mux(fallback, branch, condition, branch=f"{mode} {match}", fallback=otherwise)
+                with self.in_region(case):
+                    fallback = self.mux(fallback, alternate, condition, branch=f"{mode} {match}", fallback=otherwise)
             return fallback
         if statement is None or statement.kind.name == "Empty":
             return current
@@ -237,7 +283,7 @@ class Drawing:
         return {"title": title, "source": source, "nodes": nodes}
 
 
-def data_schematics(members, structures, locate, text):
+def data_schematics(members, structures, locate, text, case_graphs):
     schematics = []
     for member in members:
         if isinstance(member, (ast.NetSymbol, ast.VariableSymbol)) and member.initializer is not None:
@@ -278,11 +324,12 @@ def data_schematics(members, structures, locate, text):
             continue
         dests = {symbol.hierarchicalPath: symbol for item in writes for symbol, _ in targets(item.left)}
         source = locate(member.location)
+        cases = case_graphs.get((source["file"], source["line"], source["column"]))
         complete = []
         if timing == "edge":
-            complete = clocked_schematics(member, edges, writes, dests, source, text)
+            complete = clocked_schematics(member, edges, writes, dests, source, text, cases)
         elif timing == "comb" and len(dests) == 1:
-            sheet = process_schematic(member, writes, dests, structures, source, text)
+            sheet = process_schematic(member, writes, dests, structures, source, text, cases)
             if sheet is not None:
                 complete = [sheet]
         if complete:
@@ -296,8 +343,10 @@ def data_schematics(members, structures, locate, text):
             site = locate(item.sourceRange.start)
             target = text(item.left) or symbol.name
             title = f"{target} · value at L{site['line']}"
-            drawing = Drawing(text)
+            drawing = Drawing(text, cases=cases)
             data = drawing.expression(item.right)
+            if cases:
+                data = drawing.arm_value(cases.owner(item), data, target)
             if len(lhs) == 1 and isinstance(selected, ast.ElementSelectExpression) and symbol.type.isUnpackedArray:
                 # These are the actual operands of one write, with the guard left in the RTL.
                 pins = [("ADDR", drawing.expression(selected.selector)), ("WD", data)]
@@ -347,7 +396,7 @@ def clock_controls(member, edges):
     return clock, reset, reset_branch, body
 
 
-def clocked_schematics(member, edges, writes, dests, source, text):
+def clocked_schematics(member, edges, writes, dests, source, text, cases):
     if (any(not isinstance(item.left, VALUE_EXPRESSIONS) for item in writes) or
             (len(writes) > 1 and any(not item.isNonBlocking for item in writes))):
         return []
@@ -362,7 +411,7 @@ def clocked_schematics(member, edges, writes, dests, source, text):
         if not symbol.type.isIntegral:
             return []
         width = symbol.type.bitWidth
-        drawing = Drawing(text)
+        drawing = Drawing(text, cases=cases, destination=symbol.name)
         feedback = drawing.terminal(symbol.name + " (Q feedback)", [name], bits=width)
         try:
             data = drawing.next_value(body, name, feedback)
@@ -387,11 +436,11 @@ def clocked_schematics(member, edges, writes, dests, source, text):
     return schematics
 
 
-def process_schematic(member, writes, dests, structures, source, text):
+def process_schematic(member, writes, dests, structures, source, text, cases):
     name, symbol = next(iter(dests.items()))
     if not symbol.type.isIntegral or any(not isinstance(item.left, VALUE_EXPRESSIONS) for item in writes):
         return None
-    drawing = Drawing(text)
+    drawing = Drawing(text, cases=cases, destination=symbol.name)
     latch = any(s["kind"] == "latch" and name in s["outputs"] and
                 any(site["source"] == source for site in s["occurrences"]) for s in structures)
     if latch:

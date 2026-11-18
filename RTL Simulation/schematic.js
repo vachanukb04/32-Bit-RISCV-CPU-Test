@@ -361,7 +361,7 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   section.append(header);
 
   const graph = buildSchematicGraph(scope, signals, signalLabel);
-  if (!graph.nodes.length) {
+  if (!graph.nodes.length && !graph.regions.length) {
     section.append(make("p", "empty", "No circuit connections were elaborated in this scope."));
     return {section, highlight() {}};
   }
@@ -424,13 +424,30 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   const outline = 12;
   svg.append(svgNode("rect", {x: outline, y: outline, width: layout.width - 2 * outline,
     height: layout.height - 2 * outline, rx: 12, class: "schematic-outline"}));
+  const headings = svgNode("g", {class: "region-headings"});
   for (const region of layout.regions) {
-    const box = svgNode("g", {class: "process-region", "aria-label": region.label + " combinational logic"});
+    const process = region.kind === "process";
+    const arm = region.kind === "arm";
+    const box = svgNode("g", {class: process ? "process-region" : "case-region",
+      "data-region": region.kind, "aria-label": region.label});
+    if (arm) box.setAttribute("data-color", region.label === "default" ? "default" : region.color % 8);
     box.append(svgNode("rect", {x: region.x, y: region.y, width: region.width, height: region.height,
-      rx: 9, class: "process-outline"}));
-    svgText(box, region.x + 14, region.y + 23, region.label, "process-region-title");
-    box.append(svgNode("title", {}, "Combinational logic · inputs re-evaluate the block · line " + region.source.line));
+      rx: 9, class: process ? "process-outline" : arm ? "case-arm-outline" : "case-outline"}));
+    const heading = svgNode("g", {class: box.getAttribute("class")});
+    if (arm) heading.setAttribute("data-color", box.getAttribute("data-color"));
+    const title = svgNode("text", {x: region.x + 14, y: region.y + 23,
+      class: process ? "process-region-title" : "case-region-title"}, shorten(region.label, 51));
+    if (!process && region.source) {
+      makeInteractive(title, "Open RTL for " + region.label, () => openSource(region.source));
+    }
+    title.append(svgNode("title", {}, region.label + " · line " + region.source.line));
+    heading.append(title);
+    if (arm && !region.hasContent) {
+      svgText(heading, region.x + 14, region.y + 53,
+        region.empty ? "No assignments" : "No separate circuit shown", "case-region-note");
+    }
     svg.append(box);
+    headings.append(heading);
   }
   const wires = routeSchematic(graph, layout, track, (net, key) =>
     selectSignal(net, {key, reveal: false}), signalLabel);
@@ -489,6 +506,7 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     }
     markEndpoint(edge.to, edge.input, false, wireTraceKey(edge), edge.net);
   }
+  svg.append(headings);
   viewport.append(svg);
   section.append(viewport, details);
 
@@ -524,9 +542,10 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
     if (graph.nodes.length <= 25 && viewport.clientWidth >= 680) zoomToFit();
     else {
       setZoom(.9, false);
-      const region = layout.regions[0];
+      const region = layout.regions.find(region => region.kind === "case") || layout.regions[0];
       if (region) {
-        viewport.scrollTop = Math.max(0, (region.y - 18) * zoom);
+        viewport.scrollTop = Math.max(0, (region.y - 22) * zoom);
+        viewport.scrollLeft = Math.max(0, (region.x - 72) * zoom);
       }
     }
   });

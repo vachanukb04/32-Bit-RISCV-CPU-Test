@@ -129,37 +129,12 @@ function layoutSchematic(graph) {
   const packedHeight = (column, spacing = rowGap(column)) =>
     column.reduce((total, node) => total + node.height + spacing, 0);
 
-  const innerColumns = columns.filter(column => !isBoundary(column));
-  const bands = new Map();
-  for (const column of innerColumns) {
-    for (const node of column) {
-      const region = node.region;
-      const key = region?.key || "";
-      if (!bands.has(key)) bands.set(key, {region, columns: new Map(), nodes: []});
-      const band = bands.get(key);
-      if (!band.columns.has(column)) band.columns.set(column, []);
-      band.columns.get(column).push(node);
-      band.nodes.push(node);
-    }
-  }
-  const partitions = [...bands.values()].sort((a, b) =>
-    (a.region?.source.line || 0) - (b.region?.source.line || 0));
-  let occupied = 0;
-  for (const band of partitions) {
-    band.height = Math.max(...[...band.columns.values()].map(column => packedHeight(column, 36)));
-    band.top = 60 + occupied + (band.region ? 48 : 0);
-    occupied += band.height + (band.region ? 72 : 0);
-  }
-  const bodyHeight = Math.max(occupied, packedHeight(inputs), packedHeight(outputs));
-
-  function place(column, x, width, y, spacing) {
-    for (const node of column) {
-      node.x = x;
-      node.y = y + node.height / 2;
-      node.leftChannel = x - 24;
-      node.rightChannel = x + width + 24;
-      y += node.height + spacing;
-    }
+  const root = {columns: new Map(), nodes: [], children: []};
+  const bands = new Map((graph.regions || []).map(region =>
+    [region.key, {region, columns: new Map(), nodes: [], children: []}]));
+  for (const band of bands.values()) {
+    const parent = bands.get(band.region.parent) || root;
+    parent.children.push(band);
   }
 
   let x = inputs.length ? 36 : 60;
@@ -167,26 +142,117 @@ function layoutSchematic(graph) {
     const width = Math.max(...column.map(node => node.width));
     const inset = Math.max(...column.map(node => node.valueInset || 0));
     if (inset) x += Math.max(0, ceilTile(inset + 36) - (index ? gap : x));
-    if (isBoundary(column)) {
-      for (const node of column) node.width = width;
-      place(column, x, width, 60, rowGap(column));
-    } else {
-      for (const band of partitions) {
-        const members = band.columns.get(column);
-        if (!members) continue;
-        const spare = partitions.length === 1 ? bodyHeight - occupied : 0;
-        const top = band.top + snap((band.height - packedHeight(members, 36) + spare) / 2);
-        place(members, x, width, top, 36);
-      }
+    for (const node of column) {
+      if (isBoundary(column)) node.width = width;
+      node.x = x;
+      node.leftChannel = x - 24;
+      node.rightChannel = x + width + 24;
+      if (isBoundary(column)) continue;
+      const band = bands.get(node.region?.key) || root;
+      if (!band.columns.has(column)) band.columns.set(column, []);
+      band.columns.get(column).push(node);
+      band.nodes.push(node);
     }
     x += width + gap;
   }
+
+  function measure(band, emptyLeft) {
+    const rects = band.children.map(child => measure(child, emptyLeft + 12));
+    band.selectors = band.region?.kind === "case" ? band.nodes.filter(node => node.kind === "mux") : [];
+    const shared = new Set(band.selectors);
+    const elements = band.nodes.filter(node => !shared.has(node));
+    band.columns = new Map([...band.columns].map(([column, members]) =>
+      [column, members.filter(node => !shared.has(node))]));
+    const starts = elements.map(node => node.x - (node.valueInset || 0));
+    const ends = elements.map(node => node.x + node.width);
+    const occupied = rects.filter(rect => rect.hasContent);
+    const contentLeft = Math.min(...starts, ...occupied.map(rect => rect.left));
+    const contentRight = Math.max(...ends, ...occupied.map(rect => rect.right));
+    const reference = Number.isFinite(contentLeft) ? contentLeft : emptyLeft;
+    band.left = Math.max(24, reference - 24);
+    const titleWidth = band.region ? Math.min(band.region.label.length, 51) * 8 + 28 : 0;
+    band.right = Math.max(contentRight + 24, band.left + Math.max(158, titleWidth));
+    // Empty arms align with the real circuitry in their enclosing case.
+    for (const child of band.children) {
+      if (!child.hasContent) {
+        moveEmpty(child, band.left + 18 - child.left);
+        band.right = Math.max(band.right, child.right + 24);
+      }
+    }
+    if (band.selectors.length) {
+      const inset = Math.max(0, ...band.selectors.map(node => node.valueInset || 0));
+      const side = ceilTile(band.right + Math.max(84, inset + 36));
+      let right = side;
+      for (const node of band.selectors) {
+        node.x = side;
+        node.leftChannel = side - 24;
+        node.rightChannel = side + node.width + 24;
+        right = Math.max(right, side + node.width + 24);
+      }
+      band.right = right;
+    }
+    band.hasContent = band.nodes.length > 0 || occupied.length > 0;
+    band.direct = Math.max(0, ...[...band.columns.values()].map(column => packedHeight(column, 24)));
+    band.header = band.region ? 36 : 0;
+    const empty = band.region && !band.direct && !band.children.length && !band.selectors.length ? 30 : 0;
+    const stacked = band.direct + empty + band.children.reduce((height, child) => height + child.height + 12, 0);
+    band.selectionHeight = packedHeight(band.selectors, 24);
+    band.contentHeight = Math.max(stacked, band.selectionHeight);
+    band.height = band.header + band.contentHeight + (band.region ? 24 : 0);
+    return band;
+  }
+
+  function moveEmpty(band, dx) {
+    band.left += dx;
+    band.right += dx;
+    for (const child of band.children) moveEmpty(child, dx);
+  }
+
+  const firstInside = columns.find(column => !isBoundary(column))?.[0].x || 96;
+  measure(root, firstInside);
+  const bodyHeight = Math.max(root.height, packedHeight(inputs), packedHeight(outputs));
+  const regions = [];
+  function placeBand(band, top) {
+    if (band.region) {
+      regions.push({...band.region, hasContent: band.hasContent, x: band.left, y: top, width: band.right - band.left, height: band.height});
+    }
+    let y = top + band.header;
+    for (const members of band.columns.values()) {
+      let cursor = y + snap((band.direct - packedHeight(members, 24)) / 2);
+      for (const node of members) {
+        node.y = cursor + node.height / 2;
+        cursor += node.height + 24;
+      }
+    }
+    y += band.direct;
+    for (const child of band.children) {
+      placeBand(child, y);
+      y += child.height + 12;
+    }
+    // Keep the shared priority muxes beside the arms they select from.
+    const preferred = new Map(band.selectors.map(node => {
+      const positions = incoming[node.id].map(edge => edge.from.y).filter(Number.isFinite);
+      const middle = positions.length ? positions.reduce((sum, at) => sum + at, 0) / positions.length : y;
+      return [node, middle];
+    }));
+    band.selectors.sort((a, b) => preferred.get(a) - preferred.get(b));
+    let next = top + band.header;
+    let remaining = band.selectionHeight;
+    for (const node of band.selectors) {
+      const last = top + band.header + band.contentHeight - remaining;
+      const at = Math.max(next, Math.min(last, snap(preferred.get(node) - node.height / 2)));
+      node.y = at + node.height / 2;
+      remaining -= node.height + 24;
+      next = at + node.height + 24;
+    }
+  }
+  placeBand(root, 60 + snap((bodyHeight - root.height) / 2));
   // Align the I/O rails to nearby circuitry without reordering module ports.
   for (const column of [inputs, outputs]) {
     let remaining = packedHeight(column);
     const isInput = column === inputs;
-    const firstRegion = isInput && partitions.find(band => band.region);
-    let start = firstRegion ? Math.min(firstRegion.top - 12, 60 + bodyHeight - remaining) : 60;
+    const firstRegion = isInput && regions[0];
+    let start = firstRegion ? Math.min(snap(firstRegion.y + 36), 60 + bodyHeight - remaining) : 60;
     for (const node of column) {
       const peers = (isInput ? outgoing : incoming)[node.id]
         .map(edge => isInput ? edge.to : edge.from).filter(peer => !portSide(peer));
@@ -200,14 +266,18 @@ function layoutSchematic(graph) {
       remaining -= occupied;
     }
   }
-  const regions = partitions.filter(band => band.region).map(band => {
-    const left = Math.min(...band.nodes.map(node => node.x - (node.valueInset || 0))) - 24;
-    const right = Math.max(...band.nodes.map(node => node.x + node.width)) + 24;
-    const top = Math.min(...band.nodes.map(node => node.y - node.height / 2)) - 36;
-    const bottom = Math.max(...band.nodes.map(node => node.y + node.height / 2)) + 24;
-    return {...band.region, x: left, y: top, width: right - left, height: bottom - top};
-  });
-  return {width: x - gap + (outputs.length ? 36 : 60), height: bodyHeight + 108, regions};
+  const rightmost = Math.max(0, ...regions.map(region => region.x + region.width));
+  if (outputs.length && outputs[0].x < rightmost + 36) {
+    const offset = ceilTile(rightmost + 36 - outputs[0].x);
+    for (const node of outputs) {
+      node.x += offset;
+      node.leftChannel += offset;
+      node.rightChannel += offset;
+    }
+    x += offset;
+  }
+  const width = Math.max(x - gap + (outputs.length ? 36 : 60), rightmost + 24);
+  return {width, height: bodyHeight + 108, regions};
 }
 
 class RouteQueue {

@@ -6,6 +6,7 @@ from pathlib import Path
 import pyslang
 from pyslang import ast, parsing, syntax
 
+from rtl_case_regions import CaseRegions
 from rtl_comb_logic import summarize_combinational
 from rtl_process_view import process_view
 from rtl_schematic import clock_routes, data_schematics
@@ -167,12 +168,18 @@ def describe_instance(root, manager, instance, parent_path=""):
     text = lambda obj: source_text(manager, obj)
     logic_by_location = {(entry["source"]["file"], entry["source"]["line"], entry["source"]["column"]): entry
                          for entry in logic if entry["source"]}
+    case_graphs = {}
     for member in local_members:
         if isinstance(member, ast.ProceduralBlockSymbol):
             site = locate(member.location)
-            entry = logic_by_location.get((site["file"], site["line"], site["column"]))
+            key = site["file"], site["line"], site["column"]
+            entry = logic_by_location.get(key)
             if entry is None:
                 continue
+            cases = CaseRegions(member.body, locate, text)
+            if cases.regions:
+                case_graphs[key] = cases
+                entry["caseRegions"] = cases.regions
             timing, _ = process_timing(member)
             view = process_view(member, timing, locate, text)
             if view:
@@ -189,12 +196,12 @@ def describe_instance(root, manager, instance, parent_path=""):
                     latches = {net: item["bits"] for item in structures if item["kind"] == "latch"
                                and any(occurrence["source"] == site for occurrence in item["occurrences"])
                                for net in item["outputs"]}
-                    summary = summarize_combinational(member.body, locate, text, latches)
+                    summary = summarize_combinational(member.body, locate, text, latches, case_graphs.get(key))
                     if summary is not None:
                         view["summary"] = summary
                         entry["inputs"] = summary["inputs"]
 
-    schematics = data_schematics(local_members, structures, locate, text)
+    schematics = data_schematics(local_members, structures, locate, text, case_graphs)
     clocks = clock_routes(local_members, children, logic, locate, text)
     nets = sorted({member.hierarchicalPath for member in local_members
                    if isinstance(member, (ast.NetSymbol, ast.VariableSymbol))})
