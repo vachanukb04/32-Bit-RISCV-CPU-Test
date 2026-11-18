@@ -3,70 +3,69 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RTL Workbench · VLSI Suite 101</title>
+  <meta name="description" content="Explore RTL hierarchy, block schematics, and signal connectivity in RTL2GDS Cockpit.">
+  <title>RTL2GDS Cockpit</title>
   <link rel="stylesheet" href="/workbench.css">
-  <script src="/schematic-graph.js" defer></script>
-  <script src="/schematic-layout.js" defer></script>
-  <script src="/schematic.js" defer></script>
-  <script src="/workbench.js" defer></script>
 </head>
 <body>
   <header class="masthead">
-    <div class="mark" aria-hidden="true"></div>
-    <div><span class="suite">VLSI SUITE 101</span><h1>RTL Workbench</h1></div>
+    <a class="brand" href="/" aria-label="RTL2GDS Cockpit home" aria-current="page">
+      <span class="mark" aria-hidden="true"></span>
+      <span>RTL2GDS Cockpit</span>
+    </a>
+    <nav class="workflow-nav" aria-label="Workflows">
+      <a href="/workbench.html">Understanding your design</a>
+    </nav>
   </header>
-  <main>
-    <section class="project panel" aria-labelledby="project-title">
-      <div class="section-head"><h2 id="project-title">Project setup</h2><span id="scan-summary"></span></div>
-      <form id="scan">
-        <label>RTL root directory or GitHub URL
-          <input id="project" value="." spellcheck="false" placeholder="/path/to/rtl or https://github.com/owner/repo">
-        </label>
-        <label>Source directory (optional)
-          <input id="scope" list="directories" placeholder="All source folders" spellcheck="false">
-          <datalist id="directories"></datalist>
-        </label>
-        <button class="button" type="submit">Scan sources</button>
-      </form>
-      <form id="compile">
-        <label>Top module
-          <select id="top" disabled><option>Scan sources to find top modules</option></select>
-        </label>
-        <button class="button primary" id="compile-button" disabled type="submit">Compile &amp; elaborate</button>
-      </form>
-      <p id="status" class="status" role="status"></p>
+  <main class="cockpit-home">
+    <h1>What are you working on today?</h1>
+    <section class="workflow-deck" aria-labelledby="design-workflow-title">
+      <div class="workflow-preview" role="group" aria-label="Example design workbench">
+        <div class="preview-heading">
+          <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <strong>Design workbench preview</strong>
+          <code>decoder.sv</code>
+        </div>
+        <div class="preview-workspace">
+          <div class="preview-hierarchy">
+            <p class="preview-panel-title">Design hierarchy</p>
+            <ul class="preview-tree">
+              <li><code>decode_unit</code>
+                <ul><li><code>u_decode</code><span>decoder</span></li></ul>
+              </li>
+            </ul>
+          </div>
+          <div class="preview-diagram">
+            <p class="preview-panel-title">Block diagram <code>decode_unit / u_decode</code></p>
+            <div class="preview-grid">
+              <div class="preview-chip">
+                <strong>decoder</strong>
+                <div class="preview-circuit" role="img" aria-label="The valid and enable inputs feed an AND gate to produce execute.">
+                  <div class="preview-inputs" aria-hidden="true"><code>valid</code><code>enable</code></div>
+                  <span class="preview-gate" aria-hidden="true">&amp;</span>
+                  <span class="preview-wire" aria-hidden="true"></span>
+                  <code class="preview-output" aria-hidden="true">execute</code>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="preview-source">
+            <p class="preview-panel-title">RTL source</p>
+            <pre><code><span>module</span> decoder (
+  <span>input</span> valid, enable,
+  <span>output</span> execute
+);
+  <span>assign</span> execute = valid &amp; enable;
+<span>endmodule</span></code></pre>
+          </div>
+        </div>
+      </div>
+      <div class="workflow-launch">
+        <h2 id="design-workflow-title">Understanding your design</h2>
+        <p>Explore the module hierarchy, trace a signal from its driver to its loads, and inspect the RTL behind each block.</p>
+        <a class="workflow-cta" href="/workbench.html">Open design workbench</a>
+      </div>
     </section>
-
-    <div class="workspace">
-      <aside class="panel hierarchy" aria-labelledby="hierarchy-title">
-        <div class="section-head"><h2 id="hierarchy-title">Design hierarchy</h2><span id="instance-count"></span></div>
-        <div id="tree"><p class="empty">Elaborated instances appear here.</p></div>
-      </aside>
-      <section class="panel design" aria-labelledby="design-title">
-        <div class="section-head"><h2 id="design-title">Block diagram</h2><nav id="crumbs" aria-label="Instance path"></nav></div>
-        <div id="diagram"><div class="empty stage-empty">Select a top module to inspect its blocks and signals.</div></div>
-        <div id="inspector"></div>
-      </section>
-    </div>
-
-    <details class="panel output" id="file-panel">
-      <summary>Generated file list <span id="file-count"></span></summary>
-      <button id="download" type="button" class="button" disabled>Download sources.f</button>
-      <ol id="sources"></ol>
-      <div id="includes"></div>
-    </details>
-    <details class="panel output" id="diagnostic-panel">
-      <summary>Compiler diagnostics</summary>
-      <div id="issues"></div>
-      <pre id="diagnostics">No compile has been run.</pre>
-    </details>
   </main>
-  <dialog id="source-view" aria-labelledby="source-path">
-    <div class="source-head">
-      <div><h2>RTL source</h2><p id="source-path" class="source"></p></div>
-      <form method="dialog"><button class="button" autofocus>Close</button></form>
-    </div>
-    <div id="source-lines" tabindex="0" aria-label="Source lines"></div>
-  </dialog>
 </body>
 </html>

@@ -539,7 +539,7 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   }
   requestAnimationFrame(() => {
     if (!viewport.isConnected || manuallyZoomed) return;
-    if (graph.nodes.length <= 25 && viewport.clientWidth >= 680) zoomToFit();
+    if (scope.children.length || (graph.nodes.length <= 25 && viewport.clientWidth >= 680)) zoomToFit();
     else {
       setZoom(.9, false);
       const region = layout.regions.find(region => region.kind === "case") || layout.regions[0];

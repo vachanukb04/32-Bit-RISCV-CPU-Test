@@ -26,6 +26,7 @@ REPO = HERE.parent
 GITHUB = re.compile(r"https://github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?(?:/tree/([\w.-]+))?/?", re.ASCII)
 ASSETS = {
     "/": ("index.html", "text/html"),
+    "/workbench.html": ("workbench.html", "text/html"),
     "/workbench.css": ("workbench.css", "text/css"),
     "/schematic-graph.js": ("schematic-graph.js", "text/javascript"),
     "/schematic-layout.js": ("schematic-layout.js", "text/javascript"),

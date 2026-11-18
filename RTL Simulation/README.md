@@ -1,4 +1,4 @@
-# RTL Workbench
+# RTL2GDS Cockpit
 
 The first RTL Simulation milestone discovers Verilog and SystemVerilog sources,
 compiles and elaborates a selected top with Slang, and displays the resulting
@@ -14,8 +14,10 @@ python3 -m venv "RTL Simulation/.venv"
 "RTL Simulation/.venv/bin/python" "RTL Simulation/serve.py"
 ```
 
-Open [localhost:8080](http://127.0.0.1:8080). For **RTL root directory**, enter
-a local directory, leave `.` for the current repository checkout, or paste a
+Open the cockpit and select **Understanding your design**. [localhost:8080](http://127.0.0.1:8080)
+
+For **RTL root directory**, enter a local directory, leave `.` for the current
+repository checkout, or paste a
 public GitHub repository URL such as
 [32-Bit-RISCV-CPU-Test](https://github.com/vachanukb04/32-Bit-RISCV-CPU-Test/tree/main).
 GitHub input requires Git. A repository URL uses its default branch and a
