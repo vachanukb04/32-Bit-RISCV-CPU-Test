@@ -6,7 +6,7 @@ from itertools import islice
 from pyslang import SVInt, ast
 
 from rtl_process_view import expression_label, statements, unconverted
-from rtl_schematic import Drawing
+from rtl_schematic import Drawing, level_control
 from rtl_structure import VALUE_EXPRESSIONS, integer_literal, signal_refs
 
 
@@ -192,14 +192,49 @@ class RuleDrawing(Drawing):
         self.cached[key] = result
         return result
 
-    def combine(self, gates, label):
-        if not gates:
-            return self.terminal("1'b0" if label == "OR" else "1'b1")
-        if len(gates) == 1:
-            return gates[0]
-        middle = len(gates) // 2
-        return self.add("gate", label, [("A", self.combine(gates[:middle], label)),
-                                        ("B", self.combine(gates[middle:], label))], bits=1)
+    def latched_value(self, value, net, saved):
+        """Return the data and write enable, discarding data on hold paths."""
+        key = id(value)
+        if key in saved:
+            return saved[key]
+        if isinstance(value, Value):
+            result = (None, None) if value.retained and net in value.inputs else (self.outcome(value), None)
+        else:
+            data, enable = self.latched_value(value.fallback, net, saved)
+            for index in reversed(range(len(value.arms))):
+                branch, write = self.latched_value(value.arms[index][1], net, saved)
+                if branch is None and data is None:
+                    continue
+                select = self.arm_match(value, index)
+                if data is None:
+                    data, enable = branch, self.combine([select, write] if write is not None else [select], "AND")
+                elif branch is None:
+                    reject = self.add("gate", "NOT", [("A", select)], bits=1)
+                    enable = self.combine([reject, enable] if enable is not None else [reject], "AND")
+                else:
+                    data = self.mux(data, branch, select)
+                    if enable is not None or write is not None:
+                        yes = self.terminal("1'b1", bits=1)
+                        enable = self.mux(yes if enable is None else enable, yes if write is None else write, select,
+                                          bits=1)
+            result = (data, enable)
+        saved[key] = result
+        return result
+
+    def latch(self, value, symbol):
+        net = symbol.hierarchicalPath
+        if (isinstance(value, Decision) and value.kind == "if" and not value.selector.bindings
+                and isinstance(value.fallback, Value) and value.fallback.retained and net in value.fallback.inputs):
+            level = level_control(value.selector.expression)
+            data, enable = self.latched_value(value.arms[0][1], net, {})
+            if level is not None and data is not None and enable is None:
+                signal, low = level
+                return self.add("latch", symbol.name, [("D", data), ("EN", self.expression(signal))],
+                                bits=symbol.type.bitWidth, enableLow=low)
+        data, enable = self.latched_value(value, net, {})
+        if data is not None and enable is not None:
+            return self.add("latch", symbol.name, [("D", data), ("EN", enable)], bits=symbol.type.bitWidth)
+        return self.outcome(value)
 
     def match_operand(self, match):
         label = case_label(match.expression, match.text)
@@ -231,9 +266,9 @@ class RuleDrawing(Drawing):
         return self.combine(terms, "AND")
 
 
-def data_circuit(value, symbol, text, source):
+def data_circuit(value, symbol, text, source, latch=False):
     drawing = RuleDrawing(text)
-    driver = drawing.outcome(value)
+    driver = drawing.latch(value, symbol) if latch else drawing.outcome(value)
     # Keep a distinct endpoint for an output whose previous value is retained.
     width = symbol.type.bitWidth
     bounds = str(symbol.type.fixedRange) if width > 1 else ""
@@ -290,7 +325,7 @@ def collect_roles(node, seen, conditions, dispatches, data_nets):
     collect_roles(node.fallback, seen, conditions, dispatches, data_nets)
 
 
-def summarize_combinational(body, locate, text):
+def summarize_combinational(body, locate, text, latch_outputs):
     symbols = {}
     initial = {}
 
@@ -381,7 +416,8 @@ def summarize_combinational(body, locate, text):
         outputs.append({"net": net, "name": symbol.name, "bits": symbol.type.bitWidth,
                         "range": str(symbol.type.fixedRange) if symbol.type.bitWidth > 1 else "",
                         "inputs": sorted(outcome.inputs), "controls": sorted(outcome.controls),
-                        "circuit": data_circuit(outcome, symbol, text, rows[0]["source"]),
+                        "circuit": data_circuit(outcome, symbol, text, rows[0]["source"],
+                                                latch=latch_outputs.get(net) == symbol.type.bitWidth),
                         "rules": rows})
     return {"inputs": sorted(dependencies), "controls": sorted(control_nets), "dataInputs": sorted(data_nets),
             "conditions": list(conditions), "selectors": list(dispatches), "outputs": outputs}

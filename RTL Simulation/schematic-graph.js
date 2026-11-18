@@ -25,7 +25,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     .map(item => [sourceKey(item.source), item.view]));
   const illustrated = new Map();
   const retained = new Set(scope.schematics.filter(sheet => sheet.nodes.some(shape =>
-    shape.kind === "latch" || (shape.kind === "memory" && shape.write)))
+    shape.kind === "memory" && shape.write))
     .map(sheet => sourceKey(sheet.processSource || sheet.source)));
   for (const logic of scope.logic) {
     const key = sourceKey(logic.source);
@@ -267,22 +267,21 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         const fields = shape.fields;
         // Outputs of one combinational process can share the same elaborated subexpression.
         const signature = sheet.destination && JSON.stringify([key, shape.kind, shape.label, fields,
-          shape.bits, shape.symbol, shape.branch, shape.fallback, shape.pins.map(pin => {
+          shape.bits, shape.symbol, shape.branch, shape.fallback, shape.enableLow, shape.pins.map(pin => {
             const value = pinInput(pin);
             return [pin.pin, value.item.id, value.output];
           })]);
         let item = logicNodes.get(signature);
         if (!item) {
           item = add(shape.kind, shape.label, {
-            edge: shape.edge, source: sheet.source, fields, bits: shape.bits, symbol: shape.symbol,
+            edge: shape.edge, resetLow: shape.resetLow, resetValue: shape.resetValue,
+            enableLow: shape.enableLow, source: sheet.source, fields, bits: shape.bits, symbol: shape.symbol,
             branch: shape.branch, fallback: shape.fallback, processLabel: sheet.processLabel,
-            compactFields: Boolean(fields && sheet.processLabel),
             caption: fields ? busRange(shape) : undefined
           });
           for (const pin of shape.pins) {
             const value = pinInput(pin);
-            feed(value, item, {input: pin.pin, inputLabel: fields ?
-              (sheet.processLabel ? fields[Number(pin.pin)].range : "") : pin.pin,
+            feed(value, item, {input: pin.pin, inputLabel: fields ? fields[Number(pin.pin)].range : pin.pin,
               clock: pin.pin === "CLK" || clocks.has(value.net)});
           }
           if (signature) logicNodes.set(signature, item);

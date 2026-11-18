@@ -1,9 +1,9 @@
 """Lower supported elaborated RTL expressions to connected schematic symbols."""
 
-from pyslang import ast
+from pyslang import SVInt, ast
 
 from rtl_process_view import expression_label, unconverted
-from rtl_structure import BITWISE, OPERATORS, VALUE_EXPRESSIONS, access, assignments, process_timing, signal_refs, span, targets
+from rtl_structure import BITWISE, OPERATORS, VALUE_EXPRESSIONS, access, assignments, definite_writes, integer_literal, process_timing, signal_refs, span, targets
 
 
 GATE_OPERATORS = {
@@ -12,6 +12,41 @@ GATE_OPERATORS = {
     "BitwiseNand": "~&", "BitwiseNor": "~|", "BitwiseXnor": "~^",
     "LogicalAnd": "&&", "LogicalOr": "||", "LogicalNot": "!",
 }
+
+
+CASE_OPERATORS = {"Normal": ("Case equality", "==="), "WildcardXOrZ": ("Casex match", "?="),
+                  "WildcardJustZ": ("Casez match", "?=")}
+
+
+def level_control(expr):
+    """Return a one-bit input and its active polarity for a direct level test."""
+    expr = unconverted(expr)
+    low = False
+    if isinstance(expr, ast.UnaryExpression) and expr.op.name in {"LogicalNot", "BitwiseNot"}:
+        expr = unconverted(expr.operand)
+        low = True
+    elif isinstance(expr, ast.BinaryExpression) and expr.op.name in {"Equality", "Inequality"}:
+        for operand, comparison in [(expr.left, expr.right), (expr.right, expr.left)]:
+            value = integer_literal(comparison)
+            signal = unconverted(operand)
+            if value in (0, 1) and isinstance(signal, VALUE_EXPRESSIONS) and signal.type.bitWidth == 1:
+                return signal, (value == 0) != (expr.op.name == "Inequality")
+    if isinstance(expr, VALUE_EXPRESSIONS) and expr.type.bitWidth == 1:
+        return expr, low
+    return None
+
+
+def single_statement(stmt):
+    while isinstance(stmt, (ast.TimedStatement, ast.BlockStatement, ast.StatementList)):
+        if isinstance(stmt, ast.TimedStatement):
+            stmt = stmt.stmt
+        elif isinstance(stmt, ast.BlockStatement):
+            stmt = stmt.body
+        elif len(stmt.list) == 1:
+            stmt = stmt.list[0]
+        else:
+            break
+    return stmt
 
 
 def value_name(node, text):
@@ -120,6 +155,15 @@ class Drawing:
     def mux(self, when_zero, when_one, select, **fields):
         return self.add("mux", "MUX", [("0", when_zero), ("1", when_one), ("S", select)], **fields)
 
+    def combine(self, gates, label):
+        if not gates:
+            return self.terminal("1'b0" if label == "OR" else "1'b1", bits=1)
+        if len(gates) == 1:
+            return gates[0]
+        middle = len(gates) // 2
+        return self.add("gate", label, [("A", self.combine(gates[:middle], label)),
+                                        ("B", self.combine(gates[middle:], label))], bits=1)
+
     def next_value(self, statement, name, current):
         """Lower a procedural assignment tree for one full-width target."""
         if isinstance(statement, ast.TimedStatement):
@@ -134,12 +178,11 @@ class Drawing:
             item = statement.expr
             if not isinstance(item, ast.AssignmentExpression):
                 raise ValueError("unsupported procedural expression")
-            lhs = list(targets(item.left))
-            if len(lhs) == 1 and lhs[0][0].hierarchicalPath == name:
-                if isinstance(item.left, VALUE_EXPRESSIONS) and not item.isCompound:
-                    return self.expression(item.right)
-                raise ValueError("partial procedural write")
-            raise ValueError("multiple procedural targets")
+            if not isinstance(item.left, VALUE_EXPRESSIONS) or item.isCompound or item.timingControl is not None:
+                raise ValueError("unsupported procedural write")
+            if item.left.symbol.hierarchicalPath == name:
+                return self.expression(item.right)
+            return current
         if isinstance(statement, ast.ConditionalStatement) and len(statement.conditions) == 1:
             condition = statement.conditions[0]
             if condition.pattern is None:
@@ -148,6 +191,22 @@ class Drawing:
                 if zero == one:
                     return zero
                 return self.mux(zero, one, self.expression(condition.expr))
+        if isinstance(statement, ast.CaseStatement) and statement.condition.name in CASE_OPERATORS:
+            label, symbol = CASE_OPERATORS[statement.condition.name]
+            selector = self.expression(statement.expr)
+            fallback = self.next_value(statement.defaultCase, name, current)
+            for index, arm in reversed(list(enumerate(statement.items))):
+                branch = self.next_value(arm.stmt, name, current)
+                if branch == fallback:
+                    continue
+                matches = [self.add("operator", label, [("A", selector), ("B", self.expression(item))],
+                                    symbol=symbol, bits=1) for item in arm.expressions]
+                condition = self.combine(matches, "OR")
+                match = ", ".join(expression_label(item, self.text) for item in arm.expressions)
+                mode = {"Normal": "case", "WildcardXOrZ": "casex", "WildcardJustZ": "casez"}[statement.condition.name]
+                otherwise = "No match" if index == len(statement.items) - 1 else "Next case arm"
+                fallback = self.mux(fallback, branch, condition, branch=f"{mode} {match}", fallback=otherwise)
+            return fallback
         if statement is None or statement.kind.name == "Empty":
             return current
         raise ValueError("unsupported procedural control")
@@ -210,10 +269,15 @@ def data_schematics(members, structures, locate, text):
             continue
         dests = {symbol.hierarchicalPath: symbol for item in writes for symbol, _ in targets(item.left)}
         source = locate(member.location)
-        complete = (process_schematic(member, timing, edges, writes, dests, structures, source, text)
-                    if timing in {"edge", "comb"} else None)
-        if complete is not None:
-            schematics.append(complete)
+        complete = []
+        if timing == "edge":
+            complete = clocked_schematics(member, edges, writes, dests, source, text)
+        elif timing == "comb" and len(dests) == 1:
+            sheet = process_schematic(member, writes, dests, structures, source, text)
+            if sheet is not None:
+                complete = [sheet]
+        if complete:
+            schematics.extend(complete)
             continue
         for item in writes:
             lhs = list(targets(item.left))
@@ -242,46 +306,106 @@ def data_schematics(members, structures, locate, text):
     return sorted(schematics, key=lambda sheet: sheet.get("processKind") == "Initial")
 
 
-def process_schematic(member, timing, edges, writes, dests, structures, source, text):
-    # A full data path is limited to one destination whose updates can be ordered.
-    if len(dests) != 1:
+def clock_controls(member, edges):
+    if not 1 <= len(edges) <= 2:
         return None
+    body = member.body
+    reset, reset_branch = None, None
+    clock = edges[0]
+    if len(edges) == 2:
+        branch = single_statement(body)
+        if (not isinstance(branch, ast.ConditionalStatement) or len(branch.conditions) != 1 or
+                branch.conditions[0].pattern is not None):
+            return None
+        control = level_control(branch.conditions[0].expr)
+        if control is None:
+            return None
+        signal, low = control
+        reset_edge = "NegEdge" if low else "PosEdge"
+        reset = next((edge for edge in edges if edge.edge.name == reset_edge and
+                      isinstance(unconverted(edge.expr), VALUE_EXPRESSIONS) and
+                      unconverted(edge.expr).symbol.hierarchicalPath == signal.symbol.hierarchicalPath), None)
+        if reset is None:
+            return None
+        clock = next(edge for edge in edges if edge is not reset)
+        if signal.symbol.hierarchicalPath in signal_refs(clock.expr):
+            return None
+        reset_branch, body = branch.ifTrue, branch.ifFalse
+
+    # Only lower edge events without an additional event guard.
+    if any(getattr(event, "iffCondition", None) is not None for event in edges):
+        return None
+    return clock, reset, reset_branch, body
+
+
+def clocked_schematics(member, edges, writes, dests, source, text):
+    if (any(not isinstance(item.left, VALUE_EXPRESSIONS) for item in writes) or
+            (len(writes) > 1 and any(not item.isNonBlocking for item in writes))):
+        return []
+    controls = clock_controls(member, edges)
+    if controls is None:
+        return []
+    clock, reset, reset_branch, body = controls
+    reset_writes = assignments(reset_branch) if reset is not None else []
+    reset_coverage = definite_writes(reset_branch) if reset is not None else {}
+    schematics = []
+    for name, symbol in dests.items():
+        if not symbol.type.isIntegral:
+            return []
+        width = symbol.type.bitWidth
+        drawing = Drawing(text)
+        feedback = drawing.terminal(symbol.name + " (Q feedback)", [name], bits=width)
+        try:
+            data = drawing.next_value(body, name, feedback)
+        except ValueError:
+            return []
+        fields = {"edge": clock.edge.name, "bits": width}
+        pins = [("D", data), ("CLK", drawing.expression(clock.expr))]
+        if reset is not None:
+            values = [item.right for item in reset_writes
+                      if isinstance(item.left, VALUE_EXPRESSIONS) and item.left.symbol.hierarchicalPath == name]
+            if len(values) != 1 or reset_coverage.get(name) != (1 << width) - 1:
+                return []
+            constant = values[0].eval(ast.EvalContext(symbol)).value
+            if not isinstance(constant, SVInt) or constant.hasUnknown:
+                return []
+            pins.append(("ARST", drawing.expression(reset.expr)))
+            fields.update(resetLow=reset.edge.name == "NegEdge", resetValue=str(constant))
+        label = symbol.name + span(symbol.type)
+        flop = drawing.add("flop", label, pins, **fields)
+        sink = drawing.output(label, flop, [name])
+        schematics.append(drawing.finish(symbol.name, source, sink))
+    return schematics
+
+
+def process_schematic(member, writes, dests, structures, source, text):
     name, symbol = next(iter(dests.items()))
     if not symbol.type.isIntegral or any(not isinstance(item.left, VALUE_EXPRESSIONS) for item in writes):
         return None
     drawing = Drawing(text)
-    kind = "flop" if timing == "edge" else "logic"
-    latch = next((s for s in structures if s["kind"] == "latch" and name in s["outputs"]), None)
+    latch = any(s["kind"] == "latch" and name in s["outputs"] and
+                any(site["source"] == source for site in s["occurrences"]) for s in structures)
     if latch:
-        kind = "latch"
-    if kind == "latch":
-        branch = member.body
-        wrappers = (ast.TimedStatement, ast.BlockStatement)
-        while isinstance(branch, wrappers):
-            branch = branch.stmt if isinstance(branch, ast.TimedStatement) else branch.body
+        branch = single_statement(member.body)
         if (isinstance(branch, ast.ConditionalStatement) and branch.ifFalse is None
                 and len(branch.conditions) == 1 and branch.conditions[0].pattern is None
                 and len(writes) == 1):
-            gate = drawing.expression(branch.conditions[0].expr)
+            condition = branch.conditions[0].expr
+            control, low = level_control(condition) or (condition, False)
             data = drawing.expression(writes[0].right)
-            latch_node = drawing.add("latch", symbol.name + span(symbol.type), [("D", data), ("EN", gate)])
-            sink = drawing.output(symbol.name + span(symbol.type), latch_node, [name])
+            gate = drawing.expression(control)
+            node = drawing.add("latch", symbol.name + span(symbol.type), [("D", data), ("EN", gate)],
+                               enableLow=low, bits=symbol.type.bitWidth)
+            sink = drawing.output(symbol.name + span(symbol.type), node, [name])
             return drawing.finish(symbol.name, source, sink)
         return None
-    if len(edges) > 1 or any(not item.isNonBlocking for item in writes) and timing == "edge":
+    if name in access(member.body, writes):
         return None
-    if kind == "logic" and name in access(member.body, writes):
-        return None
-    # Q feedback is a named terminal to keep the schematic acyclic.
-    initial = drawing.terminal(symbol.name + (" (Q feedback)" if kind == "flop" else ""), [name])
+    initial = drawing.terminal(symbol.name, [name])
     try:
         data = drawing.next_value(member.body, name, initial)
     except ValueError:
         return None
-    if kind == "flop":
-        clock = drawing.terminal(value_name(edges[0].expr, text), signal_refs(edges[0].expr))
-        data = drawing.add("flop", symbol.name + span(symbol.type), [("D", data), ("CLK", clock)],
-                           edge=edges[0].edge.name)
     sink = drawing.output(symbol.name + span(symbol.type), data, [name])
     return drawing.finish(symbol.name, source, sink)
 
@@ -315,11 +439,11 @@ def clock_routes(members, children, logic, locate, text):
         if timing != "edge":
             continue
         dests = {symbol.name for item in assignments(member.body) for symbol, _ in targets(item.left)}
-        # More than one event can include asynchronous reset or set. Keep event roles explicit.
+        controls = clock_controls(member, edges)
         for event in edges:
             uses.append({"signal": value_name(event.expr, text), "refs": signal_refs(event.expr),
                          "label": ", ".join(sorted(dests)) or "Process", "edge": event.edge.name,
-                         "pin": "CLK" if len(edges) == 1 else "Edge event",
+                         "pin": "CLK" if controls is not None and event is controls[0] else "Edge event",
                          "source": locate(event.sourceRange.start)})
     for child in children:
         for port in child["ports"]:

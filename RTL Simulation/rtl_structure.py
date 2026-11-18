@@ -154,11 +154,13 @@ def process_timing(member):
     kind = member.procedureKind.name
     timing = member.body.timing if isinstance(member.body, ast.TimedStatement) else None
     events = timing.events if isinstance(timing, ast.EventListControl) else [timing]
-    edges = [e for e in events if isinstance(e, ast.SignalEventControl) and e.edge.name != "None_"]
+    edges = [e for e in events if isinstance(e, ast.SignalEventControl)
+             and e.edge.name in {"PosEdge", "NegEdge"}]
     if edges and len(edges) == len(events) and kind in {"Always", "AlwaysFF"}:
         return "edge", edges
     if kind in {"AlwaysComb", "AlwaysLatch"} or (kind == "Always" and (
-        isinstance(timing, ast.ImplicitEventControl) or isinstance(timing, (ast.SignalEventControl, ast.EventListControl))
+        isinstance(timing, ast.ImplicitEventControl) or
+        all(isinstance(event, ast.SignalEventControl) and event.edge.name == "None_" for event in events)
     )):
         return "comb", []
     return "simulation", []

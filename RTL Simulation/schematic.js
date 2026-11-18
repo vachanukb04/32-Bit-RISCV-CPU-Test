@@ -17,7 +17,7 @@ function svgPath(parent, d, classes = "symbol-body") {
   return parent.appendChild(svgNode("path", {d, class: classes}));
 }
 
-function symbol(parent, kind, label, edge, mark) {
+function symbol(parent, kind, label, edge, mark, node) {
   switch (kind) {
     case "mux":
       svgPath(parent, "M0 -31 L64 -19 V19 L0 31 Z");
@@ -29,6 +29,12 @@ function symbol(parent, kind, label, edge, mark) {
       if (kind === "flop") {
         svgPath(parent, "M0 14 l8 7 -8 7", "symbol-line");
         if (edge === "NegEdge") parent.append(svgNode("circle", {cx:-4, cy:21, r:4, class:"symbol-body"}));
+      }
+      if (kind === "latch" && node.enableLow) {
+        parent.append(svgNode("circle", {cx:-4, cy:21, r:4, class:"symbol-body"}));
+      }
+      if (kind === "flop" && node.resetLow) {
+        parent.append(svgNode("circle", {cx:-4, cy:4, r:4, class:"symbol-body"}));
       }
       svgText(parent, 61, 4, "Q", "pin-name", "end");
       svgText(parent, 36, -12, kind === "flop" ? "DFF" : "Latch", "pin-name", "middle");
@@ -83,7 +89,11 @@ function pinGeometry(node, pin) {
     if (pin === "S") return {x: 22, y: 27, bottom: true};
     return {x: 0, y: pin === "0" ? -14 : 14};
   }
-  if (node.kind === "flop" || node.kind === "latch") return {x:0, y: pin === "D" ? -5 : 21};
+  if (node.kind === "flop" || node.kind === "latch") {
+    if (pin === "ARST") return {x: node.resetLow ? -8 : 0, y: 4};
+    if (pin === "EN") return {x: node.enableLow ? -8 : 0, y: 21};
+    return {x: 0, y: node.inputs.has("ARST") ? -13 : -5};
+  }
   if (node.kind === "expression") {
     return {x:0, y: 24 * (parseInt(pin, 10) - (node.inputs.size + 1) / 2)};
   }
@@ -105,10 +115,11 @@ function usesBox(node) {
 }
 
 function pinPosition(node, pin, outgoing) {
+  if (node.kind === "bitfields") {
+    return outgoing ? {x: node.x + node.width, y: node.y} :
+      {x: node.x, y: node.y + TILE * (Number(pin) - (node.fields.length - 1) / 2)};
+  }
   if (usesBox(node)) {
-    if (node.fields && !node.compactFields && outgoing) {
-      return {x: node.x + node.width, y: node.y - node.height / 2 + 48 + 12 * (node.fields.length - 1)};
-    }
     const pins = outgoing ? node.outputs : node.inputs;
     const index = [...pins.keys()].indexOf(pin);
     return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + 48 + index * 24};
@@ -126,7 +137,6 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
   const paths = svgNode("g");
   const junctions = svgNode("g");
   layer.append(paths, junctions);
-  let aliases = 0;
   const route = createWireRouter(graph, layout);
   const groups = new Map();
   for (const edge of graph.edges) {
@@ -135,11 +145,10 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
     groups.get(key).push(edge);
   }
   let id = 0;
-  for (const edges of groups.values()) {
+  const routes = [...groups.values()].sort((a, b) => Number(b[0].clock) - Number(a[0].clock) || b.length - a.length);
+  for (const edges of routes) {
     id++;
     const points = new Map();
-    let alias;
-    let aliasSource;
     const record = (point, neighbor, edge) => {
       const key = point.x + "," + point.y;
       if (!points.has(key)) points.set(key, {point, neighbors: new Set(), selections: new Set(), clock: false});
@@ -161,36 +170,7 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
       const prefix = name && name !== edge.from.label ? name + " · " : "";
       const caption = prefix + edge.from.label + " to " + edge.to.label +
         (edge.input === "IN" ? "" : " " + edge.input);
-      const distance = Math.abs(start.x - end.x) + Math.abs(start.y - end.y);
-      const insideCombinational = edge.from.processLabel || edge.to.processLabel;
-      const pointsOnGrid = insideCombinational && distance > 280 ? [] : route(launch, land, id);
-      const useAlias = insideCombinational && (!pointsOnGrid.length || pointsOnGrid.length > 30);
-      let commands;
-      if (useAlias) {
-        const choose = () => chooseWire(edge.net, key);
-        if (!alias) {
-          alias = "W" + ++aliases;
-          const sourceEnd = start.x + 24;
-          aliasSource = drawWire(`M${start.x} ${start.y} H${sourceEnd}`, edge.clock,
-            alias + " · " + edge.from.label, choose);
-          svgText(aliasSource, sourceEnd, start.y - 5, alias, "wire-alias", "end");
-          paths.append(aliasSource);
-        }
-        const targetStart = end.bottom ? {x: end.x, y: end.y + 21} : {x: end.x - 24, y: end.y};
-        const connection = drawWire(`M${targetStart.x} ${targetStart.y} L${end.x} ${end.y}`,
-          edge.clock, alias + " · " + caption, choose);
-        svgText(connection, targetStart.x + (end.bottom ? 5 : 0), targetStart.y - (end.bottom ? 2 : 5),
-          alias, "wire-alias");
-        paths.append(connection);
-        for (const group of [aliasSource, connection]) {
-          const wire = group.querySelector("path");
-          if (edge.from.bits > 1) wire.classList.add("bus-wire");
-          track(wire, key);
-          track(group, key);
-        }
-        continue;
-      }
-
+      const pointsOnGrid = route(launch, land, id);
       const path = [start, {x: launch.x, y: start.y}, ...pointsOnGrid];
       if (end.bottom) path.push({x: end.x, y: land.y});
       else path.push({x: land.x, y: end.y});
@@ -201,7 +181,7 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
         const a = distinct[i - 1], b = distinct[i + 1];
         return !(a.x === point.x && point.x === b.x) && !(a.y === point.y && point.y === b.y);
       });
-      commands = corners.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
+      const commands = corners.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
       const connection = drawWire(commands, edge.clock, caption, () => chooseWire(edge.net, key));
       const wire = connection.querySelector("path");
       if (edge.from.bits > 1) wire.classList.add("bus-wire");
@@ -226,7 +206,6 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
       for (const key of selections) track(dot, key);
     }
   }
-  if (aliases) layer.setAttribute("data-wire-aliases", aliases);
   return layer;
 }
 
@@ -253,17 +232,17 @@ function drawDecisionRows(group, node, top) {
   }
 }
 
-function drawBitFields(group, node, top) {
-  for (const [index, field] of node.fields.entries()) {
-    const y = top + 48 + index * 24;
-    const row = svgNode("g", {class: "bit-field"});
-    row.append(svgNode("rect", {x: 8, y: y - 10, width: node.width - 16, height: 20,
-      rx: 3, class: "bit-field-body"}));
-    svgText(row, 16, y + 4, field.range, "bit-field-range");
-    svgText(row, 82, y + 4, shorten(field.text, 58), "bit-field-text");
-    row.append(svgNode("title", {}, field.range + " ← " + field.text));
-    group.append(row);
+function drawConcatenation(group, node) {
+  const join = Math.round(node.width / 2);
+  const half = TILE * (node.fields.length - 1) / 2;
+  svgText(group, node.width / 2, -node.height / 2 + 13, concatenationLabel(node.fields),
+    "concat-label", "middle");
+  for (let offset = -half; offset <= half; offset += TILE) {
+    svgPath(group, `M0 ${offset} H${join - 6} L${join} ${offset - 4}`, "concat-merge");
   }
+  svgPath(group, `M${join} ${-half - 4} V${half - 4} M${join} -4 L${join + 6} 0 H${node.width}`,
+    "concat-merge concat-bus");
+  if (node.caption) svgText(group, node.width, 15, node.caption, "pin-label", "end");
 }
 
 function drawSchematicSymbol(node) {
@@ -277,6 +256,8 @@ function drawSchematicSymbol(node) {
       class: node.kind === "net" ? "net-body" : "terminal-body"}));
     svgText(local, node.width / 2, node.caption ? -2 : 4, shorten(node.label, 27), "net-label", "middle");
     if (node.caption) svgText(local, node.width / 2, 13, node.caption, "pin-label", "middle");
+  } else if (node.kind === "bitfields") {
+    drawConcatenation(local, node);
   } else if (usesBox(node)) {
     const top = -node.height / 2;
     local.append(svgNode("rect", {x: 0, y: top, width: node.width, height: node.height, rx: 4,
@@ -284,7 +265,6 @@ function drawSchematicSymbol(node) {
     svgText(local, 9, top + 16, shorten(node.label, 27), "net-label");
     if (node.caption) svgText(local, 9, top + 31, shorten(node.caption, 31), "pin-label");
     if (node.rows?.length) drawDecisionRows(local, node, top);
-    if (node.fields && !node.compactFields) drawBitFields(local, node, top);
     for (const outgoing of [false, true]) {
       const pins = outgoing ? node.outputs : node.inputs;
       for (const [key, label] of pins) {
@@ -292,10 +272,8 @@ function drawSchematicSymbol(node) {
         const x = point.x - node.x;
         const y = point.y - node.y;
         local.append(svgNode("circle", {cx: x, cy: y, r: 2.8, class: "terminal-dot"}));
-        if (!(node.fields && !node.compactFields && outgoing)) {
-          svgText(local, x + (outgoing ? -7 : 7), y + 3, shorten(label, outgoing ? 18 : 24),
-            "pin-label", outgoing ? "end" : "start");
-        }
+        svgText(local, x + (outgoing ? -7 : 7), y + 3, shorten(label, outgoing ? 18 : 24),
+          "pin-label", outgoing ? "end" : "start");
       }
     }
     if (node.kind === "bank") {
@@ -304,7 +282,7 @@ function drawSchematicSymbol(node) {
       for (const dx of [-10, 0, 10]) svgPath(local, `M${center + dx} -13 v26`, "memory-grid");
     }
   } else {
-    symbol(local, node.kind, node.label, node.kind === "expression" ? node.height / 2 - 7 : node.edge, node.symbol);
+    symbol(local, node.kind, node.label, node.kind === "expression" ? node.height / 2 - 7 : node.edge, node.symbol, node);
     if (node.bits > 1) {
       svgText(local, 34, -37, busRange(node), "pin-label", "middle");
     }
@@ -324,8 +302,11 @@ function drawSchematicSymbol(node) {
       }
     }
   }
+  const storage = node.kind === "flop" ? (node.edge === "NegEdge" ? "Falling-edge D flip-flop" : "Rising-edge D flip-flop")
+    : node.kind === "latch" ? `D latch · transparent when EN is ${node.enableLow ? "low" : "high"}` : "";
   group.append(svgNode("title", {}, [node.kind === "gate" && node.symbol ? `${node.label} (${node.symbol})` : node.label,
-    node.caption, node.compactFields && node.fields.map(field => field.range + " ← " + field.text).join("\n"),
+    storage, node.resetValue !== undefined && `Asynchronous reset · active ${node.resetLow ? "low" : "high"} → ${node.resetValue}`,
+    node.caption, node.fields && node.fields.map(field => field.range + " ← " + field.text).join("\n"),
     node.processLabel && node.processLabel + " · line " + node.source.line,
     node.branch && `1: ${node.branch} · 0: ${node.fallback}`, node.port?.binding &&
     "Parent connection " + node.port.binding].filter(Boolean).join("\n")));
@@ -420,9 +401,6 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   const wires = routeSchematic(graph, layout, track, (net, key) =>
     selectSignal(net, {key, reveal: false}), signalLabel);
   svg.append(wires);
-  if (wires.hasAttribute("data-wire-aliases")) {
-    header.append(make("span", "source", "Matching wire labels connect"));
-  }
   const portLeads = svgNode("g", {class: "port-leads"});
   svg.append(portLeads);
   const symbols = new Map();

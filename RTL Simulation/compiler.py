@@ -181,7 +181,10 @@ def describe_instance(root, manager, instance, parent_path=""):
                     entry["inputs"] = []
                     entry["outputs"] = sorted(view["outputs"])
                 elif view["kind"] == "combinational":
-                    summary = summarize_combinational(member.body, locate, text)
+                    latches = {net: item["bits"] for item in structures if item["kind"] == "latch"
+                               and any(occurrence["source"] == site for occurrence in item["occurrences"])
+                               for net in item["outputs"]}
+                    summary = summarize_combinational(member.body, locate, text, latches)
                     if summary is not None:
                         view["summary"] = summary
                         if (isinstance(member.body, ast.TimedStatement) and

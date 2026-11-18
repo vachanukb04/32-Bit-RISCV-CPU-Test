@@ -6,7 +6,7 @@ const { runInNewContext } = require("node:vm");
 
 const scripts = ["schematic-graph.js", "schematic-layout.js"];
 const api = runInNewContext(scripts.map(file => readFileSync(join(__dirname, file), "utf8")).join("\n") +
-  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey});");
+  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey, concatenationLabel});");
 
 const location = line => ({file: "rom.v", line, column: 1});
 const terminal = (label, net) => ({kind: "terminal", label, pins: [], nets: net ? [net] : []});
@@ -165,4 +165,8 @@ test("draws an always @* case directly on the module canvas", () => {
   assert.equal(graph.anchors.get("a").caption, "[31:0]");
   assert.equal(graph.anchors.get("code").bits, 32);
   assert.equal(graph.anchors.get("code").caption, "[31:0]");
+});
+
+test("formats concatenation ranges in declared order", () => {
+  assert.equal(api.concatenationLabel([{range: "[0:2]"}, {range: "[3:9]"}]), "{[0:2] [3:9]}");
 });

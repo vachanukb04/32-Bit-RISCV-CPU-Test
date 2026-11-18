@@ -18,6 +18,66 @@ class CompilerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
 
+    def test_storage_symbols_follow_edge_level_and_reset_semantics(self):
+        self.write("storage.sv", """
+            module storage(input logic clk, rst_n, en, a, b, selector,
+                           output logic q, q_copy, rising, held, held_copy, high_latch, mixed);
+                always @(negedge clk or negedge rst_n) begin
+                    if (!rst_n) begin
+                        q <= 1'b0;
+                        q_copy <= 1'b1;
+                    end else begin
+                        case (selector)
+                            1'b0: q <= a;
+                            default: q <= b;
+                        endcase
+                        q_copy <= q;
+                    end
+                end
+                always @(posedge clk)
+                    if (rst_n) rising <= a; else rising <= 1'b0;
+                always @* begin
+                    if (!en) begin
+                        held = a;
+                        held_copy = b;
+                    end
+                    mixed = a ^ b;
+                end
+                always_latch begin
+                    if (en) begin
+                        if (selector) high_latch = a; else high_latch = b;
+                    end
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "storage", "storage.sv")["hierarchy"]
+        clocks = {(use["signal"], use["edge"], use["pin"]) for use in scope["clockUses"]}
+        self.assertIn(("clk", "NegEdge", "CLK"), clocks)
+        self.assertIn(("rst_n", "NegEdge", "Edge event"), clocks)
+
+        sheets = {sheet["title"]: sheet["nodes"] for sheet in scope["schematics"] if not sheet.get("expressionOnly")}
+        for name, val in [("q", "0"), ("q_copy", "1")]:
+            nodes = sheets[name]
+            flop = nodes[-2]
+            self.assertEqual((flop["kind"], flop["edge"], flop["resetLow"]), ("flop", "NegEdge", True))
+            self.assertTrue(flop["resetValue"].endswith(val))
+            self.assertEqual([nodes[pin["source"]]["label"] for pin in flop["pins"][1:]], ["clk", "rst_n"])
+        q_nodes = sheets["q"]
+        self.assertEqual(q_nodes[q_nodes[-2]["pins"][0]["source"]]["kind"], "mux")
+        self.assertEqual(sheets["rising"][-2]["edge"], "PosEdge")
+        self.assertNotIn("resetLow", sheets["rising"][-2])
+        rising_nodes = sheets["rising"]
+        self.assertEqual(rising_nodes[rising_nodes[-2]["pins"][0]["source"]]["kind"], "mux")
+
+        summaries = {output["name"]: output["circuit"]["nodes"] for entry in scope["logic"]
+                     for output in entry.get("view", {}).get("summary", {}).get("outputs", [])}
+        for name in ("held", "held_copy", "high_latch"):
+            nodes = summaries[name]
+            latch = nodes[-2]
+            self.assertEqual((latch["kind"], latch["enableLow"]), ("latch", name != "high_latch"))
+            self.assertEqual(nodes[latch["pins"][1]["source"]]["label"], "en")
+        self.assertEqual(summaries["mixed"][-2]["kind"], "gate")
+
     def test_case_diagrams_show_data_gates_and_combine_nested_branch_conditions(self):
         self.write("mix.sv", """
             module mix(input logic reset, input logic [1:0] op,

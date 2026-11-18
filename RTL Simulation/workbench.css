@@ -128,19 +128,7 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .circuit-svg { display: block; max-width: none; }
 .schematic-outline { fill: #17272055; stroke: #5f8273; stroke-width: 1.5; }
 .port-leads .terminal-dot { fill: #c6e5d3; stroke: #172720; pointer-events: none; }
-.wire-connection > :is(.wire-alias { fill: #c6f3e2; font: 700 10px var(--mono); paint-order: stroke;
-  stroke: #172720; stroke-width: 3px; cursor: pointer; }
-.wire-connection.net-highlight .wire-alias { fill: #ffdc88; }
-.data-wire, .clock-wire), .wire-junction { pointer-events: none; }
-.wire-hit { fill: none; stroke: transparent; stroke-width: 9;
-  pointer-events: stroke; cursor: pointer; }
-.wire-connection:focus-visible { outline: none; }
-.wire-connection:is(:hover, :focus-visible) > :is(.data-wire, .clock-wire) {
-  stroke: #f4f9f6; stroke-width: 2.6; opacity: 1;
-}
-.symbol-body { fill: #203a31; stroke: #d1eadc; stroke-width: 1.65; stroke-linejoin: round; }
-.symbol-line { fill: none; stroke: #d1eadc; stroke-width: 1.45; }
-.data-wire, .clock-wire { fill: none; stroke: #a6cdb9; stroke-width: 1.35; stroke-linejoin: round; }
+.wire-connection > :is(.data-wire, .clock-wire { fill: none; stroke: #a6cdb9; stroke-width: 1.35; stroke-linejoin: round; }
 .wire-connection > .bus-wire { stroke-width: 2.35; }
 .clock-wire { stroke: #7dd7ff; stroke-width: 1.9; }
 .wire-junction { fill: #c5e6d5; }
@@ -177,7 +165,7 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .decision-badge { fill: #2c5043; stroke: #598674; stroke-width: .7; }
 .decision-badge-text, .decision-text, .bit-field-range, .bit-field-text { font: 10.5px var(--mono); }
 .decision-badge-text { fill: #c9edda; font-weight: 700; font-size: 9px; }
-.decision-text, .bit-field-text { fill: #e5f5ed; }
+.decision-text { fill: #e5f5ed; }
 .decision-if .decision-badge, .decision-else .decision-badge,
 .decision-sweep .decision-badge { fill: #554c2d; stroke: #b5a36a; }
 .decision-if .decision-badge-text, .decision-else .decision-badge-text,
@@ -185,8 +173,9 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .decision-case .decision-badge, .decision-case-z .decision-badge, .decision-case-x .decision-badge,
 .decision-case-inside .decision-badge { fill: #224b54; stroke: #5b9aa2; }
 .decision-case .decision-badge-text { fill: #b0edf4; }
-.bit-field-body { fill: #142a22; stroke: #476b5d; stroke-width: .7; }
-.bit-field-range { fill: #83ddca; font-weight: 700; }
+.concat-label { fill: #b8efdb; font: 700 11px var(--mono); }
+.concat-merge { fill: none; stroke: #a6cdb9; stroke-width: 1.5; }
+.concat-bus { stroke-width: 2.35; }
 .schematic-source:not(:empty) { margin: .55rem 0; padding: .6rem; border: 1px solid #426256; border-radius: 6px; }
 .schematic-source ul { margin: .4rem 0 0; padding-left: 1.15rem; }
 .schematic-source li { margin: .22rem 0; }

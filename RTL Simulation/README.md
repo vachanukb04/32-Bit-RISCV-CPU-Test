@@ -65,11 +65,18 @@ all come from the project sources.
   external data and control inputs, guards, selectors, and driven outputs.
   The module schematic draws these gates and their connectivity directly,
   with the case arm labeled at its multiplexer. A wide signal uses one bus
-  with its range. Matching wire labels connect distant pins, and selecting
-  a wire highlights its matching connections. Initialization
+  with its range. Concatenations join their fields with a brace label such as
+  `{[31:16] [15:0]}`, in RTL order. Wires are continuous and clicking a net
+  highlights its driver and fanout. Initialization
   shows known writes and statically resolved memory index sweeps. The process
   blocks link to the original RTL. Synthesis determines the final cells and
   memory mapping.
+- The workbench uses the elaborated event and assignment semantics to draw
+  D flip-flops and D latches. Clock-edge polarity and latch-enable polarity
+  appear on their control pins. A synchronous reset selects the D input
+  through a mux. A recognized asynchronous constant reset has its own
+  reset pin. Complex processes outside the supported forms retain a link to
+  their RTL. [Yosys process lowering](https://yosyshq.readthedocs.io/projects/yosys/en/stable/using_yosys/synthesis/proc.html)
 - Quoted headers found by the compiler are listed in the UI. Discovery parses
   candidates independently, so project-specific defines, package imports driven
   by earlier file macros, and custom include paths can require a future

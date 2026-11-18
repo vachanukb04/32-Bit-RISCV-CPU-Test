@@ -10,8 +10,12 @@ const portSide = node => {
   return "";
 };
 
-const BOX_KINDS = ["instance", "bank", "process", "binding", "bitfields"];
+const BOX_KINDS = ["instance", "bank", "process", "binding"];
 const DECISION_ROW = 19;
+
+function concatenationLabel(fields) {
+  return "{" + fields.map(field => field.range).join(" ") + "}";
+}
 
 function layoutSchematic(graph) {
   const {nodes, edges} = graph;
@@ -95,11 +99,12 @@ function layoutSchematic(graph) {
         node.contentX = Math.max(18, longestIn * 6 + 14);
         bodyWidth = Math.max(...node.rows.map(row => row.depth * 13 + Math.min(row.text.length, 92) * 6.4 + 112));
         bodyHeight = 57 + DECISION_ROW * node.rows.length;
-      } else if (node.fields && !node.compactFields) {
-        bodyWidth = 104 + Math.max(...node.fields.map(field => Math.min(field.text.length, 58) * 6.5));
       }
       node.width = ceilTile(Math.max(132, rails + bodyWidth));
       node.height = ceilTile(Math.max(72, bodyHeight, 48 + Math.max(node.inputs.size, node.outputs.size) * 24));
+    } else if (node.kind === "bitfields") {
+      node.width = ceilTile(Math.max(84, concatenationLabel(node.fields).length * 7 + 16));
+      node.height = ceilTile(48 + node.fields.length * TILE);
     } else if (["net", "tap", "literal"].includes(node.kind)) {
       node.width = ceilTile(Math.max(48, Math.min(27, node.label.length) * 7 + 24,
         node.caption ? Math.min(27, node.caption.length) * 6 + 20 : 0));
@@ -111,7 +116,7 @@ function layoutSchematic(graph) {
     }
   }
 
-  const gap = nodes.length > 45 ? 108 : 72;
+  const gap = nodes.length > 45 ? 120 : 84;
   const isBoundary = column => column === inputs || column === outputs;
   const rowGap = column => isBoundary(column) ? 24 : 36;
   const packedHeight = column => column.reduce((total, node) => total + node.height + rowGap(column), 0);
@@ -129,6 +134,23 @@ function layoutSchematic(graph) {
       y += node.height + rowGap(column);
     }
     x += width + gap;
+  }
+  // Align the I/O rails to nearby circuitry without reordering module ports.
+  for (const column of [inputs, outputs]) {
+    let start = 60;
+    let remaining = packedHeight(column);
+    const isInput = column === inputs;
+    for (const node of column) {
+      const peers = (isInput ? outgoing : incoming)[node.id]
+        .map(edge => isInput ? edge.to : edge.from).filter(peer => !portSide(peer));
+      const positions = peers.map(peer => peer.y).sort((a, b) => a - b);
+      const preferred = positions.length ? snap(positions[Math.floor(positions.length / 2)] - node.height / 2) : start;
+      const top = Math.max(start, Math.min(preferred, 60 + bodyHeight - remaining));
+      node.y = top + node.height / 2;
+      const occupied = node.height + rowGap(column);
+      start = top + occupied;
+      remaining -= occupied;
+    }
   }
   return {width: x - gap + (outputs.length ? 36 : 60), height: bodyHeight + 108};
 }
@@ -228,7 +250,7 @@ function createWireRouter(graph, layout) {
         const crowded = occupied && !shared;
         const turn = axis !== (state & 1);
         const weight = (shared ? .7 : 1.05) + (turn ? 2.5 : 0) +
-          (crowded ? 17 : 0) + (crossing && crossing !== group ? .8 : 0);
+          (crowded ? 42 : 0) + (crossing && crossing !== group ? 1.2 : 0);
         seek(next, axis, cost + weight, state);
       }
     }
