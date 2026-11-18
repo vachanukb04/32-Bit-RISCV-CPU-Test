@@ -274,7 +274,7 @@ function drawDiagram() {
   const title = make("div", "chip-title");
   title.append(make("strong", "", node.module), make("span", "", node.children.length + " child instances"));
   const grid = make("div", "blocks");
-  const endpoints = new Map();
+  const endpoints = new Map(node.nets.map(net => [net, []]));
   const register = (signal, card, label, role) => {
     if (!signal) return;
     if (!endpoints.has(signal)) endpoints.set(signal, []);
@@ -294,7 +294,8 @@ function drawDiagram() {
     for (const port of child.ports) {
       for (const net of port.refs) {
         const role = port.direction === "inout" ? "shared" : port.drives.includes(net) ? "driver" : "load";
-        register(net, card, child.name + "." + port.name + " · " + port.direction, role);
+        const name = child.name + "." + port.name + " · " + port.direction;
+        register(net, card, port.binding ? name + " (" + port.binding + ")" : name, role);
       }
     }
   }
@@ -327,87 +328,45 @@ function drawDiagram() {
   picker.id = "signal-picker";
   picker.append(new Option("Select a signal", ""));
   const label = net => net.startsWith(node.path + ".") ? net.slice(node.path.length + 1) : net;
+  bar.append(pickerLabel, picker);
+  for (const use of node.clockUses) {
+    if (["Clock input", "Edge event input"].includes(use.pin)) continue;
+    for (const net of use.refs) {
+      const name = use.label + " · " + use.pin;
+      register(net, title, name, "load");
+    }
+  }
+  // Include terminals from the elaborated drawings even if they have no
+  // independent driver/load record (for example, a local index expression).
+  for (const sheet of node.schematics) {
+    for (const shape of sheet.nodes) {
+      for (const net of shape.nets || []) {
+        if (!endpoints.has(net)) endpoints.set(net, []);
+      }
+    }
+  }
   for (const key of [...endpoints.keys()].sort((a, b) => label(a).localeCompare(label(b)))) {
     picker.append(new Option(label(key), key));
   }
   picker.disabled = !endpoints.size;
-  bar.append(pickerLabel, picker);
-  const trace = make("div", "trace-flow");
-  trace.hidden = true;
-  chip.append(title, bar, trace);
+  chip.append(title, bar);
   if (grid.children.length) chip.append(grid);
-  if (node.clockUses.length) chip.append(drawClockWiring(node));
-  if (node.schematics.length) chip.append(drawDataSchematic(node.schematics));
-  if (node.structures.length) chip.append(drawStructures(node.structures, label));
-  if (!grid.children.length && !node.structures.length) {
-    chip.append(make("p", "empty", "No child instances or local processes."));
-  }
+  const schematic = drawDataSchematic(node, endpoints, label, signal => {
+    picker.value = signal;
+    highlight(signal);
+  });
+  chip.append(schematic.section);
   byId("diagram").replaceChildren(chip);
   drawInspector(node);
 
-  picker.addEventListener("change", () => {
-    const hits = endpoints.get(picker.value) || [];
+  function highlight(signal) {
+    const hits = endpoints.get(signal) || [];
     const touched = new Set(hits.map(hit => hit.card));
     for (const card of grid.querySelectorAll(".block")) card.dataset.hit = touched.has(card);
-    trace.hidden = !hits.length;
-    trace.replaceChildren();
-    if (!hits.length) return;
-
-    function lane(role, heading, fallback) {
-      const section = make("div", "trace-lane");
-      section.append(make("h3", "", heading));
-      const labels = new Set(hits.filter(hit => hit.role === role).map(hit => hit.label));
-      for (const text of labels) section.append(make("div", "trace-terminal", text));
-      if (!labels.size) section.append(make("p", "source", fallback));
-      return section;
-    }
-
-    const net = make("div", "trace-net");
-    net.append(make("span", "", "Selected signal"), make("strong", "", label(picker.value)));
-    trace.append(lane("driver", "Drivers", "No driver shown in this scope"), net,
-      lane("load", "Loads", "No load shown in this scope"));
-    if (hits.some(hit => hit.role === "shared")) {
-      trace.append(lane("shared", "Bidirectional / interface", ""));
-    }
-  });
-}
-
-function drawStructures(structures, signalLabel) {
-  const section = make("section", "structures");
-  section.append(make("h3", "structures-title", "RTL structures"));
-  const kinds = [
-    ["flop", "Flip-flops"], ["latch", "Latches"], ["memory", "Memories"],
-    ["mux", "Multiplexers"], ["gate", "Combinational gates"], ["operator", "Datapath operators"],
-  ];
-  for (const [kind, name] of kinds) {
-    const items = structures.filter(item => item.kind === kind);
-    if (!items.length) continue;
-    section.append(make("h4", "", name));
-    const row = make("div", "structure-grid");
-    for (const item of items) {
-      const card = make("details", "structure-card");
-      const heading = make("summary");
-      const caption = make("span", "structure-caption");
-      caption.append(make("strong", "", item.label));
-      heading.append(structureGlyph(item), caption);
-      const summary = [item.bits ? item.bits + " bit" + (item.bits === 1 ? "" : "s") : "",
-        item.occurrences.length > 1 ? item.occurrences.length + " occurrences" : ""].filter(Boolean).join(" · ");
-      if (summary) caption.append(make("span", "source", summary));
-      if (item.detail) caption.append(make("span", "source", item.detail));
-      card.append(heading);
-      const info = make("div", "structure-info");
-      if (item.inputs.length) info.append(make("p", "source", "References · " + item.inputs.map(signalLabel).join(", ")));
-      if (item.outputs.length) info.append(make("p", "source", "Assignment context · " + item.outputs.map(signalLabel).join(", ")));
-      for (const entry of item.occurrences) {
-        info.append(sourceLink(entry.source));
-        if (entry.text) info.append(make("pre", "", entry.text));
-      }
-      card.append(info);
-      row.append(card);
-    }
-    section.append(row);
+    schematic.highlight(signal);
   }
-  return section;
+
+  picker.addEventListener("change", () => highlight(picker.value));
 }
 
 function drawInspector(node) {

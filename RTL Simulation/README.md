@@ -28,12 +28,11 @@ GitHub input requires Git. A repository URL uses its default branch and a
    For the simulation hierarchy, select `tb_riscv_core` from the same directory.
 3. Click **Compile & elaborate**. Click a block to enter it. The breadcrumbs
    return to any parent, and the tree supports independent expand and collapse.
-4. Select a signal under **Trace signal** to see its drivers and loads in a
-   dedicated diagram. Click a block to see its ports, local RTL, and the
-   inferred structures in its scope. **Clock wiring** draws the local clock
-   source and consuming instance or register pins. **Data schematic** lets
-   you choose an output, register, or assignment and inspect its wired pins.
-   Expand a symbol under **RTL structures** for its source and expressions.
+4. Open **Data schematic** for every signal in the selected instance. The
+   wiring rows connect named nets to module ports, child pins, and local RTL.
+   Clock wiring and all circuit paths appear below the rows. Select a signal
+   from **Trace signal** or click a net name to highlight its connections
+   throughout the view.
 5. Click a file location under **Compiler diagnostics** to open the source
    read-only at the highlighted line and column.
 6. Open **Generated file list** to inspect or download `sources.f`. Paths are

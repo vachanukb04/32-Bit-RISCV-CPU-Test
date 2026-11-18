@@ -14,7 +14,7 @@ function svgText(parent, x, y, value, classes = "", anchor = "start") {
 }
 
 function svgPath(parent, d, classes = "symbol-body") {
-  parent.append(svgNode("path", {d, class: classes}));
+  return parent.appendChild(svgNode("path", {d, class: classes}));
 }
 
 function symbol(parent, kind, label, edge) {
@@ -56,6 +56,10 @@ function symbol(parent, kind, label, edge) {
       for (const y of [-13, 0, 13]) svgPath(parent,"M34 " + y + " h27", "symbol-line");
       for (const x of [37, 49, 61]) svgPath(parent,"M" + x + " -18 v36", "symbol-line");
       break;
+    case "expression":
+      svgPath(parent, "M0 -30 H67 V30 H0 Z");
+      svgText(parent, 33, 4, "RTL", "pin-name", "middle");
+      break;
     case "operator": {
       const signs = {Adder:"+", Subtractor:"−", Multiplier:"×", Equal:"=",
         "Not equal":"≠", "Less than":"<", "Greater than":">", "Left shift":"≪",
@@ -72,7 +76,7 @@ function outputX(node) {
     const gate = node.label.replace(/^(Logical|Reduction) /, "");
     return {AND:59, NAND:69, OR:64, NOR:74, XOR:64, XNOR:74, NOT:71, BUF:61}[gate] || 67;
   }
-  return {mux:64, flop:68, latch:68, memory:72, operator:71}[node.kind] || 0;
+  return {mux:64, flop:68, latch:68, memory:72, operator:71, expression:67}[node.kind] || 0;
 }
 
 function pinGeometry(node, pin) {
@@ -83,6 +87,9 @@ function pinGeometry(node, pin) {
   }
   if (node.kind === "flop" || node.kind === "latch") return {x:0, y: pin === "D" ? -5 : 21};
   if (node.kind === "memory") return {x:0, y: pin === "ADDR" ? -17 : 0};
+  if (node.kind === "expression") {
+    return {x:0, y: -24 + 48 * (parseInt(pin, 10) - 1) / Math.max(1, node.pins.length - 1)};
+  }
   if (node.kind === "operator") return {x:0, y: pin === "A" ? -17 : 17};
   if (node.kind === "gate") {
     const gate = node.label.replace(/^(Logical|Reduction) /, "");
@@ -92,7 +99,7 @@ function pinGeometry(node, pin) {
   return {x:0, y:0};
 }
 
-function renderSchematic(sheet) {
+function renderSchematic(sheet, track) {
   const nodes = sheet.nodes;
   const depth = [];
   const rows = new Map();
@@ -121,7 +128,8 @@ function renderSchematic(sheet) {
       const commands = end.bottom
         ? `M${startX} ${prev.y} H${bend} V${endY+13} H${endX} V${endY}`
         : `M${startX} ${prev.y} H${bend} V${endY} H${endX}`;
-      svgPath(wires, commands, end.clock ? "clock-wire" : "data-wire");
+      const wire = svgPath(wires, commands, end.clock ? "clock-wire" : "data-wire");
+      track(wire, [...(nodes[pin.source].nets || []), ...(node.nets || [])]);
       if (["flop", "latch", "memory", "mux"].includes(node.kind)) {
         const x = end.bottom ? endX + 7 : endX - 7;
         const y = end.bottom ? endY + 14 : endY - 4;
@@ -134,10 +142,13 @@ function renderSchematic(sheet) {
   for (const [i, node] of nodes.entries()) {
     const p = positions[i];
     if (node.kind === "terminal" || node.kind === "output") {
-      svg.append(svgNode("circle", {cx:p.x, cy:p.y, r:3, class:"terminal-dot"}));
-      svgText(svg, p.x + (node.kind === "terminal" ? -8 : 8), p.y - 7, shorten(node.label),
+      const terminal = svgNode("g");
+      terminal.append(svgNode("circle", {cx:p.x, cy:p.y, r:3, class:"terminal-dot"}));
+      svgText(terminal, p.x + (node.kind === "terminal" ? -8 : 8), p.y - 7, shorten(node.label),
         "net-label", node.kind === "terminal" ? "end" : "start");
-      if (node.label.length > 25) svg.append(svgNode("title", {}, node.label));
+      if (node.label.length > 25) terminal.append(svgNode("title", {}, node.label));
+      track(terminal, node.nets || []);
+      svg.append(terminal);
       continue;
     }
     const group = svgNode("g", {transform:`translate(${p.x} ${p.y})`});
@@ -149,6 +160,8 @@ function renderSchematic(sheet) {
       if (!node.write) svgText(group, 69, -23, "RD", "pin-name", "end");
     }
     if (node.kind !== "mux") svgText(group, 34, 47, shorten(node.label), "net-label", "middle");
+    if (node.label.length > 25) group.append(svgNode("title", {}, node.label));
+    track(group, node.nets || []);
     svg.append(group);
   }
   svg.append(labels);
@@ -159,7 +172,7 @@ function shorten(value, limit = 25) {
   return value.length > limit ? value.slice(0, limit - 1) + "…" : value;
 }
 
-function drawClockWiring(node) {
+function drawClockWiring(node, track) {
   const groups = new Map();
   for (const use of node.clockUses) {
     const key = use.signal;
@@ -195,6 +208,7 @@ function drawClockWiring(node) {
       svgText(svg, 648, y+4, use.pin, "pin-label", "end");
     }
     const wrap = make("div", "schematic-scroll");
+    track(svg, uses.flatMap(use => use.refs));
     wrap.append(svg);
     section.append(wrap);
     if (port?.binding) {
@@ -211,44 +225,96 @@ function drawClockWiring(node) {
   return section;
 }
 
-function drawDataSchematic(sheets) {
+function drawDataSchematic(node, endpoints, signalLabel, selectSignal) {
   const section = make("section", "schematic-section");
   const header = make("div", "section-head");
-  header.append(make("h3", "", "Data schematic"));
-  const select = make("select");
-  select.setAttribute("aria-label", "Data schematic output");
-  for (const [index, sheet] of sheets.entries()) select.append(new Option(sheet.title, index));
-  header.append(select);
-  const state = sheets.findIndex(sheet => sheet.nodes.some(node => ["flop", "latch"].includes(node.kind)));
-  select.value = String(state >= 0 ? state : 0);
-  const host = make("div");
-  function render() {
-    const sheet = sheets[Number(select.value)];
-    const wrap = make("div", "schematic-scroll");
-    wrap.append(renderSchematic(sheet));
-    host.replaceChildren(wrap);
-    const details = make("div", "schematic-caption");
-    if (sheet.expressionOnly) details.append(make("span", "source", "Assignment operands · enclosing control in source"));
-    details.append(sourceLink(sheet.source));
-    host.append(details);
-  }
-  select.addEventListener("change", render);
-  render();
-  section.append(header, host);
-  return section;
-}
+  header.append(make("h3", "", "Data schematic"), make("span", "", endpoints.size + " signals"));
+  section.append(header);
 
-function structureGlyph(item) {
-  const svg = svgNode("svg", {viewBox:"-14 -35 102 82", width:98, height:76,
-    "aria-hidden":"true", class:"structure-glyph"});
-  symbol(svg, item.kind, item.label, item.detail?.includes("negedge") ? "NegEdge" : "");
-  const gate = item.label.replace(/^(Logical|Reduction) /, "");
-  const unary = item.kind === "gate" && (["NOT","BUF"].includes(gate) || item.label.startsWith("Reduction "));
-  const sequential = ["flop","latch"].includes(item.kind);
-  for (const y of unary ? [0] : sequential ? [-5,21] : [-14,14]) {
-    svgPath(svg, `M-13 ${y} H0`, item.kind === "flop" && y === 21 ? "clock-wire" : "data-wire");
+  const highlighted = new Map();
+  const track = (element, nets) => {
+    for (const net of new Set(nets)) {
+      if (!highlighted.has(net)) highlighted.set(net, []);
+      highlighted.get(net).push(element);
+    }
+  };
+
+  const sheet = make("div", "net-sheet");
+  sheet.tabIndex = 0;
+  sheet.setAttribute("aria-label", "Signal wiring");
+  const signalRows = new Map();
+  const headings = make("div", "net-columns");
+  for (const name of ["Drivers", "Signal", "Loads"]) headings.append(make("span", "", name));
+  sheet.append(headings);
+  for (const [net, pins] of [...endpoints].sort(([a], [b]) => signalLabel(a).localeCompare(signalLabel(b)))) {
+    const row = make("div", "net-row");
+    const lanes = {driver: make("div", "net-side net-drivers"), load: make("div", "net-side net-loads")};
+    const seen = new Set();
+    for (const pin of pins) {
+      const key = pin.role + pin.label;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const lane = lanes[pin.role];
+      if (lane) lane.append(make("span", "net-pin", pin.label));
+      else {
+        lanes.driver.append(make("span", "net-pin", "↔ " + pin.label));
+        lanes.load.append(make("span", "net-pin", "↔ " + pin.label));
+      }
+    }
+    for (const lane of Object.values(lanes)) {
+      if (!lane.children.length) lane.append(make("span", "net-empty", "—"));
+    }
+    const name = make("button", "net-name", signalLabel(net));
+    name.type = "button";
+    name.title = signalLabel(net);
+    name.setAttribute("aria-pressed", "false");
+    name.addEventListener("click", () => selectSignal(net));
+    row.append(lanes.driver, name, lanes.load);
+    sheet.append(row);
+    signalRows.set(net, {row, name});
+    track(row, [net]);
   }
-  if (item.kind === "mux") svgPath(svg,"M22 27 V39","data-wire");
-  svgPath(svg,`M${outputX(item)} 0 H86`,"data-wire");
-  return svg;
+  if (endpoints.size) section.append(sheet);
+  else section.append(make("p", "empty", "No signals in this scope."));
+
+  if (node.clockUses.length) section.append(drawClockWiring(node, track));
+  if (node.schematics.length) {
+    const paths = make("div", "schematic-paths");
+    paths.append(make("h3", "", "Circuit paths"),
+      make("p", "source", "Matching net names connect paths within this instance."));
+    for (const circuit of node.schematics) {
+      const card = make("section", "circuit-path");
+      const heading = make("div", "section-head");
+      heading.append(make("h4", "", circuit.title), sourceLink(circuit.source));
+      const wrap = make("div", "schematic-scroll");
+      wrap.append(renderSchematic(circuit, track));
+      card.append(heading, wrap);
+      if (circuit.expressionOnly) {
+        const description = circuit.processKind === "Initial"
+          ? "Initialization" : "Assignment operands · enclosing control in source";
+        card.append(make("p", "source", description));
+      }
+      track(card, circuit.nodes.flatMap(part => part.nets || []));
+      paths.append(card);
+    }
+    section.append(paths);
+  }
+
+  let selected = "";
+  function highlight(net) {
+    for (const element of highlighted.get(selected) || []) element.classList.remove("net-highlight");
+    signalRows.get(selected)?.name.setAttribute("aria-pressed", "false");
+    selected = net;
+    for (const element of highlighted.get(net) || []) element.classList.add("net-highlight");
+    const item = signalRows.get(net);
+    if (item) {
+      item.name.setAttribute("aria-pressed", "true");
+      const bounds = sheet.getBoundingClientRect();
+      const row = item.row.getBoundingClientRect();
+      if (row.top < bounds.top + headings.offsetHeight || row.bottom > bounds.bottom) {
+        sheet.scrollTop += row.top - bounds.top - headings.offsetHeight;
+      }
+    }
+  }
+  return {section, highlight};
 }

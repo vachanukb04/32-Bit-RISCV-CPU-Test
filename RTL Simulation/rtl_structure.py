@@ -177,6 +177,12 @@ def describe_structure(members, locate, source_text):
                                     "text": source_text(node)})
 
     for member in members:
+        if isinstance(member, (ast.NetSymbol, ast.VariableSymbol)) and member.initializer is not None:
+            logic.append({
+                "kind": "Declaration initializer", "source": locate(member.location),
+                "text": str(member.syntax).strip(), "inputs": signal_refs(member.initializer),
+                "outputs": [member.hierarchicalPath],
+            })
         if isinstance(member, ast.VariableSymbol):
             dtype = member.type.canonicalType
             dimensions = []
@@ -205,6 +211,9 @@ def describe_structure(members, locate, source_text):
                 elif port is not None:
                     inputs.update(signal_refs(port))
             occurrence("gate", member.primitiveType.name.upper(), 1, member.syntax, inputs, outputs)
+            logic.append({"kind": member.primitiveType.name.upper(), "source": locate(member.location),
+                          "text": str(member.syntax).strip(), "inputs": sorted(inputs),
+                          "outputs": sorted(outputs)})
             continue
 
         if isinstance(member, ast.ContinuousAssignSymbol):

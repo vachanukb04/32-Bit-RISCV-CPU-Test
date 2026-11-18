@@ -19,20 +19,26 @@ class Drawing:
         self.nodes = []
 
     def add(self, kind, label, inputs=(), **fields):
-        index = len(self.nodes)
         pins = [{"pin": pin, "source": source} for pin, source in inputs]
+        index = len(self.nodes)
         self.nodes.append({"kind": kind, "label": label, "pins": pins, **fields})
         return index
 
-    def terminal(self, label):
-        return self.add("terminal", label)
+    def terminal(self, label, nets=()):
+        return self.add("terminal", label, nets=list(nets))
+
+    def output(self, label, driver, nets):
+        return self.add("output", label, [("IN", driver)], nets=list(nets))
 
     def expression(self, node):
         if isinstance(node, ast.ConversionExpression):
-            # Preserve casts that change the operand's width or signedness.
-            if node.type.bitWidth == node.operand.type.bitWidth and node.type.isSigned == node.operand.type.isSigned:
-                return self.expression(node.operand)
-            return self.terminal(self.text(node) or value_name(node, self.text))
+            operand = self.expression(node.operand)
+            if isinstance(node.operand, ast.IntegerLiteral) or (
+                node.type.bitWidth == node.operand.type.bitWidth and node.type.isSigned == node.operand.type.isSigned
+            ):
+                return operand
+            label = f"{node.type.bitWidth}-bit {'signed' if node.type.isSigned else 'unsigned'}"
+            return self.add("operator", label, [("A", operand)])
         if isinstance(node, ast.ConditionalExpression) and len(node.conditions) == 1:
             condition = node.conditions[0]
             if condition.pattern is None:
@@ -48,8 +54,17 @@ class Drawing:
         if isinstance(node, ast.ElementSelectExpression):
             symbol = node.value.getSymbolReference()
             if symbol is not None and symbol.type.isUnpackedArray:
-                return self.add("memory", symbol.name, [("ADDR", self.expression(node.selector))])
-        return self.terminal(value_name(node, self.text))
+                return self.add("memory", symbol.name, [("ADDR", self.expression(node.selector))],
+                                nets=[symbol.hierarchicalPath])
+        refs = signal_refs(node)
+        label = value_name(node, self.text) or node.kind.name
+        if len(refs) > 1:
+            # Preserve each dependency for expressions represented by their RTL text.
+            return self.add("expression", label, [
+                (str(i + 1), self.terminal(ref.rsplit(".", 1)[-1], [ref]))
+                for i, ref in enumerate(refs)
+            ])
+        return self.terminal(label, refs)
 
     def mux(self, when_zero, when_one, select):
         return self.add("mux", "MUX", [("0", when_zero), ("1", when_one), ("S", select)])
@@ -106,6 +121,15 @@ class Drawing:
 def data_schematics(members, structures, locate, text):
     schematics = []
     for member in members:
+        if isinstance(member, (ast.NetSymbol, ast.VariableSymbol)) and member.initializer is not None:
+            drawing = Drawing(text)
+            data = drawing.expression(member.initializer)
+            sink = drawing.output(member.name, data, [member.hierarchicalPath])
+            sheet = drawing.finish(member.name, locate(member.location), sink)
+            if isinstance(member, ast.VariableSymbol):
+                sheet.update(expressionOnly=True, processKind="Initial")
+            schematics.append(sheet)
+            continue
         if isinstance(member, ast.PrimitiveInstanceSymbol):
             gate = member.primitiveType.name.upper()
             ports = member.portConnections
@@ -116,7 +140,7 @@ def data_schematics(members, structures, locate, text):
                 pin_names = ("A", "B")
                 cell = drawing.add("gate", gate, zip(pin_names, map(drawing.expression, ports[1:])))
                 lhs = value_name(ports[0].left, text)
-                sink = drawing.add("output", lhs, [("IN", cell)])
+                sink = drawing.output(lhs, cell, [sym.hierarchicalPath for sym, _ in targets(ports[0].left)])
                 schematics.append(drawing.finish(lhs, locate(member.location), sink))
             continue
         if isinstance(member, ast.ContinuousAssignSymbol):
@@ -124,43 +148,46 @@ def data_schematics(members, structures, locate, text):
             lhs = text(item.left) or value_name(item.left, text)
             drawing = Drawing(text)
             driver = drawing.expression(item.right)
-            sink = drawing.add("output", lhs, [("IN", driver)])
+            sink = drawing.output(lhs, driver, [sym.hierarchicalPath for sym, _ in targets(item.left)])
             schematics.append(drawing.finish(lhs, locate(member.location), sink))
             continue
         if not isinstance(member, ast.ProceduralBlockSymbol):
             continue
         timing, edges = process_timing(member)
         writes = assignments(member.body)
-        if timing not in {"edge", "comb"} or not writes:
+        if not writes:
             continue
         dests = {symbol.hierarchicalPath: symbol for item in writes for symbol, _ in targets(item.left)}
         source = locate(member.location)
-        complete = process_schematic(member, timing, edges, writes, dests, structures, source, text)
+        complete = (process_schematic(member, timing, edges, writes, dests, structures, source, text)
+                    if timing in {"edge", "comb"} else None)
         if complete is not None:
             schematics.append(complete)
             continue
         for item in writes:
             lhs = list(targets(item.left))
-            if len(lhs) != 1:
+            if not lhs:
                 continue
             symbol, selected = lhs[0]
             site = locate(item.sourceRange.start)
-            title = f"{symbol.name} · value at L{site['line']}"
+            target = text(item.left) or symbol.name
+            title = f"{target} · value at L{site['line']}"
             drawing = Drawing(text)
             data = drawing.expression(item.right)
-            if isinstance(selected, ast.ElementSelectExpression) and symbol.type.isUnpackedArray:
+            if len(lhs) == 1 and isinstance(selected, ast.ElementSelectExpression) and symbol.type.isUnpackedArray:
                 # These are the actual operands of one write, with the guard left in the RTL.
                 pins = [("ADDR", drawing.expression(selected.selector)), ("WD", data)]
                 if len(edges) == 1:
-                    pins.append(("CLK", drawing.terminal(value_name(edges[0].expr, text))))
-                sink = drawing.add("memory", symbol.name, pins, write=True)
+                    pins.append(("CLK", drawing.terminal(value_name(edges[0].expr, text), signal_refs(edges[0].expr))))
+                sink = drawing.add("memory", symbol.name, pins, write=True, nets=[symbol.hierarchicalPath])
                 title = f"{symbol.name} · write at L{site['line']}"
             else:
-                sink = drawing.add("output", text(item.left) or symbol.name, [("IN", data)])
+                sink = drawing.output(target, data, sorted({sym.hierarchicalPath for sym, _ in lhs}))
             sheet = drawing.finish(title, site, sink)
             sheet["expressionOnly"] = True
+            sheet["processKind"] = member.procedureKind.name
             schematics.append(sheet)
-    return schematics
+    return sorted(schematics, key=lambda sheet: sheet.get("processKind") == "Initial")
 
 
 def process_schematic(member, timing, edges, writes, dests, structures, source, text):
@@ -186,7 +213,7 @@ def process_schematic(member, timing, edges, writes, dests, structures, source, 
             gate = drawing.expression(branch.conditions[0].expr)
             data = drawing.expression(writes[0].right)
             latch_node = drawing.add("latch", symbol.name + span(symbol.type), [("D", data), ("EN", gate)])
-            sink = drawing.add("output", symbol.name + span(symbol.type), [("IN", latch_node)])
+            sink = drawing.output(symbol.name + span(symbol.type), latch_node, [name])
             return drawing.finish(symbol.name, source, sink)
         return None
     if len(edges) > 1 or any(not item.isNonBlocking for item in writes) and timing == "edge":
@@ -194,16 +221,16 @@ def process_schematic(member, timing, edges, writes, dests, structures, source, 
     if kind == "logic" and name in access(member.body, writes):
         return None
     # Q feedback is a named terminal to keep the schematic acyclic.
-    initial = drawing.terminal(symbol.name + (" (Q feedback)" if kind == "flop" else ""))
+    initial = drawing.terminal(symbol.name + (" (Q feedback)" if kind == "flop" else ""), [name])
     try:
         data = drawing.next_value(member.body, name, initial)
     except ValueError:
         return None
     if kind == "flop":
-        clock = drawing.terminal(value_name(edges[0].expr, text))
+        clock = drawing.terminal(value_name(edges[0].expr, text), signal_refs(edges[0].expr))
         data = drawing.add("flop", symbol.name + span(symbol.type), [("D", data), ("CLK", clock)],
                            edge=edges[0].edge.name)
-    sink = drawing.add("output", symbol.name + span(symbol.type), [("IN", data)])
+    sink = drawing.output(symbol.name + span(symbol.type), data, [name])
     return drawing.finish(symbol.name, source, sink)
 
 

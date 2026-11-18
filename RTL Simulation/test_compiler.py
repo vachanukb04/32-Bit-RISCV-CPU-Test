@@ -101,7 +101,37 @@ class CompilerTests(unittest.TestCase):
         data, clock = [nodes[pin["source"]] for pin in flop["pins"]]
         self.assertEqual(clock["label"], "c")
         self.assertEqual(data["kind"], "mux")
-        self.assertEqual([nodes[pin["source"]]["label"] for pin in data["pins"]], ["n", "0", "rst"])
+        zero, one, select = [nodes[pin["source"]] for pin in data["pins"]]
+        self.assertEqual((zero["label"], select["label"]), ("n", "rst"))
+        while one["kind"] == "operator":
+            one = nodes[one["pins"][0]["source"]]
+        self.assertEqual(one["label"], "0")
+
+    def test_nested_address_comparators_connect_to_and(self):
+        self.write("rom.sv", """
+            module rom(input [31:0] address, output logic [31:0] data);
+              logic [31:0] mem [0:255];
+              wire valid;
+              wire spare;
+              assign valid = (address[31:10] == 22'd0) && (address[1:0] == 2'b00);
+              initial mem[0] = 32'h13;
+              always_comb data = valid ? mem[address[9:2]] : 32'h13;
+            endmodule
+        """)
+        root = compile_design(self.root, self.root, "rom", "rom.sv")["hierarchy"]
+        self.assertIn("rom.spare", root["nets"])
+        drawings = root["schematics"]
+        self.assertTrue(any(sheet.get("processKind") == "Initial" for sheet in drawings))
+        address = next(sheet for sheet in drawings if sheet["title"] == "valid")["nodes"]
+        self.assertEqual(address[-1]["nets"], ["rom.valid"])
+        driven_by = address[address[-1]["pins"][0]["source"]]
+        self.assertEqual(driven_by["label"], "Logical AND")
+        for pin in driven_by["pins"]:
+            comparator = address[pin["source"]]
+            self.assertEqual(comparator["label"], "Equal")
+            self.assertEqual(address[comparator["pins"][0]["source"]]["nets"], ["rom.address"])
+        data = next(sheet for sheet in drawings if sheet["title"] == "data")["nodes"]
+        self.assertTrue(any(shape["kind"] == "memory" and shape["nets"] == ["rom.mem"] for shape in data))
 
     def test_unknown_module_reports_compile_failure(self):
         self.write("top.v", "module top; unknown u(); endmodule")

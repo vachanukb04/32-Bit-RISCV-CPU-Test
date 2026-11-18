@@ -165,8 +165,10 @@ def describe_instance(root, manager, instance, parent_path=""):
     text = lambda obj: source_text(manager, obj)
     schematics = data_schematics(local_members, structures, locate, text)
     clocks = clock_routes(local_members, children, logic, locate, text)
+    nets = sorted({member.hierarchicalPath for member in local_members
+                   if isinstance(member, (ast.NetSymbol, ast.VariableSymbol))})
     return {
-        "schematics": schematics, "clockUses": clocks,
+        "schematics": schematics, "clockUses": clocks, "nets": nets,
         "path": path, "name": path.removeprefix(parent_path + ".") if parent_path else instance.name,
         "module": instance.definition.name, "source": location(root, manager, instance.definition.location),
         "ports": ports, "children": children, "logic": logic, "structures": structures,
