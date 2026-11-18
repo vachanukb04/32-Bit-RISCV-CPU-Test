@@ -25,21 +25,67 @@
       <p>What are you looking for today?</p>
     </div>
     <section class="workflow-deck" aria-labelledby="highlights-title">
-      <div class="workflow-gallery" id="workflow-gallery" role="group" aria-label="Workflow previews"></div>
+      <div class="workflow-gallery" id="workflow-gallery" role="group" aria-label="Workflow previews" tabindex="0">
+        <a class="workflow-card workflow-open" id="design-workflow" href="/workbench.html" aria-label="Understanding your design">
+          <span class="workflow-card-caption">
+            <strong>Understanding your design</strong>
+            <span>Explore module hierarchy, trace signals, and read the RTL behind each block.</span>
+          </span>
+        </a>
+      </div>
       <section class="workflow-highlight" aria-labelledby="highlights-title">
         <h2 id="highlights-title">Get the highlights.</h2>
-        <div class="workflow-tabs" id="workflow-tabs" role="group" aria-label="Highlights"></div>
-        <div id="workflow-window"></div>
-        <div class="workflow-copy" id="workflow-copy" aria-live="polite"></div>
+        <div class="workflow-tabs" id="workflow-tabs" role="group" aria-label="Highlights">
+          <a class="workflow-tab workflow-open" href="/workbench.html">Understanding your design</a>
+        </div>
+        <a class="design-preview-link" href="/workbench.html" aria-label="Open design workbench from its preview">
+          <div class="workflow-window design-window" id="design-preview" role="group" aria-label="Design workbench preview">
+            <div class="preview-heading">
+              <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <strong>RTL Workbench · Design hierarchy &amp; connectivity</strong>
+            </div>
+            <div class="preview-workspace">
+              <div class="preview-panel">
+                <strong class="preview-panel-title">Design hierarchy</strong>
+                <ul class="design-tree">
+                  <li>decode_unit
+                    <ul><li><strong>u_decode</strong> · decoder</li></ul>
+                  </li>
+                </ul>
+              </div>
+              <div class="preview-panel design-diagram">
+                <strong class="preview-panel-title">Data schematic</strong>
+                <div class="design-circuit" role="img" aria-label="The valid and enable inputs feed an AND gate, which drives execute.">
+                  <div class="design-inputs" aria-hidden="true"><code>valid</code><code>enable</code></div>
+                  <span class="design-gate" aria-hidden="true">&amp;</span>
+                  <span class="design-wire" aria-hidden="true"></span>
+                  <code aria-hidden="true">execute</code>
+                </div>
+              </div>
+              <div class="preview-panel">
+                <strong class="preview-panel-title">RTL source</strong>
+                <pre class="design-source"><code><span>module</span> decoder (
+  <span>input</span> valid, enable,
+  <span>output</span> execute
+);
+  <span>assign</span> execute = valid &amp; enable;
+<span>endmodule</span></code></pre>
+              </div>
+            </div>
+          </div>
+        </a>
+        <div class="workflow-copy">
+          <p class="workflow-name">Understanding your design</p>
+          <h3>Follow a signal through your RTL</h3>
+          <ul>
+            <li><strong>Design hierarchy.</strong> Open an instance to see its ports and local logic.</li>
+            <li><strong>Signal tracing.</strong> Click a wire to see its driver and connected loads.</li>
+            <li><strong>RTL source.</strong> Open the code behind a schematic element or case arm.</li>
+          </ul>
+        </div>
         <a class="workflow-cta" href="/workbench.html">Open design workbench</a>
       </section>
-      <div class="workflow-pagination" aria-label="Preview navigation" hidden>
-        <button type="button" id="previous-workflow" class="preview-step" aria-label="Previous preview">‹</button>
-        <div class="preview-pages" id="workflow-pages"></div>
-        <button type="button" id="next-workflow" class="preview-step" aria-label="Next preview">›</button>
-        <output id="workflow-count" class="preview-count" aria-label="Current preview"></output>
-      </div>
-      <button type="button" class="workflow-chooser" id="choose-workflow" hidden>Choose a workflow preview</button>
+      <p class="workflow-status">Other workflows are paused</p>
     </section>
   </main>
 </body>
