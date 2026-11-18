@@ -197,6 +197,7 @@ def describe_structure(members, locate, source_text):
                 ranges = "".join(f"[{left}:{right}]" for left, right in dimensions)
                 memories[member.hierarchicalPath] = {
                     "kind": "memory", "label": member.name, "bits": dtype.bitWidth,
+                    "net": member.hierarchicalPath,
                     "detail": f"{depth} words × {dtype.bitWidth} bits · {ranges} · word {span(dtype) or '[0]'}",
                     "inputs": set(), "outputs": set(), "occurrences": [{"source": locate(member.location)}],
                     "access": set(),

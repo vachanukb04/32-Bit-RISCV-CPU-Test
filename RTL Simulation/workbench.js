@@ -354,7 +354,7 @@ function drawDiagram() {
   const schematic = drawDataSchematic(node, endpoints, label, signal => {
     picker.value = signal;
     highlight(signal);
-  });
+  }, child => focus([...chain, child]));
   chip.append(schematic.section);
   byId("diagram").replaceChildren(chip);
   drawInspector(node);

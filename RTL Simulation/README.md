@@ -28,11 +28,11 @@ GitHub input requires Git. A repository URL uses its default branch and a
    For the simulation hierarchy, select `tb_riscv_core` from the same directory.
 3. Click **Compile & elaborate**. Click a block to enter it. The breadcrumbs
    return to any parent, and the tree supports independent expand and collapse.
-4. Open **Data schematic** for every signal in the selected instance. The
-   wiring rows connect named nets to module ports, child pins, and local RTL.
-   Clock wiring and all circuit paths appear below the rows. Select a signal
-   from **Trace signal** or click a net name to highlight its connections
-   throughout the view.
+4. Open **Data schematic** to see one wired canvas for the selected instance.
+   Module ports, child pins, gates, memory, and clock fanout appear on the same
+   canvas. Select a net from **Trace signal** or click a signal label to light
+   up its driver and branches. Use **Fit** for an overview and **100%** to read
+   pin names on a larger schematic.
 5. Click a file location under **Compiler diagnostics** to open the source
    read-only at the highlighted line and column.
 6. Open **Generated file list** to inspect or download `sources.f`. Paths are
@@ -55,16 +55,13 @@ all come from the project sources.
 - The selected sources are compiled as one compilation unit. The compiler
   resolves the top, parameters, generate scopes, arrays, and port bindings,
   and supplies diagnostics. The browser uses the actual elaborated instances.
-- Signal tracing groups module ports, instance bindings, and local reads and
-  writes by elaborated signal symbol within the current scope. Port bindings
-  show slices and expressions. The trace has signal-level granularity.
-- The RTL structures view groups edge-triggered state by written signal and
-  bit range, flags possible latches by conditional assignment coverage, and
-  shows declared memories, conditional selections, and combinational operators.
-  Complete data schematics cover continuous expressions and supported
-  single-destination processes. Other procedural sheets show the operands of
-  one assignment and link to the enclosing RTL. These are RTL-level
-  schematics. Synthesis determines the final cells and memory mapping.
+- The schematic joins expressions and port bindings by elaborated symbol in
+  the current scope. Slices have labeled taps, wires branch at marked junctions,
+  and child blocks open their own schematics. Tracing works at signal granularity.
+- Continuous expressions and supported single-destination processes expand
+  into circuit symbols. A complex process groups its input and output wiring
+  on a source-linked block that retains the individual assignment locations.
+  Synthesis determines the final cells and memory mapping.
 - Quoted headers found by the compiler are listed in the UI. Discovery parses
   candidates independently, so project-specific defines, package imports driven
   by earlier file macros, and custom include paths can require a future

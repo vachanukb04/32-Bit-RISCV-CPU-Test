@@ -51,13 +51,8 @@ function symbol(parent, kind, label, edge) {
       }
       break;
     }
-    case "memory":
-      svgPath(parent,"M0 -32 H72 V32 H0 Z");
-      for (const y of [-13, 0, 13]) svgPath(parent,"M34 " + y + " h27", "symbol-line");
-      for (const x of [37, 49, 61]) svgPath(parent,"M" + x + " -18 v36", "symbol-line");
-      break;
     case "expression":
-      svgPath(parent, "M0 -30 H67 V30 H0 Z");
+      svgPath(parent, `M0 ${-edge} H67 V${edge} H0 Z`);
       svgText(parent, 33, 4, "RTL", "pin-name", "middle");
       break;
     case "operator": {
@@ -76,7 +71,7 @@ function outputX(node) {
     const gate = node.label.replace(/^(Logical|Reduction) /, "");
     return {AND:59, NAND:69, OR:64, NOR:74, XOR:64, XNOR:74, NOT:71, BUF:61}[gate] || 67;
   }
-  return {mux:64, flop:68, latch:68, memory:72, operator:71, expression:67}[node.kind] || 0;
+  return {mux:64, flop:68, latch:68, operator:71, expression:67}[node.kind] || 0;
 }
 
 function pinGeometry(node, pin) {
@@ -86,235 +81,294 @@ function pinGeometry(node, pin) {
     return {x: 0, y: pin === "0" ? -14 : 14};
   }
   if (node.kind === "flop" || node.kind === "latch") return {x:0, y: pin === "D" ? -5 : 21};
-  if (node.kind === "memory") return {x:0, y: pin === "ADDR" ? -17 : 0};
   if (node.kind === "expression") {
-    return {x:0, y: -24 + 48 * (parseInt(pin, 10) - 1) / Math.max(1, node.pins.length - 1)};
+    return {x:0, y: 24 * (parseInt(pin, 10) - (node.inputs.size + 1) / 2)};
   }
   if (node.kind === "operator") return {x:0, y: pin === "A" ? -17 : 17};
   if (node.kind === "gate") {
     const gate = node.label.replace(/^(Logical|Reduction) /, "");
-    if (node.pins.length === 1) return {x: gate.includes("OR") ? 9 : 0, y:0};
+    if (node.inputs.size === 1) return {x: gate.includes("OR") ? 9 : 0, y:0};
     return {x: gate.includes("OR") ? (gate.includes("X") ? 0 : 7) : 0, y:pin === "A" ? -15 : 15};
   }
   return {x:0, y:0};
-}
-
-function renderSchematic(sheet, track) {
-  const nodes = sheet.nodes;
-  const depth = [];
-  const rows = new Map();
-  const positions = nodes.map((node, index) => {
-    const level = node.pins.length ? 1 + Math.max(...node.pins.map(pin => depth[pin.source])) : 0;
-    depth.push(level);
-    const row = rows.get(level) || 0;
-    rows.set(level, row + 1);
-    return {x:155 + level * 168, y:52 + row * 83};
-  });
-  const width = 325 + Math.max(...depth) * 168;
-  const height = 27 + Math.max(...rows.values()) * 83;
-  const svg = svgNode("svg", {class:"circuit-svg", viewBox:`0 0 ${width} ${height}`, width, height,
-    role:"img", "aria-label": "RTL schematic for " + sheet.title});
-  const wires = svgNode("g");
-  const labels = svgNode("g");
-  for (const [i, node] of nodes.entries()) {
-    const pos = positions[i];
-    for (const [j, pin] of node.pins.entries()) {
-      const prev = positions[pin.source];
-      const end = pinGeometry(node, pin.pin);
-      const startX = prev.x + outputX(nodes[pin.source]);
-      const endX = pos.x + end.x;
-      const endY = pos.y + end.y;
-      const bend = pos.x - 28 - j * 11;
-      const commands = end.bottom
-        ? `M${startX} ${prev.y} H${bend} V${endY+13} H${endX} V${endY}`
-        : `M${startX} ${prev.y} H${bend} V${endY} H${endX}`;
-      const wire = svgPath(wires, commands, end.clock ? "clock-wire" : "data-wire");
-      track(wire, [...(nodes[pin.source].nets || []), ...(node.nets || [])]);
-      if (["flop", "latch", "memory", "mux"].includes(node.kind)) {
-        const x = end.bottom ? endX + 7 : endX - 7;
-        const y = end.bottom ? endY + 14 : endY - 4;
-        svgText(labels, x, y, pin.pin, end.clock ? "clock-ink" : "pin-label",
-          end.bottom ? "start" : "end");
-      }
-    }
-  }
-  svg.append(wires);
-  for (const [i, node] of nodes.entries()) {
-    const p = positions[i];
-    if (node.kind === "terminal" || node.kind === "output") {
-      const terminal = svgNode("g");
-      terminal.append(svgNode("circle", {cx:p.x, cy:p.y, r:3, class:"terminal-dot"}));
-      svgText(terminal, p.x + (node.kind === "terminal" ? -8 : 8), p.y - 7, shorten(node.label),
-        "net-label", node.kind === "terminal" ? "end" : "start");
-      if (node.label.length > 25) terminal.append(svgNode("title", {}, node.label));
-      track(terminal, node.nets || []);
-      svg.append(terminal);
-      continue;
-    }
-    const group = svgNode("g", {transform:`translate(${p.x} ${p.y})`});
-    symbol(group, node.kind, node.label, node.edge);
-    if (node.kind === "memory") {
-      if (node.write && node.pins.some(pin => pin.pin === "CLK")) {
-        svgPath(group, "M0 14 l8 7 -8 7", "symbol-line");
-      }
-      if (!node.write) svgText(group, 69, -23, "RD", "pin-name", "end");
-    }
-    if (node.kind !== "mux") svgText(group, 34, 47, shorten(node.label), "net-label", "middle");
-    if (node.label.length > 25) group.append(svgNode("title", {}, node.label));
-    track(group, node.nets || []);
-    svg.append(group);
-  }
-  svg.append(labels);
-  return svg;
 }
 
 function shorten(value, limit = 25) {
   return value.length > limit ? value.slice(0, limit - 1) + "…" : value;
 }
 
-function drawClockWiring(node, track) {
-  const groups = new Map();
-  for (const use of node.clockUses) {
-    const key = use.signal;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(use);
-  }
-  const section = make("section", "clock-section");
-  section.append(make("h3", "", "Clock wiring"));
-  for (const [signal, uses] of groups) {
-    const port = node.ports.find(port => port.direction === "input" && port.name === signal);
-    const left = port ? "Input " + signal : [...uses[0].driverPorts, ...uses[0].driverExpressions].join(", ") ||
-      (uses[0].drivers.length ? "Local RTL driver" : "Clock expression");
-    const rows = uses.map((_, i) => 39 + i * 37);
-    const mid = rows[Math.floor((rows.length - 1) / 2)];
-    const height = rows.at(-1) + 33;
-    const svg = svgNode("svg", {viewBox:`0 0 680 ${height}`, width:680, height, class:"circuit-svg",
-      role:"img", "aria-label": left + " drives " + uses.map(u => u.label).join(", ")});
-    svgText(svg, 176, mid - 8, shorten(left), "net-label", "end");
-    svgText(svg, 258, mid - 9, shorten(signal), "clock-ink", "middle");
-    svg.append(svgNode("circle", {cx:182, cy:mid, r:3, class:"terminal-dot"}));
-    svgPath(svg, `M182 ${mid} H341 M341 ${rows[0]} V${rows.at(-1)}`, "clock-wire");
-    for (const [i, use] of uses.entries()) {
-      const y = rows[i];
-      svgPath(svg, `M341 ${y} H420`, "clock-wire");
-      svg.append(svgNode("circle", {cx:341, cy:y, r:3, class:"clock-junction"}));
-      if (use.edge === "NegEdge") svg.append(svgNode("circle", {cx:418, cy:y, r:3, class:"symbol-body"}));
-      if (["PosEdge","NegEdge"].includes(use.edge) && ["CLK","Clock input"].includes(use.pin)) {
-        svgPath(svg, `M422 ${y-6} L430 ${y} L422 ${y+6}`, "symbol-line");
-      } else {
-        svg.append(svgNode("circle", {cx:422, cy:y, r:2, class:"clock-junction"}));
-      }
-      svgText(svg, 440, y+4, shorten(use.label, 31), "net-label");
-      svgText(svg, 648, y+4, use.pin, "pin-label", "end");
-    }
-    const wrap = make("div", "schematic-scroll");
-    track(svg, uses.flatMap(use => use.refs));
-    wrap.append(svg);
-    section.append(wrap);
-    if (port?.binding) {
-      section.append(make("p", "source", "Parent binding · " + port.binding));
-    }
-    const sourceLinks = make("div", "clock-sources");
-    const addLink = (text, site) => sourceLinks.append(make("span", "source", text), sourceLink(site));
-    for (const site of uses[0].drivers) addLink("Driver", site);
-    for (const use of uses) addLink(use.label, use.source);
-    const details = make("details", "clock-details");
-    details.append(make("summary", "", "Clock pins and RTL sources"), sourceLinks);
-    section.append(details);
-  }
-  return section;
+function usesBox(node) {
+  return ["process", "bank", "instance", "binding"].includes(node.kind);
 }
 
-function drawDataSchematic(node, endpoints, signalLabel, selectSignal) {
+function pinPosition(node, pin, outgoing) {
+  if (usesBox(node)) {
+    const pins = outgoing ? node.outputs : node.inputs;
+    const index = [...pins.keys()].indexOf(pin);
+    return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + 48 + index * 24};
+  }
+  if (["net", "tap", "literal"].includes(node.kind)) {
+    return {x: node.x + (outgoing ? node.width : 0), y: node.y};
+  }
+  if (outgoing) return {x: node.x + outputX(node), y: node.y};
+  const point = pinGeometry(node, pin);
+  return {x: node.x + point.x, y: node.y + point.y, bottom: point.bottom};
+}
+
+function routeSchematic(graph, layout, track) {
+  const layer = svgNode("g", {class: "wire-layer"});
+  const paths = svgNode("g");
+  const junctions = svgNode("g");
+  layer.append(paths, junctions);
+  const route = createWireRouter(graph, layout);
+  const groups = new Map();
+  for (const edge of graph.edges) {
+    const key = edge.from.id + ":" + edge.output;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(edge);
+  }
+  let id = 0;
+  for (const edges of groups.values()) {
+    id++;
+    const points = new Map();
+    const record = (point, neighbor, edge) => {
+      const key = point.x + "," + point.y;
+      if (!points.has(key)) points.set(key, {point, neighbors: new Set(), nets: new Set(), clock: false});
+      const item = points.get(key);
+      item.neighbors.add(neighbor.x + "," + neighbor.y);
+      if (edge.net) item.nets.add(edge.net);
+      item.clock ||= edge.clock;
+    };
+    for (const edge of edges) {
+      const start = pinPosition(edge.from, edge.output, true);
+      const end = pinPosition(edge.to, edge.input, false);
+      const launch = {x: edge.from.rightChannel, y: snap(start.y)};
+      const land = {
+        x: edge.to.leftChannel,
+        y: end.bottom ? snap(edge.to.y + edge.to.height / 2 + 12) : snap(end.y)
+      };
+      const pointsOnGrid = route(launch, land, id);
+      const path = [start, {x: launch.x, y: start.y}, ...pointsOnGrid];
+      if (end.bottom) path.push({x: end.x, y: land.y});
+      else path.push({x: land.x, y: end.y});
+      path.push(end);
+      const distinct = path.filter((point, i) => !i || path[i - 1].x !== point.x || path[i - 1].y !== point.y);
+      const corners = distinct.filter((point, i) => {
+        if (i === 0 || i === distinct.length - 1) return true;
+        const a = distinct[i - 1], b = distinct[i + 1];
+        return !(a.x === point.x && point.x === b.x) && !(a.y === point.y && point.y === b.y);
+      });
+      const commands = corners.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
+      const wire = svgPath(paths, commands, edge.clock ? "clock-wire" : "data-wire");
+      wire.setAttribute("data-from", edge.from.label);
+      wire.setAttribute("data-to", edge.to.label);
+      if (edge.net) track(wire, edge.net);
+      if (edges.length > 1) {
+        for (let i = 1; i < pointsOnGrid.length; i++) {
+          const a = pointsOnGrid[i - 1], b = pointsOnGrid[i];
+          record(a, b, edge);
+          record(b, a, edge);
+        }
+      }
+    }
+    for (const {point, neighbors, nets, clock} of points.values()) {
+      if (neighbors.size < 3) continue;
+      const dot = svgNode("circle", {cx: point.x, cy: point.y, r: 3,
+        class: "wire-junction" + (clock ? " clock-junction" : "")});
+      junctions.append(dot);
+      for (const net of nets) track(dot, net);
+    }
+  }
+  return layer;
+}
+
+function drawSchematicSymbol(node) {
+  const group = svgNode("g", {class: "circuit-node " + node.kind, "data-label": node.label});
+  const local = svgNode("g", {transform: `translate(${node.x} ${node.y})`});
+  group.append(local);
+
+  if (["net", "literal", "tap"].includes(node.kind)) {
+    const half = node.height / 2;
+    local.append(svgNode("rect", {x: 0, y: -half, width: node.width, height: node.height, rx: 4,
+      class: node.kind === "net" ? "net-body" : "terminal-body"}));
+    svgText(local, node.width / 2, node.caption ? -2 : 4, shorten(node.label, 27), "net-label", "middle");
+    if (node.caption) svgText(local, node.width / 2, 13, node.caption, "pin-label", "middle");
+  } else if (usesBox(node)) {
+    const top = -node.height / 2;
+    local.append(svgNode("rect", {x: 0, y: top, width: node.width, height: node.height, rx: 4,
+      class: "symbol-body"}));
+    svgText(local, 9, top + 16, shorten(node.label, 27), "net-label");
+    if (node.caption) svgText(local, 9, top + 31, shorten(node.caption, 31), "pin-label");
+    for (const outgoing of [false, true]) {
+      const pins = outgoing ? node.outputs : node.inputs;
+      for (const [key, label] of pins) {
+        const point = pinPosition(node, key, outgoing);
+        const x = point.x - node.x;
+        const y = point.y - node.y;
+        local.append(svgNode("circle", {cx: x, cy: y, r: 2.8, class: "terminal-dot"}));
+        svgText(local, x + (outgoing ? -7 : 7), y + 3, shorten(label, outgoing ? 18 : 24),
+          "pin-label", outgoing ? "end" : "start");
+      }
+    }
+    if (node.kind === "bank") {
+      const center = node.width / 2;
+      for (const dy of [-10, 0, 10]) svgPath(local, `M${center - 13} ${dy} h26`, "memory-grid");
+      for (const dx of [-10, 0, 10]) svgPath(local, `M${center + dx} -13 v26`, "memory-grid");
+    }
+  } else {
+    symbol(local, node.kind, node.label, node.kind === "expression" ? node.height / 2 - 7 : node.edge);
+    if (node.kind !== "mux") svgText(local, 34, node.height / 2 + 9, shorten(node.label, 21), "net-label", "middle");
+    if (["flop", "latch", "mux"].includes(node.kind)) {
+      for (const pin of node.inputs.keys()) {
+        const point = pinGeometry(node, pin);
+        const x = point.bottom ? point.x + 6 : point.x - 6;
+        const y = point.bottom ? point.y + 12 : point.y - 4;
+        svgText(local, x, y, pin, point.clock ? "clock-ink" : "pin-label", point.bottom ? "start" : "end");
+      }
+    }
+  }
+  group.append(svgNode("title", {}, [node.label, node.caption, node.port?.binding &&
+    "Parent connection " + node.port.binding].filter(Boolean).join("\n")));
+  return group;
+}
+
+function makeInteractive(group, label, action) {
+  group.classList.add("interactive-node");
+  group.setAttribute("role", "button");
+  group.setAttribute("tabindex", "0");
+  group.setAttribute("aria-label", label);
+  group.addEventListener("click", action);
+  group.addEventListener("keydown", event => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    action();
+  });
+}
+
+function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild) {
   const section = make("section", "schematic-section");
-  const header = make("div", "section-head");
-  header.append(make("h3", "", "Data schematic"), make("span", "", endpoints.size + " signals"));
+  const header = make("div", "schematic-heading");
+  header.append(make("h3", "", "Data schematic"), make("span", "source", signals.size + " signals"));
   section.append(header);
 
+  const graph = buildSchematicGraph(scope, signals, signalLabel);
+  if (!graph.nodes.length) {
+    section.append(make("p", "empty", "No circuit connections were elaborated in this scope."));
+    return {section, highlight() {}};
+  }
+
+  const layout = layoutSchematic(graph);
+  const zoomBar = make("div", "schematic-tools");
+  const minus = make("button", "schematic-tool", "−");
+  const plus = make("button", "schematic-tool", "+");
+  const fit = make("button", "schematic-tool", "Fit");
+  const normal = make("button", "schematic-tool", "100%");
+  const readout = make("span", "source");
+  minus.setAttribute("aria-label", "Zoom out");
+  plus.setAttribute("aria-label", "Zoom in");
+  fit.setAttribute("aria-label", "Fit schematic");
+  normal.setAttribute("aria-label", "Actual size");
+  zoomBar.append(minus, readout, plus, fit, normal);
+  header.append(zoomBar);
+  if (graph.edges.some(edge => edge.clock)) {
+    header.append(make("span", "clock-key", "Clock"));
+  }
+
+  const viewport = make("div", "schematic-scroll");
+  viewport.tabIndex = 0;
+  viewport.setAttribute("aria-label", "Schematic viewport");
+  const svg = svgNode("svg", {class: "circuit-svg", viewBox: `0 0 ${layout.width} ${layout.height}`,
+    width: layout.width, height: layout.height, role: "group",
+    "aria-label": "Connected RTL schematic for " + scope.name});
+  const details = make("div", "schematic-source");
   const highlighted = new Map();
-  const track = (element, nets) => {
-    for (const net of new Set(nets)) {
-      if (!highlighted.has(net)) highlighted.set(net, []);
-      highlighted.get(net).push(element);
-    }
-  };
-
-  const sheet = make("div", "net-sheet");
-  sheet.tabIndex = 0;
-  sheet.setAttribute("aria-label", "Signal wiring");
-  const signalRows = new Map();
-  const headings = make("div", "net-columns");
-  for (const name of ["Drivers", "Signal", "Loads"]) headings.append(make("span", "", name));
-  sheet.append(headings);
-  for (const [net, pins] of [...endpoints].sort(([a], [b]) => signalLabel(a).localeCompare(signalLabel(b)))) {
-    const row = make("div", "net-row");
-    const lanes = {driver: make("div", "net-side net-drivers"), load: make("div", "net-side net-loads")};
-    const seen = new Set();
-    for (const pin of pins) {
-      const key = pin.role + pin.label;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const lane = lanes[pin.role];
-      if (lane) lane.append(make("span", "net-pin", pin.label));
-      else {
-        lanes.driver.append(make("span", "net-pin", "↔ " + pin.label));
-        lanes.load.append(make("span", "net-pin", "↔ " + pin.label));
-      }
-    }
-    for (const lane of Object.values(lanes)) {
-      if (!lane.children.length) lane.append(make("span", "net-empty", "—"));
-    }
-    const name = make("button", "net-name", signalLabel(net));
-    name.type = "button";
-    name.title = signalLabel(net);
-    name.setAttribute("aria-pressed", "false");
-    name.addEventListener("click", () => selectSignal(net));
-    row.append(lanes.driver, name, lanes.load);
-    sheet.append(row);
-    signalRows.set(net, {row, name});
-    track(row, [net]);
-  }
-  if (endpoints.size) section.append(sheet);
-  else section.append(make("p", "empty", "No signals in this scope."));
-
-  if (node.clockUses.length) section.append(drawClockWiring(node, track));
-  if (node.schematics.length) {
-    const paths = make("div", "schematic-paths");
-    paths.append(make("h3", "", "Circuit paths"),
-      make("p", "source", "Matching net names connect paths within this instance."));
-    for (const circuit of node.schematics) {
-      const card = make("section", "circuit-path");
-      const heading = make("div", "section-head");
-      heading.append(make("h4", "", circuit.title), sourceLink(circuit.source));
-      const wrap = make("div", "schematic-scroll");
-      wrap.append(renderSchematic(circuit, track));
-      card.append(heading, wrap);
-      if (circuit.expressionOnly) {
-        const description = circuit.processKind === "Initial"
-          ? "Initialization" : "Assignment operands · enclosing control in source";
-        card.append(make("p", "source", description));
-      }
-      track(card, circuit.nodes.flatMap(part => part.nets || []));
-      paths.append(card);
-    }
-    section.append(paths);
+  function track(element, net) {
+    if (!highlighted.has(net)) highlighted.set(net, []);
+    highlighted.get(net).push(element);
   }
 
+  svg.append(routeSchematic(graph, layout, track));
+  for (const node of graph.nodes) {
+    const group = drawSchematicSymbol(node);
+    if (node.net) track(group, node.net);
+    if (node.kind === "net") {
+      makeInteractive(group, "Trace " + node.label, () => selectSignal(node.net));
+      group.setAttribute("aria-pressed", "false");
+    } else if (node.child) {
+      makeInteractive(group, "Open " + node.label + " " + node.caption, () => openChild(node.child));
+    } else if (node.sources?.length || node.initializers?.length) {
+      makeInteractive(group, "View " + node.label + " RTL sources", () => {
+        details.replaceChildren(make("strong", "", node.label));
+        const list = make("ul");
+        for (const item of [...(node.sources || []), ...(node.initializers || [])]) {
+          const row = make("li", "source");
+          row.append(make("span", "", item.label), sourceLink(item.source));
+          list.append(row);
+        }
+        details.append(list);
+      });
+    } else if (node.source) {
+      makeInteractive(group, "Open RTL for " + node.label, () => openSource(node.source));
+    }
+    svg.append(group);
+  }
+  viewport.append(svg);
+  section.append(viewport, details);
+
+  let zoom = 1;
   let selected = "";
-  function highlight(net) {
-    for (const element of highlighted.get(selected) || []) element.classList.remove("net-highlight");
-    signalRows.get(selected)?.name.setAttribute("aria-pressed", "false");
-    selected = net;
-    for (const element of highlighted.get(net) || []) element.classList.add("net-highlight");
-    const item = signalRows.get(net);
-    if (item) {
-      item.name.setAttribute("aria-pressed", "true");
-      const bounds = sheet.getBoundingClientRect();
-      const row = item.row.getBoundingClientRect();
-      if (row.top < bounds.top + headings.offsetHeight || row.bottom > bounds.bottom) {
-        sheet.scrollTop += row.top - bounds.top - headings.offsetHeight;
-      }
+  let manuallyZoomed = false;
+  function setZoom(value, keepCenter = true) {
+    const x = (viewport.scrollLeft + viewport.clientWidth / 2) / zoom;
+    const y = (viewport.scrollTop + viewport.clientHeight / 2) / zoom;
+    zoom = Math.max(.06, Math.min(2, value));
+    svg.setAttribute("width", Math.ceil(layout.width * zoom));
+    svg.setAttribute("height", Math.ceil(layout.height * zoom));
+    readout.textContent = Math.round(100 * zoom) + "%";
+    if (keepCenter) {
+      viewport.scrollLeft = x * zoom - viewport.clientWidth / 2;
+      viewport.scrollTop = y * zoom - viewport.clientHeight / 2;
     }
   }
-  return {section, highlight};
+  function zoomToFit() {
+    const height = parseFloat(getComputedStyle(viewport).maxHeight);
+    setZoom(Math.min(1, (viewport.clientWidth - 4) / layout.width, (height - 4) / layout.height), false);
+    viewport.scrollTop = viewport.scrollLeft = 0;
+  }
+  for (const [button, action] of [[minus, () => setZoom(zoom / 1.25)],
+    [plus, () => setZoom(zoom * 1.25)], [normal, () => setZoom(1)], [fit, zoomToFit]]) {
+    button.addEventListener("click", () => {
+      manuallyZoomed = true;
+      action();
+    });
+  }
+  requestAnimationFrame(() => {
+    if (!viewport.isConnected || manuallyZoomed) return;
+    if (graph.nodes.length <= 25 && viewport.clientWidth >= 680) zoomToFit();
+    else setZoom(.9, false);
+  });
+
+  return {section, highlight(net) {
+    for (const element of highlighted.get(selected) || []) {
+      element.classList.remove("net-highlight");
+      if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "false");
+    }
+    selected = net;
+    svg.classList.toggle("has-trace", Boolean(net));
+    for (const element of highlighted.get(net) || []) {
+      element.classList.add("net-highlight");
+      if (element.hasAttribute("aria-pressed")) element.setAttribute("aria-pressed", "true");
+    }
+    const node = graph.anchors.get(net);
+    if (node) {
+      const x = (node.x + node.width / 2) * zoom;
+      const y = node.y * zoom;
+      if (x < viewport.scrollLeft + 28 || x > viewport.scrollLeft + viewport.clientWidth - 28) {
+        viewport.scrollLeft = x - viewport.clientWidth / 2;
+      }
+      if (y < viewport.scrollTop + 24 || y > viewport.scrollTop + viewport.clientHeight - 24) {
+        viewport.scrollTop = y - viewport.clientHeight / 2;
+      }
+    }
+  }};
 }

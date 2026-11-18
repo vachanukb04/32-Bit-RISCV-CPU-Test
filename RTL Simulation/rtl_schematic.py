@@ -186,6 +186,7 @@ def data_schematics(members, structures, locate, text):
             sheet = drawing.finish(title, site, sink)
             sheet["expressionOnly"] = True
             sheet["processKind"] = member.procedureKind.name
+            sheet["processSource"] = source
             schematics.append(sheet)
     return sorted(schematics, key=lambda sheet: sheet.get("processKind") == "Initial")
 
