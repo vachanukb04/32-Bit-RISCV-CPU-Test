@@ -169,6 +169,20 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .circuit-svg .trace-load:not(.trace-driver) .net-label { fill: #c5ffef; font-weight: 700; }
 .circuit-svg circle.net-highlight, .circuit-svg g.net-highlight .net-label { fill: #ffdc88; font-weight: 700; }
 .circuit-svg g.net-highlight :is(.net-body, .terminal-body, .symbol-body) { stroke: #ffdc88; stroke-width: 2.5; }
+.decision-branch { fill: none; stroke: #87ad9a; stroke-width: 1; opacity: .65; }
+.decision-badge { fill: #2c5043; stroke: #598674; stroke-width: .7; }
+.decision-badge-text, .decision-text, .bit-field-range, .bit-field-text { font: 10.5px var(--mono); }
+.decision-badge-text { fill: #c9edda; font-weight: 700; font-size: 9px; }
+.decision-text, .bit-field-text { fill: #e5f5ed; }
+.decision-if .decision-badge, .decision-else .decision-badge,
+.decision-sweep .decision-badge { fill: #554c2d; stroke: #b5a36a; }
+.decision-if .decision-badge-text, .decision-else .decision-badge-text,
+.decision-sweep .decision-badge-text { fill: #fff0b7; }
+.decision-case .decision-badge, .decision-case-z .decision-badge, .decision-case-x .decision-badge,
+.decision-case-inside .decision-badge { fill: #224b54; stroke: #5b9aa2; }
+.decision-case .decision-badge-text { fill: #b0edf4; }
+.bit-field-body { fill: #142a22; stroke: #476b5d; stroke-width: .7; }
+.bit-field-range { fill: #83ddca; font-weight: 700; }
 .schematic-source:not(:empty) { margin: .55rem 0; padding: .6rem; border: 1px solid #426256; border-radius: 6px; }
 .schematic-source ul { margin: .4rem 0 0; padding-left: 1.15rem; }
 .schematic-source li { margin: .22rem 0; }

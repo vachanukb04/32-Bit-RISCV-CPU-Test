@@ -100,9 +100,12 @@ test("pins module inputs and outputs to opposite edges, including output ports u
   const layout = api.layoutSchematic(graph);
   const input = graph.nodes.find(node => node.port?.name === "input_a");
   const outputs = graph.nodes.filter(node => node.port?.direction === "output");
+  assert.equal(input.x, 36);
   assert.equal(input.x, Math.min(...graph.nodes.map(node => node.x)));
   assert.equal(outputs.length, 3);
-  assert.ok(outputs.every(node => node.x + node.width === layout.width - 60));
+  assert.equal(new Set(outputs.map(node => node.width)).size, 1);
+  assert.equal(new Set(outputs.map(node => node.x)).size, 1);
+  assert.ok(outputs.every(node => node.x + node.width === layout.width - 36));
   assert.ok(graph.nodes.filter(node => !node.port).every(node => node.x > input.x &&
     node.x + node.width < outputs[0].x));
 });

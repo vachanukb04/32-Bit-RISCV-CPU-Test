@@ -6,8 +6,9 @@ from pathlib import Path
 import pyslang
 from pyslang import ast, parsing, syntax
 
+from rtl_process_view import process_view
 from rtl_schematic import clock_routes, data_schematics
-from rtl_structure import describe_structure, signal_refs, targets
+from rtl_structure import describe_structure, process_timing, signal_refs, targets
 
 
 SOURCE_EXTENSIONS = {".v", ".sv"}
@@ -163,6 +164,21 @@ def describe_instance(root, manager, instance, parent_path=""):
         lambda obj: source_text(manager, obj))
     locate = lambda loc: location(root, manager, loc)
     text = lambda obj: source_text(manager, obj)
+    logic_by_location = {(entry["source"]["file"], entry["source"]["line"], entry["source"]["column"]): entry
+                         for entry in logic if entry["source"]}
+    for member in local_members:
+        if isinstance(member, ast.ProceduralBlockSymbol):
+            site = locate(member.location)
+            entry = logic_by_location.get((site["file"], site["line"], site["column"]))
+            if entry is None:
+                continue
+            timing, _ = process_timing(member)
+            view = process_view(member, timing, locate, text)
+            if view:
+                entry["view"] = view
+                if view["kind"] == "initialization":
+                    entry["inputs"] = []
+                    entry["outputs"] = sorted(view["outputs"])
     schematics = data_schematics(local_members, structures, locate, text)
     clocks = clock_routes(local_members, children, logic, locate, text)
     nets = sorted({member.hierarchicalPath for member in local_members

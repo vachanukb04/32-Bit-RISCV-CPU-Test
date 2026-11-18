@@ -60,9 +60,12 @@ all come from the project sources.
   the current scope. Slices have labeled taps, wires branch at marked junctions,
   and child blocks open their own schematics. Tracing works at signal granularity.
 - Continuous expressions and supported single-destination processes expand
-  into circuit symbols. A complex process groups its input and output wiring
-  on a source-linked block that retains the individual assignment locations.
-  Synthesis determines the final cells and memory mapping.
+  into circuit symbols. Concatenations show destination bit ranges and their
+  operands in MSB-to-LSB order. Combinational processes show their ordered
+  assignments and nested if/else/case decisions inside the block. Initialization
+  shows known writes and statically resolved memory index sweeps. The process
+  blocks link to the original RTL. Synthesis determines the final cells and
+  memory mapping.
 - Quoted headers found by the compiler are listed in the UI. Discovery parses
   candidates independently, so project-specific defines, package imports driven
   by earlier file macros, and custom include paths can require a future

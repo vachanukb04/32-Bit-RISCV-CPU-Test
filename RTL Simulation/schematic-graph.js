@@ -17,6 +17,8 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   const represented = new Set();
   const memories = new Map();
   const clocks = new Set();
+  const views = new Map(scope.logic.filter(item => item.view)
+    .map(item => [sourceKey(item.source), item.view]));
   const portsBySignal = new Map();
   for (const port of scope.ports) {
     const peers = portsBySignal.get(port.internal) || [];
@@ -102,10 +104,15 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   function process(site, kind) {
     const key = sourceKey(site);
     if (!processes.has(key)) {
-      const label = {Always: "always", AlwaysFF: "always_ff", AlwaysComb: "always_comb",
-        AlwaysLatch: "always_latch" }[kind] || kind;
-      const item = add("process", label, {caption: site?.line ? "line " + site.line : "", source: site});
-      processes.set(key, {item, inputs: new Set(), writes: new Set()});
+      const view = views.get(key);
+      const procedure = {Always: "always", AlwaysFF: "always_ff", AlwaysComb: "always_comb",
+        AlwaysLatch: "always_latch", Initial: "initial"}[kind] || kind;
+      const title = {combinational: "Combinational", initialization: "Initialization",
+        initial: "Initial process"}[view?.kind] || procedure;
+      const caption = site?.line ? [view && procedure, "line " + site.line].filter(Boolean).join(" · ") : "";
+      const item = add("process", title, {caption, source: site, rows: view?.rows});
+      processes.set(key, {item, inputs: new Set(view?.localReads || []),
+        localReads: new Set(view?.localReads || []), writes: new Set()});
     }
     return processes.get(key);
   }
@@ -154,7 +161,9 @@ function buildSchematicGraph(scope, signals, signalLabel) {
 
   for (const sheet of scope.schematics) {
     const site = sheet.processSource || sheet.source;
-    represented.add(sourceKey(site));
+    const key = sourceKey(site);
+    if (views.get(key)?.kind === "initialization") continue;
+    represented.add(key);
     const fallback = sheet.expressionOnly && process(site, sheet.processKind);
     const root = sheet.nodes.at(-1);
     if (fallback && sheet.processKind === "Initial" && root.kind === "memory" && root.write &&
@@ -185,7 +194,8 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         for (const net of refs) {
           if (fallback) {
             const key = value.item.id + ":" + value.output;
-            if (!fallback.item.inputs.has(key)) {
+            const resolvedInside = value.item.kind === "net" && fallback.localReads.has(value.net);
+            if (!resolvedInside && !fallback.item.inputs.has(key)) {
               feed(value, fallback.item, {input: key, inputLabel: ""});
             }
             (fallback.item.sources ||= []).push({source: sheet.source, label: sheet.title});
@@ -210,10 +220,15 @@ function buildSchematicGraph(scope, signals, signalLabel) {
         if (shape.write && fallback) fallback.writes.add(net);
         wire = {item: bank, output: "Q" + index, net};
       } else {
-        const item = add(shape.kind, shape.label, {edge: shape.edge, source: sheet.source});
+        const fields = shape.fields;
+        const item = add(shape.kind, shape.label, {
+          edge: shape.edge, source: sheet.source, fields,
+          caption: fields ? "[" + (shape.bits - 1) + ":0] · MSB to LSB" : undefined
+        });
         for (const pin of shape.pins) {
           const value = pinInput(pin);
-          feed(value, item, {input: pin.pin, clock: pin.pin === "CLK" || clocks.has(value.net)});
+          feed(value, item, {input: pin.pin, inputLabel: fields ? "" : pin.pin,
+            clock: pin.pin === "CLK" || clocks.has(value.net)});
         }
         wire = {item};
       }
@@ -226,6 +241,17 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     if (represented.has(key) && !processes.has(key)) continue;
     if (!logic.inputs.length && !logic.outputs.length && !processes.has(key)) continue;
     const entry = process(logic.source, logic.kind);
+    if (logic.view?.kind === "initialization") {
+      for (const [net, caption] of Object.entries(logic.view.outputs)) {
+        const node = anchor(net);
+        const index = logic.view.indices[net];
+        if (index) node.caption = "Memory index · final " + index.final;
+        const bank = node.kind === "bank";
+        connect(entry.item, node, {net, output: net, outputLabel: caption,
+          input: bank ? "INIT" : "IN", inputLabel: bank ? "Initialize" : ""});
+      }
+      continue;
+    }
     for (const net of logic.inputs) {
       if (entry.inputs.has(net)) continue;
       feed(signalOutput(net), entry.item, {input: net, inputLabel: signalLabel(net)});

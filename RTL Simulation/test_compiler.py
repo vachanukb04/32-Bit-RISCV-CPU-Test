@@ -18,6 +18,66 @@ class CompilerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
 
+    def test_process_keeps_nested_decisions_and_parameterized_bit_fields(self):
+        self.write("select.sv", """
+            module select #(parameter EXT = 3)
+                (input logic reset, mode, input logic [3:0] d,
+                 output logic [EXT+3:0] q, output logic ready);
+                logic local_mode;
+                always @* begin
+                    local_mode = mode;
+                    ready = 0;
+                    q = 0;
+                    if (reset) ready = 1;
+                    else case (local_mode)
+                        0: casez (d[1:0])
+                            2'b0?: q = {{EXT{d[3]}}, d[3:0]};
+                            default: q = 0;
+                        endcase
+                        default: ready = 1;
+                    endcase
+                end
+            endmodule
+        """)
+        model = compile_design(self.root, self.root, "select", "select.sv")["hierarchy"]
+        view = next(logic["view"] for logic in model["logic"] if logic.get("view"))
+        controls = [(row["kind"], row["text"], row["depth"]) for row in view["rows"]]
+        self.assertIn(("if", "reset", 0), controls)
+        self.assertIn(("else", "", 0), controls)
+        self.assertIn(("case", "local_mode", 1), controls)
+        self.assertIn(("case z", "d[1:0]", 3), controls)
+        self.assertIn("select.local_mode", view["localReads"])
+        shapes = (shape for sheet in model["schematics"] for shape in sheet["nodes"])
+        bus = next(shape for shape in shapes if shape["kind"] == "bitfields")
+        self.assertEqual(bus["bits"], 7)
+        self.assertEqual(bus["fields"], [{"range": "[6:4]", "text": "EXT × d[3]"},
+                                         {"range": "[3:0]", "text": "d[3:0]"}])
+
+    def test_initialization_uses_elaborated_loop_range_and_overrides(self):
+        self.write("memory.sv", """
+            module memory #(parameter LIMIT = 9) (output logic [7:0] q);
+                logic [7:0] bank [3:10];
+                integer cursor;
+                initial begin
+                    for (cursor = 3; cursor < LIMIT; cursor++)
+                        bank[cursor] = 8'hA4;
+                    bank[4] = 8'h81;
+                end
+                assign q = bank[4];
+            endmodule
+        """)
+        model = compile_design(self.root, self.root, "memory", "memory.sv")["hierarchy"]
+        init = next(item for item in model["logic"] if item["kind"] == "Initial")
+        view = init["view"]
+        self.assertEqual(view["kind"], "initialization")
+        self.assertEqual(view["indices"]["memory.cursor"],
+                         {"name": "cursor", "start": 3, "last": 8, "step": 1, "final": 9})
+        self.assertEqual([(row["kind"], row["text"]) for row in view["rows"]],
+                         [("sweep", "cursor · 3 → 8 · step +1"),
+                          ("fill", "bank[3..8] ← 8'hA4"), ("set", "bank[4] ← 8'h81")])
+        self.assertEqual(init["inputs"], [])
+        self.assertEqual(init["outputs"], ["memory.bank", "memory.cursor"])
+
     def test_source_dependency_header_parameter_and_generate_instances(self):
         self.write("design/params.svh", "`define WIDTH 2\n")
         self.write("design/top.sv", """

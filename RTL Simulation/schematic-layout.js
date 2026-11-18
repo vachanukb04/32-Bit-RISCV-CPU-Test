@@ -10,6 +10,9 @@ const portSide = node => {
   return "";
 };
 
+const BOX_KINDS = ["instance", "bank", "process", "binding", "bitfields"];
+const DECISION_ROW = 19;
+
 function layoutSchematic(graph) {
   const {nodes, edges} = graph;
   const incoming = nodes.map(() => []);
@@ -82,11 +85,21 @@ function layoutSchematic(graph) {
   }
 
   for (const node of nodes) {
-    if (["instance", "bank", "process", "binding"].includes(node.kind)) {
+    if (BOX_KINDS.includes(node.kind)) {
       const longestIn = Math.max(0, ...[...node.inputs.values()].map(label => Math.min(24, label.length)));
       const longestOut = Math.max(0, ...[...node.outputs.values()].map(label => Math.min(18, label.length)));
-      node.width = ceilTile(Math.max(132, 42 + (longestIn + longestOut) * 6));
-      node.height = Math.max(72, 48 + Math.max(node.inputs.size, node.outputs.size) * 24);
+      const rails = 42 + (longestIn + longestOut) * 6;
+      let bodyWidth = 0;
+      let bodyHeight = 0;
+      if (node.rows?.length) {
+        node.contentX = Math.max(18, longestIn * 6 + 14);
+        bodyWidth = Math.max(...node.rows.map(row => row.depth * 13 + Math.min(row.text.length, 92) * 6.4 + 112));
+        bodyHeight = 57 + DECISION_ROW * node.rows.length;
+      } else if (node.fields) {
+        bodyWidth = 104 + Math.max(...node.fields.map(field => Math.min(field.text.length, 58) * 6.5));
+      }
+      node.width = ceilTile(Math.max(132, rails + bodyWidth));
+      node.height = ceilTile(Math.max(72, bodyHeight, 48 + Math.max(node.inputs.size, node.outputs.size) * 24));
     } else if (["net", "tap", "literal"].includes(node.kind)) {
       node.width = ceilTile(Math.max(48, Math.min(27, node.label.length) * 7 + 24,
         node.caption ? Math.min(27, node.caption.length) * 6 + 20 : 0));
@@ -99,23 +112,25 @@ function layoutSchematic(graph) {
   }
 
   const gap = nodes.length > 45 ? 108 : 72;
-  const packedHeight = column => column.reduce((total, node) => total + node.height + 36, 0);
+  const isBoundary = column => column === inputs || column === outputs;
+  const rowGap = column => isBoundary(column) ? 24 : 36;
+  const packedHeight = column => column.reduce((total, node) => total + node.height + rowGap(column), 0);
   const bodyHeight = Math.max(0, ...columns.map(packedHeight));
-  let x = 60;
+  let x = inputs.length ? 36 : 60;
   for (const column of columns) {
     const width = Math.max(...column.map(node => node.width));
-    const isBoundary = column === inputs || column === outputs;
-    let y = 60 + (isBoundary ? 0 : snap((bodyHeight - packedHeight(column)) / 2));
+    let y = 60 + (isBoundary(column) ? 0 : snap((bodyHeight - packedHeight(column)) / 2));
     for (const node of column) {
-      node.x = portSide(node) === "right" ? x + width - node.width : x;
+      if (isBoundary(column)) node.width = width;
+      node.x = x;
       node.y = y + node.height / 2;
       node.leftChannel = x - 24;
       node.rightChannel = x + width + 24;
-      y += node.height + 36;
+      y += node.height + rowGap(column);
     }
     x += width + gap;
   }
-  return {width: x - gap + 60, height: bodyHeight + 108};
+  return {width: x - gap + (outputs.length ? 36 : 60), height: bodyHeight + 108};
 }
 
 class RouteQueue {

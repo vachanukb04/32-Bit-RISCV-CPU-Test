@@ -2,6 +2,7 @@
 
 from pyslang import ast
 
+from rtl_process_view import expression_label, unconverted
 from rtl_structure import BITWISE, OPERATORS, VALUE_EXPRESSIONS, access, assignments, process_timing, signal_refs, span, targets
 
 
@@ -39,6 +40,35 @@ class Drawing:
                 return operand
             label = f"{node.type.bitWidth}-bit {'signed' if node.type.isSigned else 'unsigned'}"
             return self.add("operator", label, [("A", operand)])
+        if isinstance(node, (ast.ConcatenationExpression, ast.ReplicationExpression)) and node.type.isIntegral:
+            operands = node.operands if isinstance(node, ast.ConcatenationExpression) else [node.concat]
+            label = "Concatenate" if isinstance(node, ast.ConcatenationExpression) else "Replicate"
+            width = node.type.bitWidth
+            cursor = width
+            fields = []
+            pins = []
+            for operand in operands:
+                field_width = operand.type.bitWidth if label == "Concatenate" else width
+                if not field_width:
+                    continue
+                high = cursor - 1
+                cursor -= field_width
+                selector = f"[{high}:{cursor}]" if high != cursor else f"[{cursor}]"
+                field = expression_label(operand, self.text) if label == "Concatenate" else expression_label(node, self.text)
+                # A single operand inside a repetition is already represented by its own wire.
+                source = operand
+                bare = unconverted(operand)
+                if isinstance(bare, ast.ReplicationExpression):
+                    group = bare.concat
+                    if isinstance(group, ast.ConcatenationExpression) and len(group.operands) == 1:
+                        source = group.operands[0]
+                elif isinstance(node, ast.ReplicationExpression) and len(operands) == 1:
+                    if isinstance(source, ast.ConcatenationExpression) and len(source.operands) == 1:
+                        source = source.operands[0]
+                fields.append({"range": selector, "text": field})
+                pins.append((str(len(pins)), self.expression(source)))
+            if fields:
+                return self.add("bitfields", label, pins, fields=fields, bits=width)
         if isinstance(node, ast.ConditionalExpression) and len(node.conditions) == 1:
             condition = node.conditions[0]
             if condition.pattern is None:

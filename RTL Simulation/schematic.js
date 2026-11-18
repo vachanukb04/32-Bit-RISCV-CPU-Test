@@ -98,11 +98,14 @@ function shorten(value, limit = 25) {
 }
 
 function usesBox(node) {
-  return ["process", "bank", "instance", "binding"].includes(node.kind);
+  return BOX_KINDS.includes(node.kind);
 }
 
 function pinPosition(node, pin, outgoing) {
   if (usesBox(node)) {
+    if (node.fields && outgoing) {
+      return {x: node.x + node.width, y: node.y - node.height / 2 + 48 + 12 * (node.fields.length - 1)};
+    }
     const pins = outgoing ? node.outputs : node.inputs;
     const index = [...pins.keys()].indexOf(pin);
     return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + 48 + index * 24};
@@ -190,6 +193,42 @@ function routeSchematic(graph, layout, track, chooseWire, signalLabel) {
   return layer;
 }
 
+function drawDecisionRows(group, node, top) {
+  const badges = {if: "IF", else: "ELSE", case: "CASE", "case z": "CASEZ", "case x": "CASEX",
+    "case inside": "CASE INSIDE", match: "MATCH", default: "DEFAULT", rtl: "RTL",
+    sweep: "ADDRESS SWEEP", fill: "FILL", set: "SET"};
+  for (const [index, row] of node.rows.entries()) {
+    const x = node.contentX + row.depth * 13;
+    const y = top + 49 + index * DECISION_ROW;
+    const line = svgNode("g", {class: "decision-row decision-" + row.kind.replaceAll(" ", "-")});
+    if (row.depth) svgPath(line, `M${x-9} ${y-12} v9 h5`, "decision-branch");
+    const badge = badges[row.kind];
+    let textX = x;
+    if (badge) {
+      const width = badge.length * 6.2 + 10;
+      line.append(svgNode("rect", {x, y: y - 13, width, height: 15, rx: 3, class: "decision-badge"}));
+      svgText(line, x + width / 2, y - 2, badge, "decision-badge-text", "middle");
+      textX += width + 7;
+    }
+    svgText(line, textX, y - 1, shorten(row.text, 92), "decision-text");
+    if (row.text.length > 92) line.append(svgNode("title", {}, row.text));
+    group.append(line);
+  }
+}
+
+function drawBitFields(group, node, top) {
+  for (const [index, field] of node.fields.entries()) {
+    const y = top + 48 + index * 24;
+    const row = svgNode("g", {class: "bit-field"});
+    row.append(svgNode("rect", {x: 8, y: y - 10, width: node.width - 16, height: 20,
+      rx: 3, class: "bit-field-body"}));
+    svgText(row, 16, y + 4, field.range, "bit-field-range");
+    svgText(row, 82, y + 4, shorten(field.text, 58), "bit-field-text");
+    row.append(svgNode("title", {}, field.range + " ← " + field.text));
+    group.append(row);
+  }
+}
+
 function drawSchematicSymbol(node) {
   const group = svgNode("g", {class: "circuit-node " + node.kind, "data-label": node.label});
   const local = svgNode("g", {transform: `translate(${node.x} ${node.y})`});
@@ -207,6 +246,8 @@ function drawSchematicSymbol(node) {
       class: "symbol-body"}));
     svgText(local, 9, top + 16, shorten(node.label, 27), "net-label");
     if (node.caption) svgText(local, 9, top + 31, shorten(node.caption, 31), "pin-label");
+    if (node.rows?.length) drawDecisionRows(local, node, top);
+    if (node.fields) drawBitFields(local, node, top);
     for (const outgoing of [false, true]) {
       const pins = outgoing ? node.outputs : node.inputs;
       for (const [key, label] of pins) {
@@ -214,8 +255,10 @@ function drawSchematicSymbol(node) {
         const x = point.x - node.x;
         const y = point.y - node.y;
         local.append(svgNode("circle", {cx: x, cy: y, r: 2.8, class: "terminal-dot"}));
-        svgText(local, x + (outgoing ? -7 : 7), y + 3, shorten(label, outgoing ? 18 : 24),
-          "pin-label", outgoing ? "end" : "start");
+        if (!(node.fields && outgoing)) {
+          svgText(local, x + (outgoing ? -7 : 7), y + 3, shorten(label, outgoing ? 18 : 24),
+            "pin-label", outgoing ? "end" : "start");
+        }
       }
     }
     if (node.kind === "bank") {
@@ -355,11 +398,14 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
       group.setAttribute("aria-pressed", "false");
     } else if (node.child) {
       makeInteractive(group, "Open " + node.label + " " + node.caption, () => openChild(node.child));
-    } else if (node.sources?.length || node.initializers?.length) {
+    } else if (node.rows?.length || node.sources?.length || node.initializers?.length) {
       makeInteractive(group, "View " + node.label + " RTL sources", () => {
         details.replaceChildren(make("strong", "", node.label));
         const list = make("ul");
-        for (const item of [...(node.sources || []), ...(node.initializers || [])]) {
+        const procedure = (node.rows || []).filter(row => row.source).map(row =>
+          ({source: row.source, label: [row.kind.toUpperCase(), row.text].filter(Boolean).join(" ")}));
+        const locations = [...(procedure.length ? procedure : node.sources || []), ...(node.initializers || [])];
+        for (const item of locations) {
           const row = make("li", "source");
           row.append(make("span", "", item.label), sourceLink(item.source));
           list.append(row);
