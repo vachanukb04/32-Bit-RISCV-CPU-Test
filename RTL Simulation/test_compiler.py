@@ -52,7 +52,10 @@ class CompilerTests(unittest.TestCase):
         gate_or = data[out["pins"][0]["source"]]
         gate_and = data[gate_or["pins"][0]["source"]]
         self.assertEqual([(gate["label"], gate["bits"]) for gate in [gate_and, gate_or]], [("AND", 4), ("OR", 4)])
-        self.assertEqual([data[pin["source"]]["label"] for pin in gate_and["pins"]], ["a", "b"])
+        operands = [data[pin["source"]] for pin in gate_and["pins"]]
+        self.assertEqual([(operand["label"], operand["range"]) for operand in operands],
+                         [("a", "[3:0]"), ("b", "[3:0]")])
+        self.assertEqual(out["range"], "[3:0]")
         self.assertEqual(data[gate_or["pins"][1]["source"]]["label"], "mask")
         control = circuits["selection"]["nodes"]
         self.assertEqual(sum(node.get("symbol") == "===" for node in control), 2)

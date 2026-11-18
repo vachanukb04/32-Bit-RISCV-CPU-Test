@@ -6,7 +6,7 @@ const { runInNewContext } = require("node:vm");
 
 const scripts = ["schematic-graph.js", "schematic-layout.js"];
 const api = runInNewContext(scripts.map(file => readFileSync(join(__dirname, file), "utf8")).join("\n") +
-  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey});");
+  "\n({buildSchematicGraph, layoutSchematic, createWireRouter, wireTraceKey, compactCircuitRows});");
 
 const location = line => ({file: "rom.v", line, column: 1});
 const terminal = (label, net) => ({kind: "terminal", label, pins: [], nets: net ? [net] : []});
@@ -138,4 +138,26 @@ test("keeps assignment constants inside the output rules instead of wiring them 
   assert.deepEqual(Array.from(process.outputs.values()), ["code [4:0]"]);
   assert.deepEqual(Array.from(graph.edges, edge => edge.from.label + " → " + edge.to.label),
     ["op → Combinational", "Combinational → code"]);
+});
+
+test("compact gate rows preserve bus connections and mux pin roles", () => {
+  const sheet = {nodes: [
+    {...terminal("a", "a"), bits: 32, range: "[31:0]"},
+    {...terminal("b", "b"), bits: 32, range: "[31:0]"},
+    terminal("select", "select"),
+    {kind: "gate", label: "AND", symbol: "&", bits: 32,
+      pins: [{pin: "A", source: 0}, {pin: "B", source: 1}]},
+    {kind: "mux", label: "MUX", branch: "case 1'b1", bits: 32,
+      pins: [{pin: "0", source: 0}, {pin: "1", source: 3}, {pin: "S", source: 2}]},
+    {...output("result", 4), range: "[31:0]"}
+  ]};
+  const {signals, rows} = api.compactCircuitRows(sheet);
+  const [gate, mux, drive] = rows;
+  assert.equal(gate.inputs.length, 2);
+  assert.deepEqual(Array.from(gate.inputs, pin => signals[pin.source].label), ["a", "b"]);
+  assert.equal(signals[gate.output].range, "[31:0]");
+  assert.deepEqual(Array.from(mux.inputs, pin => pin.label), ["Other", "Match", "Select"]);
+  assert.equal(gate.output, mux.inputs[1].source);
+  assert.equal(mux.output, drive.inputs[0].source);
+  assert.equal(signals[drive.output].range, "[31:0]");
 });

@@ -180,7 +180,13 @@ class RuleDrawing(Drawing):
             result = self.outcome(value.fallback)
             for index in reversed(range(len(value.arms))):
                 condition = self.arm_match(value, index)
-                result = self.mux(result, self.outcome(value.arms[index][1]), condition)
+                match, outcome = value.arms[index]
+                branch = f"if {value.selector.text}" if match is None else f"{value.kind} {match.label}"
+                alternate = self.outcome(outcome)
+                zero_bits = self.nodes[result].get("bits")
+                one_bits = self.nodes[alternate].get("bits")
+                result = self.mux(result, alternate, condition, branch=branch,
+                                  bits=one_bits if zero_bits == one_bits else None)
         self.cached[key] = result
         return result
 
@@ -227,7 +233,9 @@ def data_circuit(value, symbol, text, source):
     drawing = RuleDrawing(text)
     driver = drawing.outcome(value)
     # Keep a distinct endpoint for an output whose previous value is retained.
-    sink = drawing.output(symbol.name, driver, ["$result"])
+    width = symbol.type.bitWidth
+    bounds = str(symbol.type.fixedRange) if width > 1 else ""
+    sink = drawing.output(symbol.name, driver, ["$result"], bits=width, range=bounds)
     return drawing.finish(symbol.name, source, sink)
 
 
@@ -236,7 +244,7 @@ def rule_circuits(leaf, path, symbol, text):
     if path:
         control = RuleDrawing(text)
         enable = control.combine([control.selected(decision, index) for decision, index in path], "AND")
-        sink = control.output("Select this rule", enable, ["$selected"])
+        sink = control.output("Enable", enable, ["$selected"], bits=1)
         circuits["selection"] = control.finish("Select this rule", leaf.source, sink)
     return circuits
 

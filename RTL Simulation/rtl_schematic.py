@@ -34,11 +34,11 @@ class Drawing:
         self.nodes.append({"kind": kind, "label": label, "pins": pins, **fields})
         return index
 
-    def terminal(self, label, nets=()):
-        return self.add("terminal", label, nets=list(nets))
+    def terminal(self, label, nets=(), **fields):
+        return self.add("terminal", label, nets=list(nets), **fields)
 
-    def output(self, label, driver, nets):
-        return self.add("output", label, [("IN", driver)], nets=list(nets))
+    def output(self, label, driver, nets, **fields):
+        return self.add("output", label, [("IN", driver)], nets=list(nets), **fields)
 
     def expression(self, node):
         if self.resolver:
@@ -52,7 +52,7 @@ class Drawing:
             ):
                 return operand
             label = f"{node.type.bitWidth}-bit {'signed' if node.type.isSigned else 'unsigned'}"
-            return self.add("operator", label, [("A", operand)])
+            return self.add("operator", label, [("A", operand)], bits=node.type.bitWidth)
         if isinstance(node, (ast.ConcatenationExpression, ast.ReplicationExpression)) and node.type.isIntegral:
             operands = node.operands if isinstance(node, ast.ConcatenationExpression) else [node.concat]
             label = "Concatenate" if isinstance(node, ast.ConcatenationExpression) else "Replicate"
@@ -86,7 +86,7 @@ class Drawing:
             condition = node.conditions[0]
             if condition.pattern is None:
                 return self.mux(self.expression(node.right), self.expression(node.left),
-                                self.expression(condition.expr))
+                                self.expression(condition.expr), bits=node.type.bitWidth)
         if isinstance(node, (ast.BinaryExpression, ast.UnaryExpression)):
             operation = node.op.name
             operands = [node.left, node.right] if isinstance(node, ast.BinaryExpression) else [node.operand]
@@ -108,10 +108,17 @@ class Drawing:
                 (str(i + 1), self.terminal(ref.rsplit(".", 1)[-1], [ref]))
                 for i, ref in enumerate(refs)
             ])
+        if node.type.isIntegral:
+            fields = {"bits": node.type.bitWidth}
+            if isinstance(node, VALUE_EXPRESSIONS):
+                bounds = node.type.fixedRange
+                if abs(bounds.left - bounds.right) + 1 == node.type.bitWidth and node.type.bitWidth > 1:
+                    fields["range"] = str(bounds)
+            return self.terminal(label, refs, **fields)
         return self.terminal(label, refs)
 
-    def mux(self, when_zero, when_one, select):
-        return self.add("mux", "MUX", [("0", when_zero), ("1", when_one), ("S", select)])
+    def mux(self, when_zero, when_one, select, **fields):
+        return self.add("mux", "MUX", [("0", when_zero), ("1", when_one), ("S", select)], **fields)
 
     def next_value(self, statement, name, current):
         """Lower a procedural assignment tree for one full-width target."""

@@ -114,7 +114,7 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     const key = sourceKey(site);
     if (!processes.has(key)) {
       const view = views.get(key);
-      const procedure = {Always: "always", AlwaysFF: "always_ff", AlwaysComb: "always_comb",
+      const procedure = view?.header || {Always: "always", AlwaysFF: "always_ff", AlwaysComb: "always_comb",
         AlwaysLatch: "always_latch", Initial: "initial"}[kind] || kind;
       const title = {combinational: "Combinational", initialization: "Initialization",
         initial: "Initial process"}[view?.kind] || procedure;
@@ -301,4 +301,28 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     }
   }
   return {nodes, edges, anchors, clocks};
+}
+
+// Keep one connection per signal or bus. Each row references the terminals or
+// the numbered intermediate nets that supply its pins.
+function compactCircuitRows(sheet) {
+  let nextNet = 1;
+  const signals = sheet.nodes.map(node => {
+    const terminal = node.kind === "terminal";
+    const named = terminal || node.kind === "output";
+    const range = node.range || (!terminal && node.bits > 1 ? `[${node.bits - 1}:0]` : "");
+    const label = named ? node.label : "n" + nextNet++;
+    const key = terminal ? JSON.stringify([node.nets, label, range]) : label;
+    return {label, range, key};
+  });
+  const rows = sheet.nodes.flatMap((node, index) => node.kind === "terminal" ? [] : [{
+    node,
+    output: index,
+    inputs: node.pins.map((pin, i) => ({
+      label: node.fields?.[i]?.range || (node.kind === "output" ? "" :
+        node.branch ? ({"0": "Other", "1": "Match", S: "Select"}[pin.pin] || pin.pin) : pin.pin),
+      source: pin.source
+    }))
+  }]);
+  return {signals, rows};
 }

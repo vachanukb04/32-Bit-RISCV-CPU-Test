@@ -51,7 +51,7 @@ function symbol(parent, kind, label, edge, mark) {
       }
       const signs = {AND: "&", OR: "|", XOR: "^", NOT: "~", "Logical AND": "&&", "Logical OR": "||",
         "Logical NOT": "!"};
-      if (signs[label]) svgText(parent, 31, 4, signs[label], "pin-name", "middle");
+      if (mark || signs[label]) svgText(parent, 31, 4, mark || signs[label], "pin-name", "middle");
       break;
     }
     case "expression":
@@ -248,7 +248,7 @@ function drawOutputSummary(group, node, top) {
   svgPath(group, `M10 ${y} H${node.width - 10}`, "logic-divider");
   svgText(group, 12, y + 15, "INPUTS", "logic-rail-label");
   svgText(group, node.width - 12, y + 15, "OUTPUTS", "logic-rail-label", "end");
-  svgText(group, node.width / 2, y + 15, "VIEW OUTPUT RULES ↗", "logic-rule-action", "middle");
+  svgText(group, node.width / 2, y + 15, "GATES ↗", "logic-rule-action", "middle");
   for (const result of outputs) {
     const at = pinPosition(node, result.net, true).y - node.y;
     const variants = new Set(result.rules.map(rule => JSON.stringify([rule.value, rule.locals])));
@@ -259,173 +259,136 @@ function drawOutputSummary(group, node, top) {
   }
 }
 
-function drawRuleCircuit(sheet, signalLabel) {
-  const pins = new Map(sheet.nodes.flatMap(node => node.nets || []).map(net => [net, []]));
-  const scope = {nets: [...pins.keys()], ports: [], children: [], logic: [], clockUses: [],
-    structures: [], schematics: [sheet]};
-  const graph = buildSchematicGraph(scope, pins, net => {
-    if (net === "$result") return sheet.title;
-    if (net === "$selected") return "Select this rule";
-    return signalLabel(net);
-  });
-  const layout = layoutSchematic(graph);
-  const svg = svgNode("svg", {class: "circuit-svg rule-circuit-svg",
-    width: layout.width, height: layout.height, viewBox: `0 0 ${layout.width} ${layout.height}`,
-    role: "group", "aria-label": sheet.title + " circuit"});
-  const wired = new Map();
-  const register = (element, key) => {
-    if (!wired.has(key)) wired.set(key, new Set());
-    wired.get(key).add(element);
-  };
+function drawCompactCircuit(sheet, title) {
+  const card = make("section", "compact-circuit");
+  card.append(make("h5", "", title));
+  const {signals, rows} = compactCircuitRows(sheet);
+  const labels = new Map();
   let selected;
-  svg.append(routeSchematic(graph, layout, register, (_net, key) => {
-    for (const element of wired.get(selected) || []) element.classList.remove("net-highlight");
-    selected = key === selected ? undefined : key;
-    svg.classList.toggle("has-trace", Boolean(selected));
-    for (const element of wired.get(selected) || []) element.classList.add("net-highlight");
-  }, signalLabel));
-  const symbols = graph.nodes.map(drawSchematicSymbol);
-  for (const edge of graph.edges) {
-    register(symbols[edge.from.id], wireTraceKey(edge));
-    register(symbols[edge.to.id], wireTraceKey(edge));
+
+  function netChip(index) {
+    const {label, range, key} = signals[index];
+    const chip = make("button", "compact-net", label);
+    chip.type = "button";
+    chip.setAttribute("aria-pressed", "false");
+    if (range) chip.append(make("span", "bus-range", range));
+    chip.addEventListener("click", () => {
+      for (const match of labels.get(selected) || []) match.setAttribute("aria-pressed", "false");
+      selected = key === selected ? undefined : key;
+      for (const match of labels.get(selected) || []) match.setAttribute("aria-pressed", "true");
+    });
+    if (!labels.has(key)) labels.set(key, []);
+    labels.get(key).push(chip);
+    return chip;
   }
-  svg.append(...symbols);
-  const canvas = make("div", "rule-circuit-canvas");
-  canvas.tabIndex = 0;
-  canvas.setAttribute("aria-label", sheet.title + " circuit viewport");
-  canvas.append(svg);
-  return canvas;
+
+  const list = make("ol", "compact-gates");
+  for (const {node, inputs, output} of rows) {
+    const row = make("li", "compact-gate");
+    const incoming = make("div", "gate-inputs");
+    for (const {label, source} of inputs) {
+      const pin = make("span", "gate-pin");
+      if (inputs.length > 1 && label) pin.append(make("span", "gate-pin-name", label));
+      pin.append(netChip(source));
+      incoming.append(pin);
+    }
+
+    const operation = make("div", "gate-operation");
+    if (["gate", "operator", "mux"].includes(node.kind)) {
+      const icon = svgNode("svg", {viewBox: "-9 -34 87 68", width: 50, height: 42, "aria-hidden": "true"});
+      symbol(icon, node.kind, node.label, node.edge, node.symbol);
+      operation.append(icon);
+    }
+    const name = node.kind === "output" ? "Drive" : node.label;
+    operation.append(make("span", "", node.symbol ? `${name} (${node.symbol})` : name));
+    if (node.branch) operation.append(make("small", "source", node.branch));
+
+    const cell = make("div", "gate-cell");
+    cell.append(incoming, operation, netChip(output));
+    row.append(cell);
+    if (node.fields?.length) {
+      const fields = make("details", "gate-fields");
+      fields.append(make("summary", "", `${node.fields.length} bit fields`));
+      const values = make("ul");
+      for (const field of node.fields) values.append(make("li", "", `${field.range} ← ${field.text}`));
+      fields.append(values);
+      row.append(fields);
+    }
+    list.append(row);
+  }
+  card.append(list);
+  return card;
 }
 
-function openRuleCircuit(container, rule, output, signalLabel) {
-  const bar = make("div", "rule-circuit-tabs");
-  const body = make("div", "rule-circuit-body");
-  const diagrams = [["Data path", rule.circuits.data], ["Branch enable", rule.circuits.selection]]
-    .filter(([, sheet]) => sheet);
-  const buttons = diagrams.map(([name]) => make("button", "button circuit-tab", name));
-  function select(index) {
-    const [name, sheet] = diagrams[index];
-    buttons.forEach((button, position) => button.setAttribute("aria-pressed", String(position === index)));
-    const hint = name === "Data path" ? "Drives " + [output.name, output.range].filter(Boolean).join(" ") +
-      " when this rule is selected." : "This path enables the selected rule.";
-    body.replaceChildren(make("p", "source", hint), drawRuleCircuit(sheet, signalLabel));
-  }
-  buttons.forEach((button, index) => {
-    button.type = "button";
-    button.addEventListener("click", () => select(index));
-    bar.append(button);
+function drawCombinationalBlock(logic) {
+  const {outputs} = logic.view.summary;
+  const panel = make("section", "comb-block");
+  const heading = make("div", "comb-heading");
+  const procedure = logic.view.header || {
+    Always: "always", AlwaysComb: "always_comb", AlwaysLatch: "always_latch"
+  }[logic.kind] || "Combinational";
+  const title = make("h4", "", procedure);
+  title.tabIndex = -1;
+  heading.append(title, sourceLink(logic.source));
+  const controls = make("div", "comb-controls");
+  const outputLabel = make("label", "", "Output");
+  const outputPicker = make("select");
+  const hasGate = rule => rule.circuits?.data.nodes.some(node => node.kind === "gate");
+  outputs.forEach((output, index) => {
+    outputPicker.append(new Option([output.name, output.range].filter(Boolean).join(" "), index));
   });
-  container.replaceChildren(bar, body);
-  select(0);
-}
+  const primary = outputs.findIndex(output => output.rules.some(hasGate));
+  outputPicker.value = String(Math.max(0, primary));
+  outputLabel.append(outputPicker);
+  const caseLabel = make("label", "", "Case arm");
+  const casePicker = make("select");
+  caseLabel.append(casePicker);
+  controls.append(outputLabel, caseLabel);
+  const body = make("div", "comb-body");
+  panel.append(heading, controls, body);
 
-function showOutputRules(container, node, signalLabel) {
-  const header = make("div", "rules-header");
-  const control = make("label", "rule-picker", "Output");
-  const picker = make("select");
-  for (const [index, output] of node.summary.outputs.entries()) {
-    const name = [output.name, output.range].filter(Boolean).join(" ");
-    picker.append(new Option(name, index));
-  }
-  const primary = node.summary.outputs.reduce((best, item, index, outputs) =>
-    item.rules.length > outputs[best].rules.length ? index : best, 0);
-  picker.value = primary;
-  control.append(picker);
-  const allGates = make("button", "button circuit-tab", "Show output circuit");
-  allGates.type = "button";
-  allGates.setAttribute("aria-expanded", "false");
-  header.append(make("strong", "", "Combinational output rules"), control, allGates, sourceLink(node.source));
-  const diagram = make("div", "output-circuit");
-  const rules = make("div", "output-rules");
-  container.replaceChildren(header, diagram, rules);
-
-  function renderOutputCircuit() {
-    const output = node.summary.outputs[Number(picker.value)];
-    const visible = allGates.getAttribute("aria-expanded") === "true";
-    allGates.textContent = visible ? "Hide output circuit" : "Show output circuit";
-    diagram.replaceChildren();
-    if (visible && output.circuit) {
-      diagram.append(drawRuleCircuit(output.circuit, signalLabel));
+  function showSelection() {
+    const output = outputs[Number(outputPicker.value)];
+    const diagrams = make("div", "comb-diagrams");
+    if (casePicker.value === "all") {
+      diagrams.append(drawCompactCircuit(output.circuit, "Output network"));
+      body.replaceChildren(diagrams);
+      return;
     }
+    const rule = output.rules[Number(casePicker.value)];
+    const expression = make("code", "comb-expression", `${output.name} ← ${rule.value}`);
+    const {data, selection} = rule.circuits;
+    diagrams.append(drawCompactCircuit(data, "Data path"));
+    if (selection) diagrams.append(drawCompactCircuit(selection, "Branch enable"));
+    const resultLine = make("div", "comb-result");
+    resultLine.append(expression);
+    if (rule.source) resultLine.append(sourceLink(rule.source));
+    const condition = rule.when.length ? make("p", "comb-condition", rule.when.join(" · ")) : null;
+    body.replaceChildren(...(condition ? [condition, resultLine, diagrams] : [resultLine, diagrams]));
   }
-  allGates.addEventListener("click", () => {
-    allGates.setAttribute("aria-expanded", String(allGates.getAttribute("aria-expanded") !== "true"));
-    renderOutputCircuit();
-  });
 
-  function renderRules() {
-    const output = node.summary.outputs[Number(picker.value)];
-    const dependencies = output.inputs.map(signalLabel);
-    const description = dependencies.length ? "Depends on " + dependencies.join(" · ") :
-      "Constant result";
-    const summary = make("p", "source", description);
-    const table = make("table", "output-rule-table");
-    const head = make("thead");
-    const columns = make("tr");
-    for (const name of ["When", "Value", "Circuit", "RTL"]) columns.append(make("th", "", name));
-    head.append(columns);
-    const body = make("tbody");
-    let open;
-    for (const rule of output.rules) {
-      const line = make("tr");
-      const when = make("td");
-      (rule.when.length ? rule.when : ["Always"]).forEach(condition =>
-        when.append(make("div", "rule-condition", condition)));
-      const value = make("td");
-      value.append(make("code", "rule-value", rule.value));
-      for (const [range, field] of rule.fields) {
-        const bit = make("div", "rule-field");
-        bit.append(make("code", "rule-range", range), make("code", "", field));
-        value.append(bit);
-      }
-      for (const [name, expression] of rule.locals) {
-        value.append(make("div", "rule-local", name + " ← " + expression));
-      }
-      const circuit = make("td");
-      const action = make("button", "button show-rule-circuit", "Show gates");
-      const details = make("tr", "rule-circuit-row");
-      const pane = make("td");
-      pane.colSpan = 4;
-      details.hidden = true;
-      details.append(pane);
-      action.type = "button";
-      action.setAttribute("aria-expanded", "false");
-      action.addEventListener("click", () => {
-        const wasOpen = open?.details === details;
-        if (open) {
-          open.details.hidden = true;
-          open.pane.replaceChildren();
-          open.action.textContent = "Show gates";
-          open.action.setAttribute("aria-expanded", "false");
-        }
-        open = undefined;
-        if (!wasOpen) {
-          open = {action, details, pane};
-          details.hidden = false;
-          action.textContent = "Hide gates";
-          action.setAttribute("aria-expanded", "true");
-          openRuleCircuit(pane, rule, output, signalLabel);
-        }
-      });
-      if (rule.circuits) circuit.append(action);
-      const rtl = make("td");
-      if (rule.source) rtl.append(sourceLink(rule.source));
-      line.append(when, value, circuit, rtl);
-      body.append(line, details);
+  function selectOutput() {
+    const output = outputs[Number(outputPicker.value)];
+    casePicker.replaceChildren();
+    output.rules.forEach((rule, index) => {
+      const condition = rule.when.join(" · ") || "Unconditional";
+      casePicker.append(new Option(condition, index));
+    });
+    if (output.rules.length > 1 && output.circuit) {
+      casePicker.append(new Option("Full output network", "all"));
     }
-    table.append(head, body);
-    const wrap = make("div", "table-wrap");
-    wrap.append(table);
-    const order = make("p", "source", "Within each case, the first matching arm wins.");
-    rules.replaceChildren(summary, order, wrap);
+    caseLabel.hidden = output.rules.length === 1 && !output.rules[0].when.length;
+    const directGate = output.rules.findIndex(rule => {
+      const shapes = rule.circuits?.data.nodes;
+      return shapes?.[shapes.at(-1).pins[0].source]?.kind === "gate";
+    });
+    casePicker.value = String(directGate >= 0 ? directGate : Math.max(0, output.rules.findIndex(hasGate)));
+    showSelection();
   }
-  picker.addEventListener("change", () => {
-    renderRules();
-    renderOutputCircuit();
-  });
-  renderRules();
-  picker.focus({preventScroll: true});
-  header.scrollIntoView({block: "nearest"});
+  outputPicker.addEventListener("change", selectOutput);
+  casePicker.addEventListener("change", showSelection);
+  selectOutput();
+  return {panel, reveal() { title.focus({preventScroll: true}); panel.scrollIntoView({block: "nearest"}); }};
 }
 
 function drawSchematicSymbol(node) {
@@ -516,6 +479,13 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   const header = make("div", "schematic-heading");
   header.append(make("h3", "", "Data schematic"), make("span", "source", signals.size + " signals"));
   section.append(header);
+  const combinational = new Map();
+  for (const logic of scope.logic) {
+    if (!logic.view?.summary?.outputs.every(output => output.rules.every(rule => rule.circuits))) continue;
+    const block = drawCombinationalBlock(logic);
+    combinational.set(sourceKey(logic.source), block);
+    section.append(block.panel);
+  }
 
   const graph = buildSchematicGraph(scope, signals, signalLabel);
   if (!graph.nodes.length) {
@@ -524,6 +494,11 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   }
 
   const layout = layoutSchematic(graph);
+  const overview = combinational.size ? make("div", "schematic-heading") : header;
+  if (combinational.size) {
+    overview.append(make("h4", "", "Module overview"));
+    section.append(overview);
+  }
   const zoomBar = make("div", "schematic-tools");
   const minus = make("button", "schematic-tool", "−");
   const plus = make("button", "schematic-tool", "+");
@@ -535,9 +510,9 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
   fit.setAttribute("aria-label", "Fit schematic");
   normal.setAttribute("aria-label", "Actual size");
   zoomBar.append(minus, readout, plus, fit, normal);
-  header.append(zoomBar);
+  overview.append(zoomBar);
   if (graph.edges.some(edge => edge.clock)) {
-    header.append(make("span", "clock-key", "Clock"));
+    overview.append(make("span", "clock-key", "Clock"));
   }
 
   const viewport = make("div", "schematic-scroll");
@@ -603,8 +578,8 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
       group.setAttribute("aria-pressed", "false");
     } else if (node.child) {
       makeInteractive(group, "Open " + node.label + " " + node.caption, () => openChild(node.child));
-    } else if (node.summary) {
-      makeInteractive(group, "View combinational output rules", () => showOutputRules(details, node, signalLabel));
+    } else if (node.summary && combinational.has(sourceKey(node.source))) {
+      makeInteractive(group, "Jump to " + node.caption + " gates", combinational.get(sourceKey(node.source)).reveal);
     } else if (node.sourceRows?.length || node.sources?.length || node.initializers?.length) {
       makeInteractive(group, "View " + node.label + " RTL sources", () => {
         details.replaceChildren(make("strong", "", node.label));
