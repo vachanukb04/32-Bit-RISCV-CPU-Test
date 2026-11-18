@@ -18,6 +18,45 @@ class CompilerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
 
+    def test_decoder_reports_guard_and_final_values_for_each_case(self):
+        self.write("decode.sv", """
+            module decode(input logic rst, key, variant, mode,
+                          output logic enabled, output logic [2:0] operation);
+                localparam OP_A = 1'b0;
+                always @* begin
+                    enabled = 0;
+                    operation = 0;
+                    if (!rst) begin
+                        case (key)
+                            OP_A: begin
+                                enabled = 1;
+                                case (variant)
+                                    0: operation = mode ? 3'd3 : 3'd4;
+                                    default: operation = 3'd5;
+                                endcase
+                            end
+                            default: operation = 3'd2;
+                        endcase
+                    end
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "decode", "decode.sv")["hierarchy"]
+        decoder = scope["logic"][0]["view"]["summary"]["decoder"]
+        self.assertEqual(decoder["selector"], "key")
+        self.assertEqual(decoder["guard"]["condition"], "rst = 0")
+        self.assertEqual([item["value"] for item in decoder["guard"]["otherwise"]], ["0", "3'b000"])
+        matched, fallback = decoder["cases"]
+        self.assertEqual(matched["labels"], ["OP_A (1'b0)"])
+        self.assertEqual(matched["values"][0]["value"], "1")
+        inner = matched["values"][1]
+        self.assertEqual(inner["selector"], "variant")
+        pick, other = [arm["result"] for arm in inner["arms"]]
+        self.assertEqual(pick["selector"], "mode")
+        self.assertEqual([arm["result"]["value"] for arm in pick["arms"]], ["3'b011", "3'b100"])
+        self.assertEqual(other["value"], "3'b101")
+        self.assertEqual([item["value"] for item in fallback["values"]], ["0", "3'b010"])
+
     def test_storage_symbols_follow_edge_level_and_reset_semantics(self):
         self.write("storage.sv", """
             module storage(input logic clk, rst_n, en, a, b, selector,

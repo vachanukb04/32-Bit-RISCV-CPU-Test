@@ -336,10 +336,183 @@ function drawWire(commands, clock, caption, choose) {
   return connection;
 }
 
+function drawDecoderSchematic(scope, signals, signalLabel, selectSignal, openChild, logic) {
+  const model = logic.view.summary.decoder;
+  const section = make("section", "schematic-section decoder-schematic");
+  const heading = make("div", "schematic-heading");
+  heading.append(make("h3", "", "Data schematic"), make("span", "source", signals.size + " signals"));
+  const timing = make("code", "decoder-timing", logic.view.header || "Combinational");
+  heading.append(timing);
+  section.append(heading, make("p", "decoder-note",
+    "A change to a read input re-evaluates the block. The outputs shown are the values after it settles."));
+
+  const traced = new Map();
+  let selected;
+  let wireView;
+  let selectionOptions;
+  function track(element, nets) {
+    for (const net of nets) {
+      if (!traced.has(net)) traced.set(net, new Set());
+      traced.get(net).add(element);
+    }
+    return element;
+  }
+
+  function line(source) {
+    const link = sourceLink(source);
+    link.title = link.textContent;
+    link.textContent = "L" + source.line;
+    link.classList.add("decoder-line");
+    return link;
+  }
+
+  function inputButton(net) {
+    const button = make("button", "decoder-signal", signalLabel(net));
+    button.type = "button";
+    button.setAttribute("aria-label", "Trace " + signalLabel(net));
+    button.addEventListener("click", () => selectSignal(net));
+    return track(button, [net]);
+  }
+
+  function literal(cell, value) {
+    const code = make("code", value.value === "1" ? "decoder-value decoder-on" : "decoder-value", value.value);
+    if (value.source) code.title = "Assigned at line " + value.source.line;
+    cell.append(code);
+  }
+
+  function decisionLabel(value) {
+    if (["case", "casez", "casex"].includes(value.kind)) return `${value.kind} (${value.selector})`;
+    return value.selector;
+  }
+
+  function renderChoices(value, output) {
+    const panel = make("div", "decoder-choices");
+    const criterion = make("div", "decoder-criterion");
+    criterion.append(track(make("code", "", decisionLabel(value)), value.inputs));
+    if (value.source) criterion.append(line(value.source));
+    panel.append(criterion);
+    const choices = make("dl", "decoder-branches");
+    for (const arm of value.arms) {
+      choices.append(track(make("dt", "", arm.label), value.inputs));
+      const result = track(make("dd", ""), [output.net]);
+      if (arm.result.kind) result.append(renderChoices(arm.result, output));
+      else literal(result, arm.result);
+      choices.append(result);
+    }
+    panel.append(choices);
+    return panel;
+  }
+
+  const flow = make("div", "decoder-flow");
+  const inputNames = make("div", "decoder-inputs");
+  for (const net of logic.view.summary.inputs) inputNames.append(inputButton(net));
+  flow.append(inputNames, make("span", "decoder-arrow", "→"));
+  if (model.guard) {
+    const check = track(make("div", "decoder-step", "When " + model.guard.condition), model.guard.inputs);
+    if (model.guard.source) check.append(line(model.guard.source));
+    flow.append(check, make("span", "decoder-arrow", "→"));
+  }
+  const dispatch = track(make("div", "decoder-step", `case (${model.selector})`), model.inputs);
+  if (model.source) dispatch.append(line(model.source));
+  flow.append(dispatch, make("span", "decoder-arrow", "→"), make("span", "decoder-step", "Output values"));
+  section.append(flow);
+
+  const table = make("table", "decoder-table");
+  const columns = table.createTHead().insertRow();
+  const keyColumn = make("th", "", "Match");
+  keyColumn.scope = "col";
+  columns.append(keyColumn);
+  for (const output of model.outputs) {
+    const column = track(make("th", ""), [output.net]);
+    column.scope = "col";
+    column.append(inputButton(output.net));
+    if (output.range) column.append(make("div", "decoder-range", output.range));
+    columns.append(column);
+  }
+  const nested = make("div", "decoder-details");
+  const rows = table.createTBody();
+
+  function appendRow(label, source, values, inputs, kind = "") {
+    const row = rows.insertRow();
+    if (kind) row.className = kind;
+    const match = track(make("th", "decoder-match"), inputs);
+    match.scope = "row";
+    for (const [index, part] of label.entries()) {
+      if (index) match.append(make("br"));
+      match.append(make("span", "", part));
+    }
+    if (source) match.append(line(source));
+    row.append(match);
+    for (const [index, value] of values.entries()) {
+      const output = model.outputs[index];
+      const cell = track(make("td", ""), [output.net]);
+      if (value.kind) {
+        const card = make("section", "decoder-card");
+        const title = make("h4", "", label[0].replace(/ \(.*\)$/, "") + " → " + output.name);
+        title.tabIndex = -1;
+        card.append(title, renderChoices(value, output));
+        nested.append(card);
+        const link = track(make("button", "decoder-link", value.selector + " ↓"), value.inputs);
+        link.title = decisionLabel(value) + " → " + output.name;
+        link.type = "button";
+        link.addEventListener("click", () => {
+          title.focus({preventScroll: true});
+          card.scrollIntoView({block: "nearest"});
+        });
+        cell.append(link);
+      } else {
+        literal(cell, value);
+      }
+      row.append(cell);
+    }
+  }
+
+  if (model.defaults) appendRow(["Initial defaults"], null, model.defaults, [], "decoder-prior");
+  if (model.guard) appendRow(["Decode disabled"], model.guard.source, model.guard.otherwise,
+    model.guard.inputs, "decoder-prior");
+  for (const arm of model.cases) {
+    appendRow(arm.labels, arm.source, arm.values, model.inputs);
+  }
+  const grid = make("div", "decoder-table-scroll");
+  grid.tabIndex = 0;
+  grid.setAttribute("aria-label", "Output values by " + model.selector);
+  grid.append(table);
+  if (model.defaults) section.append(make("p", "decoder-note",
+    "The block applies its defaults first. Each case row shows the final value of every output."));
+  section.append(grid);
+  if (nested.childElementCount) section.append(nested);
+
+  const wires = make("details", "decoder-wires");
+  wires.append(make("summary", "", "Gate-level wiring"));
+  wires.addEventListener("toggle", () => {
+    if (!wires.open || wireView) return;
+    wireView = drawWiredSchematic(scope, signals, signalLabel, selectSignal, openChild, false);
+    wires.append(wireView.section);
+    wireView.highlight(selected, selectionOptions);
+  });
+  section.append(wires);
+
+  return {section, highlight(net, options) {
+    for (const element of traced.get(selected) || []) element.classList.remove("decoder-hit");
+    selected = net;
+    selectionOptions = options;
+    for (const element of traced.get(net) || []) element.classList.add("decoder-hit");
+    wireView?.highlight(net, options);
+  }};
+}
+
 function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild) {
+  const [logic] = scope.logic;
+  if (!scope.children.length && scope.logic.length === 1 && logic.view?.summary?.decoder) {
+    return drawDecoderSchematic(scope, signals, signalLabel, selectSignal, openChild, logic);
+  }
+  return drawWiredSchematic(scope, signals, signalLabel, selectSignal, openChild);
+}
+
+function drawWiredSchematic(scope, signals, signalLabel, selectSignal, openChild, title = true) {
   const section = make("section", "schematic-section");
   const header = make("div", "schematic-heading");
-  header.append(make("h3", "", "Data schematic"), make("span", "source", signals.size + " signals"));
+  if (title) header.append(make("h3", "", "Data schematic"), make("span", "source", signals.size + " signals"));
   section.append(header);
 
   const graph = buildSchematicGraph(scope, signals, signalLabel);
