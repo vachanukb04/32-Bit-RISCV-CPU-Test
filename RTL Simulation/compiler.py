@@ -6,6 +6,7 @@ from pathlib import Path
 import pyslang
 from pyslang import ast, parsing, syntax
 
+from rtl_schematic import clock_routes, data_schematics
 from rtl_structure import describe_structure, signal_refs, targets
 
 
@@ -139,6 +140,8 @@ def describe_instance(root, manager, instance, parent_path=""):
         ports.append({
             "name": name, "direction": direction, "bits": dtype.bitWidth if dtype is not None else None,
             "binding": source_text(manager, expr) if expr is not None else "",
+            "bindingSource": location(root, manager, expr.sourceRange.start)
+            if expr is not None and expr.sourceRange.start else None,
             "refs": signal_refs(expr), "drives": output_refs,
             "internal": internal.hierarchicalPath if internal is not None else f"{path}.{name}",
         })
@@ -158,7 +161,12 @@ def describe_instance(root, manager, instance, parent_path=""):
     structures, logic = describe_structure(
         local_members, lambda loc: location(root, manager, loc),
         lambda obj: source_text(manager, obj))
+    locate = lambda loc: location(root, manager, loc)
+    text = lambda obj: source_text(manager, obj)
+    schematics = data_schematics(local_members, structures, locate, text)
+    clocks = clock_routes(local_members, children, logic, locate, text)
     return {
+        "schematics": schematics, "clockUses": clocks,
         "path": path, "name": path.removeprefix(parent_path + ".") if parent_path else instance.name,
         "module": instance.definition.name, "source": location(root, manager, instance.definition.location),
         "ports": ports, "children": children, "logic": logic, "structures": structures,

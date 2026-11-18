@@ -27,6 +27,7 @@ GITHUB = re.compile(r"https://github\.com/([\w.-]+)/([\w.-]+?)(?:\.git)?(?:/tree
 ASSETS = {
     "/": ("index.html", "text/html"),
     "/workbench.css": ("workbench.css", "text/css"),
+    "/schematic.js": ("schematic.js", "text/javascript"),
     "/workbench.js": ("workbench.js", "text/javascript"),
 }
 

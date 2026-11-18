@@ -81,6 +81,28 @@ class CompilerTests(unittest.TestCase):
         self.assertIn(("mux", "Conditional mux"), tiles)
         self.assertIn(("gate", "AND"), tiles)
 
+    def test_clock_and_register_wiring_follow_elaboration(self):
+        self.write("top.sv", """
+            module arm(input c, rst, input [31:0] n, output logic [31:0] q);
+              always_ff @(negedge c)
+                if (rst) q <= 0;
+                else q <= n;
+            endmodule
+            module top(input sys_clk, rst, input [31:0] n, output [31:0] q);
+              arm stage(.c(sys_clk), .rst(rst), .n(n), .q(q));
+            endmodule
+        """)
+        result = compile_design(self.root, self.root, "top", "top.sv")["hierarchy"]
+        route = result["clockUses"][0]
+        self.assertEqual((route["signal"], route["label"], route["edge"]), ("sys_clk", "stage.c", "NegEdge"))
+        nodes = result["children"][0]["schematics"][0]["nodes"]
+        flop = next(node for node in nodes if node["kind"] == "flop")
+        self.assertEqual(flop["label"], "q[0..31]")
+        data, clock = [nodes[pin["source"]] for pin in flop["pins"]]
+        self.assertEqual(clock["label"], "c")
+        self.assertEqual(data["kind"], "mux")
+        self.assertEqual([nodes[pin["source"]]["label"] for pin in data["pins"]], ["n", "0", "rst"])
+
     def test_unknown_module_reports_compile_failure(self):
         self.write("top.v", "module top; unknown u(); endmodule")
         result = compile_design(self.root, self.root, "top", "top.v")

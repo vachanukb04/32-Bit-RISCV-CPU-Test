@@ -300,16 +300,19 @@ function drawDiagram() {
   }
 
   if (node.logic.length) {
-    const logicCard = make("button", "block");
-    logicCard.append(make("strong", "", "Local RTL"),
-      make("span", "", node.logic.length + " assignments / processes"));
+    const logicCard = make("button", node.children.length ? "block" : "source-link");
+    logicCard.append(make("strong", "", "Local RTL"));
+    if (node.children.length) {
+      logicCard.append(make("span", "", node.logic.length + " assignments / processes"));
+    }
     logicCard.addEventListener("click", () => {
       const detail = byId("local-logic");
       detail.open = true;
       detail.scrollIntoView({block: "nearest"});
       detail.querySelector("summary").focus({preventScroll: true});
     });
-    grid.append(logicCard);
+    if (node.children.length) grid.append(logicCard);
+    else title.append(logicCard);
     for (const item of node.logic) {
       const label = item.kind + " · line " + item.source.line;
       for (const net of item.outputs) register(net, logicCard, label + " writes", "driver");
@@ -333,6 +336,8 @@ function drawDiagram() {
   trace.hidden = true;
   chip.append(title, bar, trace);
   if (grid.children.length) chip.append(grid);
+  if (node.clockUses.length) chip.append(drawClockWiring(node));
+  if (node.schematics.length) chip.append(drawDataSchematic(node.schematics));
   if (node.structures.length) chip.append(drawStructures(node.structures, label));
   if (!grid.children.length && !node.structures.length) {
     chip.append(make("p", "empty", "No child instances or local processes."));
@@ -382,11 +387,13 @@ function drawStructures(structures, signalLabel) {
     for (const item of items) {
       const card = make("details", "structure-card");
       const heading = make("summary");
-      heading.append(make("strong", "", item.label));
+      const caption = make("span", "structure-caption");
+      caption.append(make("strong", "", item.label));
+      heading.append(structureGlyph(item), caption);
       const summary = [item.bits ? item.bits + " bit" + (item.bits === 1 ? "" : "s") : "",
         item.occurrences.length > 1 ? item.occurrences.length + " occurrences" : ""].filter(Boolean).join(" · ");
-      if (summary) heading.append(make("span", "source", summary));
-      if (item.detail) heading.append(make("span", "source", item.detail));
+      if (summary) caption.append(make("span", "source", summary));
+      if (item.detail) caption.append(make("span", "source", item.detail));
       card.append(heading);
       const info = make("div", "structure-info");
       if (item.inputs.length) info.append(make("p", "source", "References · " + item.inputs.map(signalLabel).join(", ")));

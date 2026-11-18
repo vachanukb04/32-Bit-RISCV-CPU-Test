@@ -30,8 +30,10 @@ GitHub input requires Git. A repository URL uses its default branch and a
    return to any parent, and the tree supports independent expand and collapse.
 4. Select a signal under **Trace signal** to see its drivers and loads in a
    dedicated diagram. Click a block to see its ports, local RTL, and the
-   inferred structures in its scope. Expand a structure for source locations
-   and expressions.
+   inferred structures in its scope. **Clock wiring** draws the local clock
+   source and consuming instance or register pins. **Data schematic** lets
+   you choose an output, register, or assignment and inspect its wired pins.
+   Expand a symbol under **RTL structures** for its source and expressions.
 5. Click a file location under **Compiler diagnostics** to open the source
    read-only at the highlighted line and column.
 6. Open **Generated file list** to inspect or download `sources.f`. Paths are
@@ -60,8 +62,10 @@ all come from the project sources.
 - The RTL structures view groups edge-triggered state by written signal and
   bit range, flags possible latches by conditional assignment coverage, and
   shows declared memories, conditional selections, and combinational operators.
-  These are RTL-level inferences. Synthesis determines the final cells and
-  memory mapping.
+  Complete data schematics cover continuous expressions and supported
+  single-destination processes. Other procedural sheets show the operands of
+  one assignment and link to the enclosing RTL. These are RTL-level
+  schematics. Synthesis determines the final cells and memory mapping.
 - Quoted headers found by the compiler are listed in the UI. Discovery parses
   candidates independently, so project-specific defines, package imports driven
   by earlier file macros, and custom include paths can require a future

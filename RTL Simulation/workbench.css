@@ -154,3 +154,33 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
   .trace-net::before { bottom: 100%; }
   .trace-net::after { top: 100%; }
 }
+
+.clock-section, .schematic-section { border-top: 1px solid #456458; margin-top: 1rem; padding-top: .65rem; }
+.clock-section h3, .schematic-section h3 { color: var(--accent); }
+.schematic-section select { width: auto; max-width: 100%; }
+.schematic-scroll { overflow: auto; border: 1px solid #344d49; border-radius: 7px;
+  margin: .55rem 0; background: radial-gradient(#68857e40 1px, transparent 1px) 0 0 / 16px 16px, #14231f; }
+.circuit-svg { display: block; max-width: none; }
+.symbol-body { fill: #203a31; stroke: #d1eadc; stroke-width: 1.65; stroke-linejoin: round; }
+.symbol-line { fill: none; stroke: #d1eadc; stroke-width: 1.45; }
+.data-wire { fill: none; stroke: #b0d6c3; stroke-width: 1.45; }
+.clock-wire { fill: none; stroke: #7dd7ff; stroke-width: 2; }
+.clock-junction { fill: #7dd7ff; }
+.terminal-dot { fill: #15251f; stroke: #bddccc; stroke-width: 1.5; }
+.net-label, .pin-label, .pin-name, .clock-ink, .symbol-sign { fill: #e5f5ed; font: 11px var(--mono); }
+.pin-label { fill: #bdcfc5; font-size: 9px; }
+.pin-name { font-size: 10px; }
+.clock-ink { fill: #7dd7ff; font-weight: 750; }
+.symbol-sign { font-size: 17px; }
+.schematic-caption, .clock-sources { display: flex; flex-wrap: wrap; gap: .35rem .7rem; }
+.clock-details { margin: .4rem 0 .6rem; color: var(--muted); font-size: .78rem; }
+.clock-sources { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); margin-top: .4rem; }
+.structure-grid { grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr)); }
+.structure-card, .structure-card[open] { border: 0; background: transparent; }
+.structure-card summary { display: flex; align-items: center; gap: .35rem; padding: .2rem 0; }
+.structure-card summary::-webkit-details-marker { display: none; }
+.structure-card summary::marker { content: ""; }
+.structure-card summary .structure-caption { margin: 0; }
+.structure-card summary .source { margin: .18rem 0 0; }
+.structure-glyph { flex: 0 0 auto; }
+.structure-card[open] .structure-info { border-left: 1px solid #56786a; }
