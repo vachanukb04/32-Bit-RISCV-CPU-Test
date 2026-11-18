@@ -6,6 +6,7 @@ from pathlib import Path
 import pyslang
 from pyslang import ast, parsing, syntax
 
+from rtl_comb_logic import summarize_combinational
 from rtl_process_view import process_view
 from rtl_schematic import clock_routes, data_schematics
 from rtl_structure import describe_structure, process_timing, signal_refs, targets
@@ -179,6 +180,12 @@ def describe_instance(root, manager, instance, parent_path=""):
                 if view["kind"] == "initialization":
                     entry["inputs"] = []
                     entry["outputs"] = sorted(view["outputs"])
+                elif view["kind"] == "combinational":
+                    summary = summarize_combinational(member.body, locate, text)
+                    if summary is not None:
+                        view["summary"] = summary
+                        entry["inputs"] = summary["inputs"]
+
     schematics = data_schematics(local_members, structures, locate, text)
     clocks = clock_routes(local_members, children, logic, locate, text)
     nets = sorted({member.hierarchicalPath for member in local_members

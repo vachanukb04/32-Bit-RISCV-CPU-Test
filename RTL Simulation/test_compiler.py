@@ -18,6 +18,68 @@ class CompilerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(source, encoding="utf-8")
 
+    def test_combinational_summary_tracks_inputs_and_the_latest_value_per_branch(self):
+        self.write("dispatch.sv", """
+            module dispatch(input logic [2:0] op, input logic submode, blocked,
+                input logic [3:0] d, output logic [4:0] code, output logic y);
+                logic [3:0] stage;
+                always @* begin
+                    code = 5'b00000;
+                    stage = d;
+                    y = stage[0];
+                    if (!blocked) begin
+                        case (op)
+                            3'b010: code = submode ? 5'b10010 : 5'b10100;
+                            3'b100: begin
+                                stage = ~d;
+                                y = stage[0];
+                            end
+                            default: ;
+                        endcase
+                    end
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "dispatch", "dispatch.sv")["hierarchy"]
+        process = next(item for item in scope["logic"] if item.get("view"))
+        summary = process["view"]["summary"]
+        self.assertEqual(summary["inputs"], ["dispatch.blocked", "dispatch.d", "dispatch.op", "dispatch.submode"])
+        self.assertEqual(summary["dataInputs"], ["dispatch.d"])
+        self.assertEqual(summary["conditions"], ["!blocked"])
+        self.assertEqual(summary["selectors"], ["op"])
+        outputs = {entry["name"]: entry for entry in summary["outputs"]}
+        code = outputs["code"]
+        self.assertEqual(code["range"], "[4:0]")
+        self.assertEqual(code["inputs"], ["dispatch.blocked", "dispatch.op", "dispatch.submode"])
+        self.assertTrue(any(row["when"] == ["!blocked is true", "case op matches 3'b010"]
+                            and row["value"] == "submode ? 5'b10010 : 5'b10100" for row in code["rules"]))
+        self.assertEqual(code["rules"][-1]["value"], "5'b00000")
+        local_sources = {tuple(binding) for row in outputs["y"]["rules"] for binding in row["locals"]}
+        self.assertEqual(local_sources, {("stage", "d"), ("stage", "~d")})
+
+    def test_case_can_select_a_value_that_was_assigned_by_an_earlier_decision(self):
+        self.write("select.sv", """
+            module select(input logic take_b, input logic [1:0] a, b,
+                          output logic q, spare);
+                localparam logic [1:0] TRIGGER = 2'b01;
+                logic [1:0] key;
+                always @* begin
+                    if (take_b) key = b;
+                    else key = a;
+                    spare = 1'b0;
+                    case (key)
+                        TRIGGER: q = 1'b1;
+                        default: q = 1'b0;
+                    endcase
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "select", "select.sv")["hierarchy"]
+        summary = next(item for item in scope["logic"] if item.get("view"))["view"]["summary"]
+        q = next(output for output in summary["outputs"] if output["name"] == "q")
+        self.assertEqual(q["inputs"], ["select.a", "select.b", "select.take_b"])
+        self.assertEqual(q["rules"][0]["when"], ["case key matches TRIGGER (2'b01)"])
+
     def test_process_keeps_nested_decisions_and_parameterized_bit_fields(self):
         self.write("select.sv", """
             module select #(parameter EXT = 3)

@@ -120,3 +120,22 @@ test("uses one trace selection for a named net's driver and fanout wires", () =>
     api.wireTraceKey({from: driver, output: "Q"}));
   assert.notEqual(api.wireTraceKey(named[0]), api.wireTraceKey({from: driver, output: "Q"}));
 });
+
+test("keeps assignment constants inside the output rules instead of wiring them as inputs", () => {
+  const source = location(2);
+  const summary = {inputs: ["op"], controls: ["op"], dataInputs: [], conditions: [], selectors: ["op"],
+    outputs: [{net: "code", name: "code", range: "[4:0]", rules: [{value: "5'b01001"}]}]};
+  const graph = render({
+    nets: ["op", "code"], ports: [], structures: [], children: [], clockUses: [],
+    logic: [{source, kind: "Always", inputs: ["op"], outputs: ["code"],
+      view: {kind: "combinational", summary}}],
+    schematics: [{source: location(4), processSource: source, expressionOnly: true, processKind: "Always",
+      nodes: [terminal("5'b01001"), output("code", 0)]}]
+  });
+  const process = graph.nodes.find(node => node.kind === "process");
+  assert.ok(process.summary);
+  assert.deepEqual(Array.from(process.inputs.values()), ["Control · op"]);
+  assert.deepEqual(Array.from(process.outputs.values()), ["code [4:0]"]);
+  assert.deepEqual(Array.from(graph.edges, edge => edge.from.label + " → " + edge.to.label),
+    ["op → Combinational", "Combinational → code"]);
+});

@@ -183,6 +183,24 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .decision-case .decision-badge-text { fill: #b0edf4; }
 .bit-field-body { fill: #142a22; stroke: #476b5d; stroke-width: .7; }
 .bit-field-range { fill: #83ddca; font-weight: 700; }
+.logic-control-label, .logic-rail-label, .logic-rule-action { font: 700 9px var(--mono); }
+.logic-control-label { fill: #ffdc88; }
+.logic-control-value { fill: #ecf4e0; font: 11px var(--mono); }
+.logic-rail-label { fill: #a9c3b5; }
+.logic-rule-action { fill: #a9e8d1; text-decoration: underline; }
+.logic-divider { fill: none; stroke: #719287; stroke-width: .7; }
+.logic-outcome { fill: #badace; font: 10px var(--mono); }
+.rules-header { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem .85rem; }
+.rules-header strong { margin-right: auto; color: var(--accent); }
+.rule-picker { display: flex; align-items: center; gap: .4rem; }
+.rule-picker select { width: auto; max-width: 13rem; }
+.output-rule-table { width: 100%; }
+.output-rule-table td { white-space: normal; vertical-align: top; }
+.rule-condition + .rule-condition { margin-top: .28rem; color: #a9c3b5; }
+.rule-value { color: #d6f4e6; overflow-wrap: anywhere; }
+.rule-field { display: grid; grid-template-columns: 6ch 1fr; gap: .6rem; margin-top: .28rem; }
+.rule-range { color: #86dbca; }
+.rule-local { margin-top: .35rem; color: #a9c3b5; }
 .schematic-source:not(:empty) { margin: .55rem 0; padding: .6rem; border: 1px solid #426256; border-radius: 6px; }
 .schematic-source ul { margin: .4rem 0 0; padding-left: 1.15rem; }
 .schematic-source li { margin: .22rem 0; }

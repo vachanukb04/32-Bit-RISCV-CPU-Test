@@ -91,7 +91,12 @@ function layoutSchematic(graph) {
       const rails = 42 + (longestIn + longestOut) * 6;
       let bodyWidth = 0;
       let bodyHeight = 0;
-      if (node.rows?.length) {
+      if (node.summary) {
+        bodyWidth = 198;
+        node.pinInset = 76 + 22 * (Number(Boolean(node.summary.conditions.length)) +
+          Number(Boolean(node.summary.selectors.length)));
+        bodyHeight = node.pinInset + 24 * Math.max(node.inputs.size, node.outputs.size);
+      } else if (node.rows?.length) {
         node.contentX = Math.max(18, longestIn * 6 + 14);
         bodyWidth = Math.max(...node.rows.map(row => row.depth * 13 + Math.min(row.text.length, 92) * 6.4 + 112));
         bodyHeight = 57 + DECISION_ROW * node.rows.length;

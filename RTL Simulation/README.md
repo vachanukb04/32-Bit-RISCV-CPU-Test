@@ -61,8 +61,10 @@ all come from the project sources.
   and child blocks open their own schematics. Tracing works at signal granularity.
 - Continuous expressions and supported single-destination processes expand
   into circuit symbols. Concatenations show destination bit ranges and their
-  operands in MSB-to-LSB order. Combinational processes show their ordered
-  assignments and nested if/else/case decisions inside the block. Initialization
+  operands in MSB-to-LSB order. Supported combinational processes show their
+  external data and control inputs, guards, selectors, and driven outputs.
+  Click the block to see each output's ordered decisions, values, and bit
+  fields. Initialization
   shows known writes and statically resolved memory index sweeps. The process
   blocks link to the original RTL. Synthesis determines the final cells and
   memory mapping.

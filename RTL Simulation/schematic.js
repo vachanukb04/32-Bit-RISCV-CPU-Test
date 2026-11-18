@@ -108,7 +108,7 @@ function pinPosition(node, pin, outgoing) {
     }
     const pins = outgoing ? node.outputs : node.inputs;
     const index = [...pins.keys()].indexOf(pin);
-    return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + 48 + index * 24};
+    return {x: node.x + (outgoing ? node.width : 0), y: node.y - node.height / 2 + (node.pinInset || 48) + index * 24};
   }
   if (["net", "tap", "literal"].includes(node.kind)) {
     return {x: node.x + (outgoing ? node.width : 0), y: node.y};
@@ -229,6 +229,93 @@ function drawBitFields(group, node, top) {
   }
 }
 
+function drawOutputSummary(group, node, top) {
+  let y = top + 43;
+  const {conditions, selectors, outputs} = node.summary;
+  for (const [label, values] of [["CONDITION", conditions], ["SELECT", selectors]]) {
+    if (!values.length) continue;
+    const display = values.join(" · ");
+    const line = svgNode("g", {class: "logic-control-row"});
+    svgText(line, 12, y + 7, label, "logic-control-label");
+    svgText(line, 94, y + 7, shorten(display, 44), "logic-control-value");
+    line.append(svgNode("title", {}, display));
+    group.append(line);
+    y += 22;
+  }
+  svgPath(group, `M10 ${y} H${node.width - 10}`, "logic-divider");
+  svgText(group, 12, y + 15, "INPUTS", "logic-rail-label");
+  svgText(group, node.width - 12, y + 15, "OUTPUTS", "logic-rail-label", "end");
+  svgText(group, node.width / 2, y + 15, "VIEW OUTPUT RULES ↗", "logic-rule-action", "middle");
+  for (const result of outputs) {
+    const at = pinPosition(node, result.net, true).y - node.y;
+    const variants = new Set(result.rules.map(rule => JSON.stringify([rule.value, rule.locals])));
+    const hasFields = result.rules.some(rule => rule.fields.length);
+    const caption = hasFields ? "Assemble bit fields" : variants.size === 1
+      ? shorten(result.rules[0].value, 23) : variants.size + " alternatives";
+    svgText(group, node.width / 2 + 6, at + 3, caption, "logic-outcome", "middle");
+  }
+}
+
+function showOutputRules(container, node, signalLabel) {
+  const header = make("div", "rules-header");
+  const control = make("label", "rule-picker", "Output");
+  const picker = make("select");
+  for (const [index, output] of node.summary.outputs.entries()) {
+    const name = [output.name, output.range].filter(Boolean).join(" ");
+    picker.append(new Option(name, index));
+  }
+  const primary = node.summary.outputs.reduce((best, item, index, outputs) =>
+    item.rules.length > outputs[best].rules.length ? index : best, 0);
+  picker.value = primary;
+  control.append(picker);
+  header.append(make("strong", "", "Combinational output rules"), control, sourceLink(node.source));
+  const rules = make("div", "output-rules");
+  container.replaceChildren(header, rules);
+
+  function renderRules() {
+    const output = node.summary.outputs[Number(picker.value)];
+    const dependencies = output.inputs.map(signalLabel);
+    const description = dependencies.length ? "Depends on " + dependencies.join(" · ") :
+      "Constant result";
+    const summary = make("p", "source", description);
+    const table = make("table", "output-rule-table");
+    const head = make("thead");
+    const columns = make("tr");
+    for (const name of ["When", "Value", "RTL"]) columns.append(make("th", "", name));
+    head.append(columns);
+    const body = make("tbody");
+    for (const rule of output.rules) {
+      const line = make("tr");
+      const when = make("td");
+      (rule.when.length ? rule.when : ["Always"]).forEach(condition =>
+        when.append(make("div", "rule-condition", condition)));
+      const value = make("td");
+      value.append(make("code", "rule-value", rule.value));
+      for (const [range, field] of rule.fields) {
+        const bit = make("div", "rule-field");
+        bit.append(make("code", "rule-range", range), make("code", "", field));
+        value.append(bit);
+      }
+      for (const [name, expression] of rule.locals) {
+        value.append(make("div", "rule-local", name + " ← " + expression));
+      }
+      const rtl = make("td");
+      if (rule.source) rtl.append(sourceLink(rule.source));
+      line.append(when, value, rtl);
+      body.append(line);
+    }
+    table.append(head, body);
+    const wrap = make("div", "table-wrap");
+    wrap.append(table);
+    const order = make("p", "source", "Within each case, the first matching arm wins.");
+    rules.replaceChildren(summary, order, wrap);
+  }
+  picker.addEventListener("change", renderRules);
+  renderRules();
+  picker.focus({preventScroll: true});
+  header.scrollIntoView({block: "nearest"});
+}
+
 function drawSchematicSymbol(node) {
   const group = svgNode("g", {class: "circuit-node " + node.kind, "data-label": node.label});
   const local = svgNode("g", {transform: `translate(${node.x} ${node.y})`});
@@ -246,6 +333,7 @@ function drawSchematicSymbol(node) {
       class: "symbol-body"}));
     svgText(local, 9, top + 16, shorten(node.label, 27), "net-label");
     if (node.caption) svgText(local, 9, top + 31, shorten(node.caption, 31), "pin-label");
+    if (node.summary) drawOutputSummary(local, node, top);
     if (node.rows?.length) drawDecisionRows(local, node, top);
     if (node.fields) drawBitFields(local, node, top);
     for (const outgoing of [false, true]) {
@@ -398,11 +486,13 @@ function drawDataSchematic(scope, signals, signalLabel, selectSignal, openChild)
       group.setAttribute("aria-pressed", "false");
     } else if (node.child) {
       makeInteractive(group, "Open " + node.label + " " + node.caption, () => openChild(node.child));
-    } else if (node.rows?.length || node.sources?.length || node.initializers?.length) {
+    } else if (node.summary) {
+      makeInteractive(group, "View combinational output rules", () => showOutputRules(details, node, signalLabel));
+    } else if (node.sourceRows?.length || node.sources?.length || node.initializers?.length) {
       makeInteractive(group, "View " + node.label + " RTL sources", () => {
         details.replaceChildren(make("strong", "", node.label));
         const list = make("ul");
-        const procedure = (node.rows || []).filter(row => row.source).map(row =>
+        const procedure = (node.sourceRows || []).filter(row => row.source).map(row =>
           ({source: row.source, label: [row.kind.toUpperCase(), row.text].filter(Boolean).join(" ")}));
         const locations = [...(procedure.length ? procedure : node.sources || []), ...(node.initializers || [])];
         for (const item of locations) {

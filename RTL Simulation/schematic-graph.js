@@ -19,6 +19,15 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   const clocks = new Set();
   const views = new Map(scope.logic.filter(item => item.view)
     .map(item => [sourceKey(item.source), item.view]));
+  const compact = new Set();
+  const explicitWiring = new Set();
+  for (const sheet of scope.schematics) {
+    const key = sourceKey(sheet.processSource || sheet.source);
+    if (!views.get(key)?.summary) continue;
+    if (sheet.expressionOnly) compact.add(key);
+    if (!sheet.expressionOnly || sheet.nodes.some(node => node.kind === "memory")) explicitWiring.add(key);
+  }
+  for (const key of explicitWiring) compact.delete(key);
   const portsBySignal = new Map();
   for (const port of scope.ports) {
     const peers = portsBySignal.get(port.internal) || [];
@@ -110,7 +119,10 @@ function buildSchematicGraph(scope, signals, signalLabel) {
       const title = {combinational: "Combinational", initialization: "Initialization",
         initial: "Initial process"}[view?.kind] || procedure;
       const caption = site?.line ? [view && procedure, "line " + site.line].filter(Boolean).join(" · ") : "";
-      const item = add("process", title, {caption, source: site, rows: view?.rows});
+      const summary = compact.has(key) ? view.summary : undefined;
+      const rows = view?.kind === "combinational" ? undefined : view?.rows;
+      const item = add("process", title, {caption, source: site, rows, summary,
+        sourceRows: view?.rows});
       processes.set(key, {item, inputs: new Set(view?.localReads || []),
         localReads: new Set(view?.localReads || []), writes: new Set()});
     }
@@ -162,10 +174,14 @@ function buildSchematicGraph(scope, signals, signalLabel) {
   for (const sheet of scope.schematics) {
     const site = sheet.processSource || sheet.source;
     const key = sourceKey(site);
-    if (views.get(key)?.kind === "initialization") continue;
+    if (views.get(key)?.kind === "initialization" || compact.has(key)) continue;
+    const root = sheet.nodes.at(-1);
+    if (sheet.expressionOnly && views.get(key)?.kind === "combinational" && root.kind === "output" &&
+        sheet.nodes.slice(0, -1).every(node => !node.nets?.length && node.kind !== "memory")) {
+      continue;
+    }
     represented.add(key);
     const fallback = sheet.expressionOnly && process(site, sheet.processKind);
-    const root = sheet.nodes.at(-1);
     if (fallback && sheet.processKind === "Initial" && root.kind === "memory" && root.write &&
         sheet.nodes.slice(0, -1).every(shape => shape.kind === "terminal" && !shape.nets?.length)) {
       const bank = anchor(root.nets[0]);
@@ -241,6 +257,22 @@ function buildSchematicGraph(scope, signals, signalLabel) {
     if (represented.has(key) && !processes.has(key)) continue;
     if (!logic.inputs.length && !logic.outputs.length && !processes.has(key)) continue;
     const entry = process(logic.source, logic.kind);
+    if (entry.item.summary) {
+      const summary = entry.item.summary;
+      const controls = new Set(summary.controls);
+      const data = new Set(summary.dataInputs);
+      for (const net of summary.inputs) {
+        const label = signalLabel(net);
+        const role = controls.has(net) && !data.has(net) ? "Control" : "Data";
+        feed(signalOutput(net), entry.item, {input: net, inputLabel: role + " · " + label});
+      }
+      for (const result of summary.outputs) {
+        const item = anchor(result.net);
+        connect(entry.item, item, {net: result.net, output: result.net,
+          outputLabel: [result.name, result.range].filter(Boolean).join(" ")});
+      }
+      continue;
+    }
     if (logic.view?.kind === "initialization") {
       for (const [net, caption] of Object.entries(logic.view.outputs)) {
         const node = anchor(net);
