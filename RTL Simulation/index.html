@@ -6,6 +6,7 @@
   <meta name="description" content="Explore RTL hierarchy, block schematics, and signal connectivity in RTL2GDS Cockpit.">
   <title>RTL2GDS Cockpit</title>
   <link rel="stylesheet" href="/workbench.css">
+  <script src="/cockpit.js" defer></script>
 </head>
 <body>
   <header class="masthead">
@@ -17,54 +18,28 @@
       <a href="/workbench.html">Understanding your design</a>
     </nav>
   </header>
+
   <main class="cockpit-home">
-    <h1>What are you working on today?</h1>
-    <section class="workflow-deck" aria-labelledby="design-workflow-title">
-      <div class="workflow-preview" role="group" aria-label="Example design workbench">
-        <div class="preview-heading">
-          <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <strong>Design workbench preview</strong>
-          <code>decoder.sv</code>
-        </div>
-        <div class="preview-workspace">
-          <div class="preview-hierarchy">
-            <p class="preview-panel-title">Design hierarchy</p>
-            <ul class="preview-tree">
-              <li><code>decode_unit</code>
-                <ul><li><code>u_decode</code><span>decoder</span></li></ul>
-              </li>
-            </ul>
-          </div>
-          <div class="preview-diagram">
-            <p class="preview-panel-title">Block diagram <code>decode_unit / u_decode</code></p>
-            <div class="preview-grid">
-              <div class="preview-chip">
-                <strong>decoder</strong>
-                <div class="preview-circuit" role="img" aria-label="The valid and enable inputs feed an AND gate to produce execute.">
-                  <div class="preview-inputs" aria-hidden="true"><code>valid</code><code>enable</code></div>
-                  <span class="preview-gate" aria-hidden="true">&amp;</span>
-                  <span class="preview-wire" aria-hidden="true"></span>
-                  <code class="preview-output" aria-hidden="true">execute</code>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="preview-source">
-            <p class="preview-panel-title">RTL source</p>
-            <pre><code><span>module</span> decoder (
-  <span>input</span> valid, enable,
-  <span>output</span> execute
-);
-  <span>assign</span> execute = valid &amp; enable;
-<span>endmodule</span></code></pre>
-          </div>
-        </div>
-      </div>
-      <div class="workflow-launch">
-        <h2 id="design-workflow-title">Understanding your design</h2>
-        <p>Explore the module hierarchy, trace a signal from its driver to its loads, and inspect the RTL behind each block.</p>
+    <div class="cockpit-greeting">
+      <h1>Hello!</h1>
+      <p>What are you looking for today?</p>
+    </div>
+    <section class="workflow-deck" aria-labelledby="highlights-title">
+      <div class="workflow-gallery" id="workflow-gallery" role="group" aria-label="Workflow previews"></div>
+      <section class="workflow-highlight" aria-labelledby="highlights-title">
+        <h2 id="highlights-title">Get the highlights.</h2>
+        <div class="workflow-tabs" id="workflow-tabs" role="group" aria-label="Highlights"></div>
+        <div id="workflow-window"></div>
+        <div class="workflow-copy" id="workflow-copy" aria-live="polite"></div>
         <a class="workflow-cta" href="/workbench.html">Open design workbench</a>
+      </section>
+      <div class="workflow-pagination" aria-label="Preview navigation" hidden>
+        <button type="button" id="previous-workflow" class="preview-step" aria-label="Previous preview">‹</button>
+        <div class="preview-pages" id="workflow-pages"></div>
+        <button type="button" id="next-workflow" class="preview-step" aria-label="Next preview">›</button>
+        <output id="workflow-count" class="preview-count" aria-label="Current preview"></output>
       </div>
+      <button type="button" class="workflow-chooser" id="choose-workflow" hidden>Choose a workflow preview</button>
     </section>
   </main>
 </body>
