@@ -6,12 +6,13 @@ from pathlib import Path
 import pyslang
 from pyslang import ast, parsing, syntax
 
+from rtl_structure import describe_structure, signal_refs, targets
+
 
 SOURCE_EXTENSIONS = {".v", ".sv"}
 UNIT_KINDS = {"ModuleDeclaration", "InterfaceDeclaration", "ProgramDeclaration",
               "PackageDeclaration", "UdpDeclaration"}
 SCOPE_TYPES = (ast.GenerateBlockSymbol, ast.GenerateBlockArraySymbol, ast.InstanceArraySymbol)
-SIGNAL_TYPES = {"Net", "Variable", "FormalArgument"}
 DIRECTIONS = {"In": "input", "Out": "output", "InOut": "inout", "Ref": "ref"}
 
 
@@ -109,26 +110,16 @@ def location(root, manager, loc):
     loc = manager.getFullyExpandedLoc(loc)
     path = Path(manager.getFullPath(loc.buffer))
     name = path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path)
-    return {"file": name, "line": manager.getLineNumber(loc)}
+    return {"file": name, "line": manager.getLineNumber(loc), "column": manager.getColumnNumber(loc)}
 
 
 def source_text(manager, obj):
     span = obj.sourceRange
     start, end = span.start, span.end
     if start and end and start.buffer == end.buffer:
-        return manager.getSourceText(start.buffer)[start.offset:end.offset].strip()
-    return str(obj.syntax or "").strip()
-
-
-def signal_refs(expr):
-    names = set()
-    if expr is not None:
-        def collect(node):
-            if isinstance(node, (ast.NamedValueExpression, ast.HierarchicalValueExpression)):
-                if node.symbol.kind.name in SIGNAL_TYPES:
-                    names.add(node.symbol.hierarchicalPath)
-        expr.visit(collect)
-    return sorted(names)
+        return manager.getSourceText(start.buffer).encode("utf-8")[start.offset:end.offset].decode(
+            "utf-8", errors="replace").strip()
+    return str(getattr(obj, "syntax", "") or "").strip()
 
 
 def describe_instance(root, manager, instance, parent_path=""):
@@ -141,14 +132,18 @@ def describe_instance(root, manager, instance, parent_path=""):
         name = port.name
         dtype = getattr(port, "type", None)
         internal = getattr(port, "internalSymbol", None)
+        output_refs = []
+        if expr is not None and direction in {"output", "inout"}:
+            output = expr.left if isinstance(expr, ast.AssignmentExpression) else expr
+            output_refs = sorted({symbol.hierarchicalPath for symbol, _ in targets(output)})
         ports.append({
             "name": name, "direction": direction, "bits": dtype.bitWidth if dtype is not None else None,
             "binding": source_text(manager, expr) if expr is not None else "",
-            "refs": signal_refs(expr),
+            "refs": signal_refs(expr), "drives": output_refs,
             "internal": internal.hierarchicalPath if internal is not None else f"{path}.{name}",
         })
 
-    children, logic = [], []
+    children, local_members = [], []
 
     def walk(scope):
         for member in scope:
@@ -156,23 +151,17 @@ def describe_instance(root, manager, instance, parent_path=""):
                 children.append(describe_instance(root, manager, member, path))
             elif isinstance(member, SCOPE_TYPES) and not member.isUninstantiated:
                 walk(member)
-            elif isinstance(member, (ast.ContinuousAssignSymbol, ast.ProceduralBlockSymbol)):
-                if isinstance(member, ast.ContinuousAssignSymbol):
-                    item, kind = member.assignment, "assign"
-                else:
-                    item, kind = member.body, member.procedureKind.name
-                original = member.syntax
-                logic.append({
-                    "kind": kind, "source": location(root, manager, member.location),
-                    "text": str(original).strip() if original is not None else source_text(manager, item),
-                    "refs": signal_refs(item),
-                })
+            else:
+                local_members.append(member)
 
     walk(instance.body)
+    structures, logic = describe_structure(
+        local_members, lambda loc: location(root, manager, loc),
+        lambda obj: source_text(manager, obj))
     return {
         "path": path, "name": path.removeprefix(parent_path + ".") if parent_path else instance.name,
         "module": instance.definition.name, "source": location(root, manager, instance.definition.location),
-        "ports": ports, "children": children, "logic": logic,
+        "ports": ports, "children": children, "logic": logic, "structures": structures,
         "parameters": [{"name": p.name, "value": str(p.value)} for p in instance.body.parameters
                        if isinstance(p, ast.ParameterSymbol) and not p.isLocalParam],
     }
@@ -199,7 +188,22 @@ def compile_design(root, directory, top, source):
             path = Path(manager.getFullPath(include.buffer.id))
             headers.add(path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path))
     include_dirs = list(dict.fromkeys([directory.relative_to(root).as_posix(), "."]))
+    engine = pyslang.DiagnosticEngine(manager)
+    issues = [{
+        "severity": engine.getSeverity(diag.code, diag.location).name.lower(),
+        "message": engine.formatMessage(diag),
+        "source": location(root, manager, diag.location) if diag.location else None,
+    } for diag in diagnostics]
+    # Capture source as compiled. The viewer never interprets diagnostic paths as read requests.
+    sources = {}
+    for name in sorted({*source_files, *headers} | {
+        issue["source"]["file"] for issue in issues if issue["source"]
+    }):
+        path = (root / name).resolve()
+        if path.is_relative_to(root) and path.is_file():
+            sources[name] = path.read_text(encoding="utf-8", errors="replace")
     result = {
+        "issues": issues, "sourceText": sources,
         "top": top, "files": source_files, "headers": sorted(headers), "diagnostics": messages,
         "includeDirs": include_dirs,
         "filelist": "\n".join(f"./{path}" for path in source_files) + "\n",

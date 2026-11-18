@@ -54,8 +54,16 @@
     </details>
     <details class="panel output" id="diagnostic-panel">
       <summary>Compiler diagnostics</summary>
+      <div id="issues"></div>
       <pre id="diagnostics">No compile has been run.</pre>
     </details>
   </main>
+  <dialog id="source-view" aria-labelledby="source-path">
+    <div class="source-head">
+      <div><h2>RTL source</h2><p id="source-path" class="source"></p></div>
+      <form method="dialog"><button class="button" autofocus>Close</button></form>
+    </div>
+    <div id="source-lines" tabindex="0" aria-label="Source lines"></div>
+  </dialog>
 </body>
 </html>

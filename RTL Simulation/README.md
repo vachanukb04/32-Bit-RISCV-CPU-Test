@@ -28,10 +28,13 @@ GitHub input requires Git. A repository URL uses its default branch and a
    For the simulation hierarchy, select `tb_riscv_core` from the same directory.
 3. Click **Compile & elaborate**. Click a block to enter it. The breadcrumbs
    return to any parent, and the tree supports independent expand and collapse.
-4. Select a signal under **Trace signal** to highlight its referencing blocks.
-   The inspector shows port directions, widths, parent bindings, and source
-   locations. **Local RTL** shows assignments and processes in that scope.
-5. Open **Generated file list** to inspect or download `sources.f`. Paths are
+4. Select a signal under **Trace signal** to see its drivers and loads in a
+   dedicated diagram. Click a block to see its ports, local RTL, and the
+   inferred structures in its scope. Expand a structure for source locations
+   and expressions.
+5. Click a file location under **Compiler diagnostics** to open the source
+   read-only at the highlighted line and column.
+6. Open **Generated file list** to inspect or download `sources.f`. Paths are
    relative to the selected RTL root, so use that directory when replaying it.
    Pass the listed include directories to your compiler as include options.
    For Icarus, use `-grelative-include` to search beside the including file.
@@ -51,9 +54,14 @@ all come from the project sources.
 - The selected sources are compiled as one compilation unit. The compiler
   resolves the top, parameters, generate scopes, arrays, and port bindings,
   and supplies diagnostics. The browser uses the actual elaborated instances.
-- The diagram groups references to the same signal symbol. Slices and
-  expressions are visible in the port bindings. Highlighting is at signal
-  level. It does not infer bit-level connectivity or trace through assignments.
+- Signal tracing groups module ports, instance bindings, and local reads and
+  writes by elaborated signal symbol within the current scope. Port bindings
+  show slices and expressions. The trace has signal-level granularity.
+- The RTL structures view groups edge-triggered state by written signal and
+  bit range, flags possible latches by conditional assignment coverage, and
+  shows declared memories, conditional selections, and combinational operators.
+  These are RTL-level inferences. Synthesis determines the final cells and
+  memory mapping.
 - Quoted headers found by the compiler are listed in the UI. Discovery parses
   candidates independently, so project-specific defines, package imports driven
   by earlier file macros, and custom include paths can require a future

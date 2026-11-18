@@ -49,10 +49,11 @@ function resetDisplay() {
   expanded.clear();
   byId("tree").replaceChildren(make("p", "empty", "Elaborated instances appear here."));
   byId("diagram").replaceChildren(make("div", "empty stage-empty", "Select a top module to inspect its blocks and signals."));
-  for (const id of ["instance-count", "crumbs", "inspector", "sources", "file-count", "includes"]) {
+  for (const id of ["instance-count", "crumbs", "inspector", "sources", "file-count", "includes", "issues"]) {
     byId(id).replaceChildren();
   }
   byId("diagnostics").textContent = "No compile has been run.";
+  byId("diagnostics").hidden = false;
   byId("download").disabled = true;
   byId("diagnostic-panel").open = false;
   byId("file-panel").open = false;
@@ -112,30 +113,95 @@ byId("compile").addEventListener("submit", async event => {
   status("Compiling " + selected.name + "…");
   try {
     result = await request("compile", {...inputs(), top: selected.name, file: selected.file});
-    byId("sources").replaceChildren(...result.files.map(path => make("li", "", path)));
-    byId("file-count").textContent = result.files.length + " RTL files";
-    byId("includes").append(make("p", "source", "Include directories · " + result.includeDirs.join(", ")));
-    if (result.headers.length) {
-      const headers = make("ul");
-      for (const path of result.headers) headers.append(make("li", "source", path));
-      byId("includes").append(make("h3", "", "Included headers"), headers);
-    }
-    byId("download").disabled = false;
-    byId("diagnostics").textContent = result.diagnostics || "No compiler diagnostics.";
-    byId("diagnostic-panel").open = !result.hierarchy;
-    if (!result.hierarchy) {
-      status("Compilation failed. See compiler diagnostics.", true);
-      return;
-    }
-    status("Compiled and elaborated " + selected.name + ".");
-    byId("instance-count").textContent = count(result.hierarchy) + " instances";
-    focus([result.hierarchy]);
+    showResult(result);
   } catch (error) {
     status(error.message, true);
   } finally {
     busy(false);
   }
 });
+
+function showResult(compiled) {
+  result = compiled;
+  byId("sources").replaceChildren(...result.files.map(path => make("li", "", path)));
+  byId("file-count").textContent = result.files.length + " RTL files";
+  byId("includes").append(make("p", "source", "Include directories · " + result.includeDirs.join(", ")));
+  if (result.headers.length) {
+    const headers = make("ul");
+    for (const path of result.headers) headers.append(make("li", "source", path));
+    byId("includes").append(make("h3", "", "Included headers"), headers);
+  }
+  byId("download").disabled = false;
+  drawDiagnostics(result);
+  if (!result.hierarchy) {
+    status("Compilation failed. See compiler diagnostics.", true);
+    return;
+  }
+  status("Compiled and elaborated " + result.top + " · " + result.files.length + " source files.");
+  byId("instance-count").textContent = count(result.hierarchy) + " instances";
+  focus([result.hierarchy]);
+}
+
+function sourceLabel(source) {
+  return source.file + ":" + source.line + (source.column ? ":" + source.column : "");
+}
+
+function sourceLink(source) {
+  const label = sourceLabel(source);
+  if (!Object.hasOwn(result.sourceText, source.file)) return make("span", "source", label);
+  const button = make("button", "source-link", label);
+  button.type = "button";
+  button.addEventListener("click", () => openSource(source));
+  return button;
+}
+
+function drawDiagnostics(compiled) {
+  const issues = byId("issues");
+  for (const issue of compiled.issues) {
+    const card = make("div", "issue");
+    card.append(make("span", "severity " + issue.severity, issue.severity), make("span", "", issue.message));
+    if (issue.source) card.append(sourceLink(issue.source));
+    issues.append(card);
+  }
+  byId("diagnostics").textContent = compiled.diagnostics || "No compiler diagnostics.";
+  byId("diagnostics").hidden = compiled.issues.length > 0;
+  if (compiled.issues.length && compiled.diagnostics) {
+    const raw = make("details", "raw-diagnostics");
+    raw.append(make("summary", "", "Full compiler output"), make("pre", "", compiled.diagnostics));
+    issues.append(raw);
+  }
+  byId("diagnostic-panel").open = !compiled.hierarchy || compiled.issues.length > 0;
+}
+
+function openSource(source) {
+  const view = byId("source-view");
+  const listing = byId("source-lines");
+  byId("source-path").textContent = sourceLabel(source);
+  const fragment = document.createDocumentFragment();
+  const lines = result.sourceText[source.file].split(/\r?\n/);
+  let target;
+  for (const [index, text] of lines.entries()) {
+    const line = make("div", "source-line");
+    line.append(make("span", "line-number", String(index + 1)));
+    const code = make("code");
+    if (index + 1 === source.line) {
+      line.classList.add("selected-line");
+      line.setAttribute("aria-current", "location");
+      target = line;
+      const characters = Array.from(text);
+      const column = Math.min(Math.max((source.column || 1) - 1, 0), characters.length);
+      code.append(characters.slice(0, column).join(""), make("mark", "", characters[column] || " "),
+        characters.slice(column + 1).join(""));
+    } else {
+      code.textContent = text;
+    }
+    line.append(code);
+    fragment.append(line);
+  }
+  listing.replaceChildren(fragment);
+  if (!view.open) view.showModal();
+  target?.scrollIntoView({block: "center", inline: "nearest"});
+}
 
 byId("download").addEventListener("click", () => {
   if (!result) return;
@@ -207,19 +273,17 @@ function drawDiagram() {
   const chip = make("div", "chip");
   const title = make("div", "chip-title");
   title.append(make("strong", "", node.module), make("span", "", node.children.length + " child instances"));
-  const canvas = make("canvas");
-  canvas.id = "net-lines";
-  canvas.setAttribute("aria-hidden", "true");
   const grid = make("div", "blocks");
   const endpoints = new Map();
-  const register = (signal, card, label) => {
+  const register = (signal, card, label, role) => {
     if (!signal) return;
     if (!endpoints.has(signal)) endpoints.set(signal, []);
-    endpoints.get(signal).push({card, label});
+    endpoints.get(signal).push({card, label, role});
   };
 
   for (const port of node.ports) {
-    register(port.internal, title, "Module " + port.direction + " · " + port.name);
+    const role = port.direction === "input" ? "driver" : port.direction === "output" ? "load" : "shared";
+    register(port.internal, title, "Module " + port.direction + " · " + port.name, role);
   }
   for (const child of node.children) {
     const card = make("button", "block");
@@ -228,7 +292,10 @@ function drawDiagram() {
     card.addEventListener("click", () => focus([...chain, child]));
     grid.append(card);
     for (const port of child.ports) {
-      for (const net of port.refs) register(net, card, child.name + "." + port.name + " · " + port.direction);
+      for (const net of port.refs) {
+        const role = port.direction === "inout" ? "shared" : port.drives.includes(net) ? "driver" : "load";
+        register(net, card, child.name + "." + port.name + " · " + port.direction, role);
+      }
     }
   }
 
@@ -243,71 +310,102 @@ function drawDiagram() {
       detail.querySelector("summary").focus({preventScroll: true});
     });
     grid.append(logicCard);
-    for (const net of new Set(node.logic.flatMap(item => item.refs))) {
-      register(net, logicCard, "Referenced in local RTL");
+    for (const item of node.logic) {
+      const label = item.kind + " · line " + item.source.line;
+      for (const net of item.outputs) register(net, logicCard, label + " writes", "driver");
+      for (const net of item.inputs) register(net, logicCard, label + " reads", "load");
     }
   }
-  if (!grid.children.length) grid.append(make("p", "empty", "No child instances or local processes."));
-  chip.append(canvas, title, grid);
 
   const bar = make("div", "signal-bar");
-  const anchor = make("span", "", "Trace signal");
-  anchor.id = "net-anchor";
+  const pickerLabel = make("label", "", "Trace signal");
+  pickerLabel.htmlFor = "signal-picker";
   const picker = make("select");
-  picker.setAttribute("aria-label", "Trace signal");
+  picker.id = "signal-picker";
   picker.append(new Option("Select a signal", ""));
   const label = net => net.startsWith(node.path + ".") ? net.slice(node.path.length + 1) : net;
   for (const key of [...endpoints.keys()].sort((a, b) => label(a).localeCompare(label(b)))) {
     picker.append(new Option(label(key), key));
   }
   picker.disabled = !endpoints.size;
-  bar.append(anchor, picker);
-  chip.append(bar);
+  bar.append(pickerLabel, picker);
+  const trace = make("div", "trace-flow");
+  trace.hidden = true;
+  chip.append(title, bar, trace);
+  if (grid.children.length) chip.append(grid);
+  if (node.structures.length) chip.append(drawStructures(node.structures, label));
+  if (!grid.children.length && !node.structures.length) {
+    chip.append(make("p", "empty", "No child instances or local processes."));
+  }
   byId("diagram").replaceChildren(chip);
-  const connections = drawInspector(node);
-  picker.addEventListener("change", () => updateWires());
-  window.onresize = updateWires;
+  drawInspector(node);
 
-  function updateWires() {
+  picker.addEventListener("change", () => {
     const hits = endpoints.get(picker.value) || [];
-    const bounds = chip.getBoundingClientRect();
-    const scale = devicePixelRatio || 1;
-    canvas.width = bounds.width * scale;
-    canvas.height = bounds.height * scale;
-    const ctx = canvas.getContext("2d");
-    ctx.scale(scale, scale);
-    ctx.strokeStyle = "#a8e8c3";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 3]);
-    const a = anchor.getBoundingClientRect();
-    const fromX = a.left + a.width / 2 - bounds.left;
-    const fromY = a.top - bounds.top - 4;
     const touched = new Set(hits.map(hit => hit.card));
     for (const card of grid.querySelectorAll(".block")) card.dataset.hit = touched.has(card);
-    for (const card of touched) {
-      const b = card.getBoundingClientRect();
-      const toY = b.bottom - bounds.top;
-      ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(fromX, fromY - 9);
-      ctx.lineTo(b.left + b.width / 2 - bounds.left, toY + 4);
-      ctx.lineTo(b.left + b.width / 2 - bounds.left, toY);
-      ctx.stroke();
+    trace.hidden = !hits.length;
+    trace.replaceChildren();
+    if (!hits.length) return;
+
+    function lane(role, heading, fallback) {
+      const section = make("div", "trace-lane");
+      section.append(make("h3", "", heading));
+      const labels = new Set(hits.filter(hit => hit.role === role).map(hit => hit.label));
+      for (const text of labels) section.append(make("div", "trace-terminal", text));
+      if (!labels.size) section.append(make("p", "source", fallback));
+      return section;
     }
-    connections.replaceChildren();
-    if (hits.length) {
-      connections.append(make("h3", "", "Connections · " + label(picker.value)));
-      const list = make("ul");
-      for (const hit of hits) list.append(make("li", "", hit.label));
-      connections.append(list);
+
+    const net = make("div", "trace-net");
+    net.append(make("span", "", "Selected signal"), make("strong", "", label(picker.value)));
+    trace.append(lane("driver", "Drivers", "No driver shown in this scope"), net,
+      lane("load", "Loads", "No load shown in this scope"));
+    if (hits.some(hit => hit.role === "shared")) {
+      trace.append(lane("shared", "Bidirectional / interface", ""));
     }
+  });
+}
+
+function drawStructures(structures, signalLabel) {
+  const section = make("section", "structures");
+  section.append(make("h3", "structures-title", "RTL structures"));
+  const kinds = [
+    ["flop", "Flip-flops"], ["latch", "Latches"], ["memory", "Memories"],
+    ["mux", "Multiplexers"], ["gate", "Combinational gates"], ["operator", "Datapath operators"],
+  ];
+  for (const [kind, name] of kinds) {
+    const items = structures.filter(item => item.kind === kind);
+    if (!items.length) continue;
+    section.append(make("h4", "", name));
+    const row = make("div", "structure-grid");
+    for (const item of items) {
+      const card = make("details", "structure-card");
+      const heading = make("summary");
+      heading.append(make("strong", "", item.label));
+      const summary = [item.bits ? item.bits + " bit" + (item.bits === 1 ? "" : "s") : "",
+        item.occurrences.length > 1 ? item.occurrences.length + " occurrences" : ""].filter(Boolean).join(" · ");
+      if (summary) heading.append(make("span", "source", summary));
+      if (item.detail) heading.append(make("span", "source", item.detail));
+      card.append(heading);
+      const info = make("div", "structure-info");
+      if (item.inputs.length) info.append(make("p", "source", "References · " + item.inputs.map(signalLabel).join(", ")));
+      if (item.outputs.length) info.append(make("p", "source", "Assignment context · " + item.outputs.map(signalLabel).join(", ")));
+      for (const entry of item.occurrences) {
+        info.append(sourceLink(entry.source));
+        if (entry.text) info.append(make("pre", "", entry.text));
+      }
+      card.append(info);
+      row.append(card);
+    }
+    section.append(row);
   }
+  return section;
 }
 
 function drawInspector(node) {
   const inspector = byId("inspector");
-  const sourceLabel = source => source.file + ":" + source.line;
-  inspector.replaceChildren(make("div", "source", sourceLabel(node.source)));
+  inspector.replaceChildren(sourceLink(node.source));
   if (node.parameters.length) {
     inspector.append(make("p", "source", node.parameters.map(p => p.name + " = " + p.value).join(" · ")));
   }
@@ -330,8 +428,6 @@ function drawInspector(node) {
     wrap.append(table);
     inspector.append(wrap);
   }
-  const connections = make("div");
-  inspector.append(connections);
   if (node.logic.length) {
     const detail = make("details", "detail");
     detail.id = "local-logic";
@@ -343,5 +439,4 @@ function drawInspector(node) {
     }
     inspector.append(detail);
   }
-  return connections;
 }

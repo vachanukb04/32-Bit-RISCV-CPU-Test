@@ -54,11 +54,40 @@ class CompilerTests(unittest.TestCase):
         with self.assertRaisesRegex(CompileError, "narrower source directory"):
             compile_design(self.root, self.root, "top", "third/top.v")
 
+    def test_inferred_structure_groups_and_conditional_bit_coverage(self):
+        self.write("block.sv", """
+            module block(input logic clk, en, input logic [31:0] d,
+                         output logic [31:0] q, output logic [3:0] held,
+                         output wire [31:0] muxed);
+                logic [31:0] words [0:7];
+                always_ff @(posedge clk) begin
+                    q <= d;
+                    if (en) words[0] <= d;
+                end
+                always @* begin
+                    held[1:0] = d[1:0];
+                    if (en) held[3:2] = d[3:2];
+                end
+                assign muxed = en ? (d & q) : words[0];
+            endmodule
+        """)
+        x = compile_design(self.root, self.root, "block", "block.sv")
+        tiles = {(tile["kind"], tile["label"]): tile for tile in x["hierarchy"]["structures"]}
+        self.assertEqual(tiles["flop", "q"]["bits"], 32)
+        self.assertIn("[0..31]", tiles["flop", "q"]["detail"])
+        self.assertEqual(tiles["latch", "held"]["bits"], 2)
+        self.assertIn("[2..3]", tiles["latch", "held"]["detail"])
+        self.assertIn("8 words × 32 bits", tiles["memory", "words"]["detail"])
+        self.assertIn(("mux", "Conditional mux"), tiles)
+        self.assertIn(("gate", "AND"), tiles)
+
     def test_unknown_module_reports_compile_failure(self):
         self.write("top.v", "module top; unknown u(); endmodule")
         result = compile_design(self.root, self.root, "top", "top.v")
         self.assertIsNone(result["hierarchy"])
         self.assertIn("unknown module 'unknown'", result["diagnostics"])
+        self.assertEqual(result["issues"][0]["source"], {"file": "top.v", "line": 1, "column": 13})
+        self.assertEqual(result["sourceText"]["top.v"], "module top; unknown u(); endmodule")
 
 
 if __name__ == "__main__":
