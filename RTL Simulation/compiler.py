@@ -184,9 +184,6 @@ def describe_instance(root, manager, instance, parent_path=""):
                     summary = summarize_combinational(member.body, locate, text)
                     if summary is not None:
                         view["summary"] = summary
-                        if (isinstance(member.body, ast.TimedStatement) and
-                                isinstance(member.body.timing, ast.ImplicitEventControl)):
-                            view["header"] = "always @*"
                         entry["inputs"] = summary["inputs"]
 
     schematics = data_schematics(local_members, structures, locate, text)

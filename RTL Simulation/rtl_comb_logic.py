@@ -180,12 +180,7 @@ class RuleDrawing(Drawing):
             result = self.outcome(value.fallback)
             for index in reversed(range(len(value.arms))):
                 condition = self.arm_match(value, index)
-                match, outcome = value.arms[index]
-                branch = f"if {value.selector.text}" if match is None else f"{value.kind} {match.label}"
-                fallback = ("Else" if match is None else
-                            "No match" if index == len(value.arms) - 1 else "Next case arm")
-                result = self.mux(result, self.outcome(outcome), condition,
-                                  branch=branch, fallback=fallback)
+                result = self.mux(result, self.outcome(value.arms[index][1]), condition)
         self.cached[key] = result
         return result
 

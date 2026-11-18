@@ -110,8 +110,8 @@ class Drawing:
             ])
         return self.terminal(label, refs)
 
-    def mux(self, when_zero, when_one, select, **fields):
-        return self.add("mux", "MUX", [("0", when_zero), ("1", when_one), ("S", select)], **fields)
+    def mux(self, when_zero, when_one, select):
+        return self.add("mux", "MUX", [("0", when_zero), ("1", when_one), ("S", select)])
 
     def next_value(self, statement, name, current):
         """Lower a procedural assignment tree for one full-width target."""
