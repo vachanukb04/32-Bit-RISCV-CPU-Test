@@ -60,6 +60,31 @@ class CompilerTests(unittest.TestCase):
         self.assertIn("OR", {node["label"] for node in control})
         self.assertTrue(any(node["label"] == "XOR" for node in y["rules"][1]["circuits"]["data"]["nodes"]))
 
+    def test_case_expression_gates_connect_to_the_branch_comparator(self):
+        self.write("dynamic.sv", """
+            module dynamic_case(input logic key, a, b, c, output logic y);
+                always @* begin
+                    case (key)
+                        (a & b): y = a | c;
+                        c: y = ~b;
+                        default: y = 0;
+                    endcase
+                end
+            endmodule
+        """)
+        scope = compile_design(self.root, self.root, "dynamic_case", "dynamic.sv")["hierarchy"]
+        output = scope["logic"][0]["view"]["summary"]["outputs"][0]
+        self.assertEqual(set(output["controls"]), {f"dynamic_case.{name}" for name in ("key", "a", "b", "c")})
+        first, second, _ = output["rules"]
+        selection = first["circuits"]["selection"]["nodes"]
+        compare = selection[selection[-1]["pins"][0]["source"]]
+        gate = selection[compare["pins"][1]["source"]]
+        self.assertEqual((compare["symbol"], gate["label"], gate["symbol"]), ("===", "AND", "&"))
+        self.assertEqual([selection[pin["source"]]["label"] for pin in gate["pins"]], ["a", "b"])
+        self.assertIn(("OR", "|"), [(node["label"], node.get("symbol"))
+                                    for node in first["circuits"]["data"]["nodes"]])
+        self.assertIn("NOT", {node["label"] for node in second["circuits"]["selection"]["nodes"]})
+
     def test_wildcard_case_shows_exclusion_of_an_earlier_overlapping_arm(self):
         self.write("priority.sv", """
             module priority_case(input logic [1:0] key, output logic y, z);

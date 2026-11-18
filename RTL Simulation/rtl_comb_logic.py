@@ -193,6 +193,12 @@ class RuleDrawing(Drawing):
         return self.add("gate", label, [("A", self.combine(gates[:middle], label)),
                                         ("B", self.combine(gates[middle:], label))], bits=1)
 
+    def match_operand(self, match):
+        label = case_label(match.expression, match.text)
+        if label != match.text:
+            return self.terminal(label)
+        return self.outcome(match)
+
     def arm_match(self, decision, index):
         selector = self.outcome(decision.selector)
         if decision.kind == "if":
@@ -200,7 +206,7 @@ class RuleDrawing(Drawing):
         compare = {"case": ("Case equality", "==="), "casez": ("Casez match", "?="),
                    "casex": ("Casex match", "?=")}[decision.kind]
         match = decision.arms[index][0]
-        tests = [self.add("operator", compare[0], [("A", selector), ("B", self.terminal(case_label(value.expression, value.text)))],
+        tests = [self.add("operator", compare[0], [("A", selector), ("B", self.match_operand(value))],
                           symbol=compare[1], bits=1) for value in match.values]
         return self.combine(tests, "OR")
 
@@ -297,6 +303,9 @@ def summarize_combinational(body, locate, text):
                 continue
             results = [*(outcome for _, outcome in choices), fallback]
             controls = control.inputs | control.controls
+            for match, _ in arms:
+                if match:
+                    controls = controls.union(*(item.inputs | item.controls for item in match.values))
             merged[net] = Decision(kind, control, choices, fallback,
                                    controls.union(*(result.inputs for result in results)),
                                    controls.union(*(result.controls for result in results)), priority)
@@ -323,8 +332,6 @@ def summarize_combinational(body, locate, text):
                 arms = []
                 for arm in part.items:
                     matches = [value(expr, state, locate, text) for expr in arm.expressions]
-                    if any(match.inputs or match.controls for match in matches):
-                        raise UnsupportedProcess()
                     labels = ", ".join(case_label(expr, match.text)
                                        for expr, match in zip(arm.expressions, matches))
                     keys = tuple(case_key(expr, part.expr.type.bitWidth) for expr in arm.expressions)

@@ -6,6 +6,14 @@ from rtl_process_view import expression_label, unconverted
 from rtl_structure import BITWISE, OPERATORS, VALUE_EXPRESSIONS, access, assignments, process_timing, signal_refs, span, targets
 
 
+GATE_OPERATORS = {
+    "BinaryAnd": "&", "BinaryOr": "|", "BinaryXor": "^", "BinaryXnor": "~^",
+    "BitwiseNot": "~", "BitwiseAnd": "&", "BitwiseOr": "|", "BitwiseXor": "^",
+    "BitwiseNand": "~&", "BitwiseNor": "~|", "BitwiseXnor": "~^",
+    "LogicalAnd": "&&", "LogicalOr": "||", "LogicalNot": "!",
+}
+
+
 def value_name(node, text):
     while isinstance(node, ast.ConversionExpression):
         node = node.operand
@@ -85,7 +93,8 @@ class Drawing:
             if operation in BITWISE or operation in OPERATORS:
                 kind = "gate" if operation in BITWISE else "operator"
                 return self.add(kind, (BITWISE | OPERATORS)[operation],
-                                zip(("A", "B"), map(self.expression, operands)), bits=node.type.bitWidth)
+                                zip(("A", "B"), map(self.expression, operands)),
+                                bits=node.type.bitWidth, symbol=GATE_OPERATORS.get(operation))
         if isinstance(node, ast.ElementSelectExpression):
             symbol = node.value.getSymbolReference()
             if symbol is not None and symbol.type.isUnpackedArray:

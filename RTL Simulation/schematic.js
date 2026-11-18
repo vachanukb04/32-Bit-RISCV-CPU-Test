@@ -471,7 +471,8 @@ function drawSchematicSymbol(node) {
     if (node.kind === "gate" && node.bits > 1) {
       svgText(local, 34, -37, node.bits + " bits", "pin-label", "middle");
     }
-    if (node.kind !== "mux") svgText(local, 34, node.height / 2 + 9, shorten(node.label, 21), "net-label", "middle");
+    const label = node.kind === "gate" && node.symbol ? `${node.label} (${node.symbol})` : node.label;
+    if (node.kind !== "mux") svgText(local, 34, node.height / 2 + 9, shorten(label, 24), "net-label", "middle");
     if (["flop", "latch", "mux"].includes(node.kind)) {
       for (const pin of node.inputs.keys()) {
         const point = pinGeometry(node, pin);
@@ -481,7 +482,8 @@ function drawSchematicSymbol(node) {
       }
     }
   }
-  group.append(svgNode("title", {}, [node.label, node.caption, node.port?.binding &&
+  group.append(svgNode("title", {}, [node.kind === "gate" && node.symbol ? `${node.label} (${node.symbol})` : node.label,
+    node.caption, node.port?.binding &&
     "Parent connection " + node.port.binding].filter(Boolean).join("\n")));
   return group;
 }
