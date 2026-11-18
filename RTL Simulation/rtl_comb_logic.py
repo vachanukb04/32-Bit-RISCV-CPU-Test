@@ -325,99 +325,6 @@ def collect_roles(node, seen, conditions, dispatches, data_nets):
     collect_roles(node.fallback, seen, conditions, dispatches, data_nets)
 
 
-def decoder_model(body, outputs, evaluate, locate, text, latches):
-    """Group constant control outputs by the original outer selection and inner decisions."""
-    if latches or len(outputs) < 2:
-        return None
-    parts = list(statements(body.stmt if isinstance(body, ast.TimedStatement) else body))
-    head, case = parts[:-1], parts[-1]
-    if any(not isinstance(part, ast.ExpressionStatement) for part in head):
-        return None
-    guard = None
-    if isinstance(case, ast.ConditionalStatement):
-        branches = list(statements(case.ifTrue))
-        if len(case.conditions) != 1 or case.conditions[0].pattern is not None or len(branches) != 1:
-            return None
-        guard, case = case, branches[0]
-    if not isinstance(case, ast.CaseStatement) or case.condition.name != "Normal":
-        return None
-
-    def rtl(expr):
-        bare = unconverted(expr)
-        return " ".join(text(bare).split()) or expression_label(bare, text)
-
-    def site(node):
-        return locate(node.sourceRange.start) if node is not None and node.sourceRange.start else None
-
-    def literal(expr, symbol):
-        if signal_refs(expr):
-            raise UnsupportedProcess()
-        item = expr.eval(ast.EvalContext(symbol)).value
-        if not isinstance(item, SVInt):
-            raise UnsupportedProcess()
-        display = str(item)
-        if not item.hasUnknown:
-            width = symbol.type.bitWidth
-            val = int(item) & ((1 << width) - 1)
-            display = str(val) if width == 1 else f"{width}'b{val:0{width}b}"
-        return {"value": display, "source": site(expr)}
-
-    def choice(node, symbol):
-        if isinstance(node, Value):
-            if node.retained or node.expression is None or node.bindings:
-                raise UnsupportedProcess()
-            expr = unconverted(node.expression)
-            if isinstance(expr, ast.ConditionalExpression) and len(expr.conditions) == 1:
-                cond = expr.conditions[0].expr
-                return {"kind": "ternary", "selector": rtl(cond), "inputs": signal_refs(cond),
-                        "arms": [{"label": label, "result": literal(branch, symbol)}
-                                 for label, branch in [("True", expr.left), ("False", expr.right)]],
-                        "source": site(expr)}
-            return literal(node.expression, symbol)
-        if node.selector.bindings or node.selector.expression is None:
-            raise UnsupportedProcess()
-        label = lambda match: (", ".join(case_label(item.expression, rtl(item.expression)) for item in match.values)
-                               if match else "True")
-        return {"kind": node.kind, "selector": rtl(node.selector.expression), "inputs": sorted(node.selector.inputs),
-                "arms": [{"label": label(match), "result": choice(outcome, symbol)} for match, outcome in node.arms]
-                        + [{"label": "False" if node.kind == "if" else "Default",
-                            "result": choice(node.fallback, symbol)}],
-                "source": node.selector.source}
-
-    def values(state):
-        if outputs.keys() != state.keys():
-            raise UnsupportedProcess()
-        return [choice(state[net], symbol) for net, symbol in outputs.items()]
-
-    try:
-        defaults = {}
-        for part in head:
-            defaults = evaluate(part, defaults)
-        baseline = values(defaults) if defaults.keys() == outputs.keys() else None
-        cases = [{"labels": [case_label(expr, rtl(expr)) for expr in arm.expressions],
-                  "source": site(arm.stmt), "values": values(evaluate(arm.stmt, defaults))}
-                 for arm in case.items]
-        if case.defaultCase is not None or defaults.keys() == outputs.keys():
-            cases.append({"labels": ["Default"], "source": site(case.defaultCase),
-                          "values": values(evaluate(case.defaultCase, defaults))})
-        if guard is not None:
-            expr = guard.conditions[0].expr
-            active = level_control(expr)
-            condition = f"{rtl(active[0])} = {int(not active[1])}" if active else rtl(expr)
-            guarded = {"condition": condition, "source": site(guard), "inputs": signal_refs(expr),
-                       "otherwise": values(evaluate(guard.ifFalse, defaults))}
-        else:
-            guarded = None
-    except UnsupportedProcess:
-        return None
-
-    return {"selector": rtl(case.expr), "inputs": signal_refs(case.expr), "source": site(case),
-            "defaults": baseline, "guard": guarded, "cases": cases,
-            "outputs": [{"net": net, "name": symbol.name,
-                         "range": str(symbol.type.fixedRange) if symbol.type.bitWidth > 1 else ""}
-                        for net, symbol in outputs.items()]}
-
-
 def summarize_combinational(body, locate, text, latch_outputs):
     symbols = {}
     initial = {}
@@ -512,7 +419,5 @@ def summarize_combinational(body, locate, text, latch_outputs):
                         "circuit": data_circuit(outcome, symbol, text, rows[0]["source"],
                                                 latch=latch_outputs.get(net) == symbol.type.bitWidth),
                         "rules": rows})
-    decoder = decoder_model(body, {net: symbols[net] for net in result}, evaluate, locate, text, latch_outputs)
     return {"inputs": sorted(dependencies), "controls": sorted(control_nets), "dataInputs": sorted(data_nets),
-            "conditions": list(conditions), "selectors": list(dispatches), "outputs": outputs,
-            "decoder": decoder}
+            "conditions": list(conditions), "selectors": list(dispatches), "outputs": outputs}
