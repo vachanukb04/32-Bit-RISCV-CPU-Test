@@ -242,3 +242,41 @@ function indexRtl(sources) {
   }
   return tops;
 }
+
+function reviewedSimulation(project, selected, analysis) {
+  const analyzed = analysis?.hierarchy?.source.file === selected.file && analysis.top === selected.name
+    ? analysis : null;
+  const sourceText = {...project.sources, ...analyzed?.sourceText};
+  const directory = selected.file.slice(0, selected.file.lastIndexOf("/") + 1);
+  const duplicated = new Set();
+  const seen = new Map();
+  for (const {name, file} of project.candidates) {
+    if (seen.has(name) && seen.get(name) !== file) duplicated.add(name);
+    else seen.set(name, file);
+  }
+  const analyzedFiles = new Set(analyzed?.files);
+  const preferred = new Map();
+  const excluded = new Set();
+  for (const {name, file} of project.candidates) {
+    if (!duplicated.has(name)) continue;
+    const rank = file === selected.file ? 3 : analyzedFiles.has(file) ? 2 :
+      file.slice(0, file.lastIndexOf("/") + 1) === directory ? 1 : 0;
+    if (!preferred.has(name) || preferred.get(name).rank < rank) preferred.set(name, {file, rank});
+  }
+  for (const {name, file} of project.candidates) {
+    const match = preferred.get(name);
+    if (match?.rank && match.file !== file) excluded.add(file);
+  }
+  const ordered = new Set([...(analyzed?.files || []), ...Object.keys(sourceText)]);
+  const sources = Object.fromEntries([...ordered].filter(file => {
+    if (!Object.hasOwn(sourceText, file) || excluded.has(file)) return false;
+    // With parallel RTL trees, use the chosen variant and its analyzed dependencies.
+    return !duplicated.size || analyzedFiles.has(file) || !HDL_SOURCE.test(file) ||
+      file.slice(0, file.lastIndexOf("/") + 1) === directory;
+  }).map(file => [file, sourceText[file]]));
+  const names = new Set(indexRtl(sources).map(item => item.name));
+  const testbench = /^(?:tb_|testbench_)|(?:_tb|_testbench)$/i.test(selected.name) ? selected.name :
+    ["tb_" + selected.name, selected.name + "_tb", "testbench_" + selected.name, selected.name + "_testbench"]
+      .find(name => names.has(name)) || "";
+  return {name: project.name, top: selected.name, testbench, sources};
+}

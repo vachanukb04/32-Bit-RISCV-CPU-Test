@@ -106,12 +106,18 @@ all come from the project sources.
 
 ## Simulate your design
 
-Open **Simulate your design** to upload Verilog or SystemVerilog files, or paste
-RTL and a testbench. Set the testbench top and run. The browser worker uses
+Open a project in **Understanding your design** and select its top module.
+After reviewing the RTL, click **Reviewed & Proceed**. The simulation workflow
+opens with the project's source files already loaded. For parallel RTL variants,
+the handoff uses the selected source directory and any dependencies found by
+Analyze RTL. A matching project testbench is selected when available. You can
+also add simulation files or paste a testbench and set its top.
+The browser worker uses
 Icarus Verilog to compile and execute the testbench. Its console shows simulator
 diagnostics and testbench output. A testbench that records VCD using
 `$dumpfile` and `$dumpvars` produces an interactive waveform and a downloadable
-VCD file. **Load flip-flop example** fills in a runnable design and testbench.
+VCD file. Returning to the workbench preserves the active project. Changing its
+sources or top requires another review.
 The worker fetches the pinned [Icarus Verilog WebAssembly port](https://github.com/senolgulgonul/verisim/tree/ab0ff3862a8cf8c6535117a64d370c4bf263042f)
 on the first run.
 

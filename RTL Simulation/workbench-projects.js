@@ -4,9 +4,76 @@ const localCompiler = document.body.hasAttribute("data-local-compiler");
 const githubDialog = byId("github-dialog");
 const createDialog = byId("create-dialog");
 const topPicker = byId("top");
+const simulateLink = byId("simulate-workflow");
+const simulationWorkspace = byId("simulation-workspace");
+const reviewButton = byId("review-proceed");
 let project;
 let githubConnection;
 let busy = false;
+let simulationApproved = false;
+
+function updateReview() {
+  const selected = project?.candidates[topPicker.value];
+  const hasSources = Object.keys(project?.sources || {}).some(file => HDL_SOURCE.test(file));
+  reviewButton.disabled = busy || !selected || !hasSources;
+  byId("review-status").textContent = !project ? "Load a project to review its RTL." :
+    !project.candidates.length ? "Add RTL files to your project." :
+    !selected ? "Choose the top module you want to review." :
+    !hasSources ? "Analyze the selected top to load its source files." :
+    simulationApproved ? "This RTL is ready for simulation." : "Review the RTL before continuing to simulation.";
+}
+
+function showWorkflow() {
+  const simulating = simulationApproved && location.hash === "#simulate";
+  document.body.classList.toggle("simulating", simulating);
+  byId("design-workspace").hidden = simulating;
+  simulationWorkspace.hidden = !simulating;
+  const understandLink = byId("understand-workflow");
+  if (simulating) understandLink.removeAttribute("aria-current");
+  else understandLink.setAttribute("aria-current", "page");
+  if (simulating) simulateLink.setAttribute("aria-current", "page");
+  else simulateLink.removeAttribute("aria-current");
+  document.title = (simulating ? "Simulate your design" : "Understanding your design") + " · RTL2GDS Cockpit";
+}
+
+function invalidateSimulation() {
+  if (!simulationApproved) return;
+  simulationApproved = false;
+  simulationWorkspace.replaceChildren();
+  simulateLink.removeAttribute("href");
+  simulateLink.setAttribute("aria-disabled", "true");
+  simulateLink.title = "Review your RTL to unlock simulation";
+  if (location.hash === "#simulate") history.replaceState(null, "", "#design");
+  showWorkflow();
+}
+
+reviewButton.addEventListener("click", () => {
+  if (reviewButton.disabled) return;
+  if (!simulationApproved) {
+    const snapshot = reviewedSimulation(project, project.candidates[topPicker.value], result);
+    if (!Object.keys(snapshot.sources).some(file => HDL_SOURCE.test(file))) {
+      byId("review-status").textContent = "Analyze the selected top to load its source files.";
+      return;
+    }
+    const frame = document.createElement("iframe");
+    frame.title = "Simulate your design";
+    frame.addEventListener("load", () => {
+      frame.contentWindow.postMessage({type: "reviewed-rtl", project: snapshot}, location.origin);
+    }, {once: true});
+    frame.src = "/simulate.html";
+    simulationWorkspace.replaceChildren(frame);
+    simulationApproved = true;
+    simulateLink.href = "#simulate";
+    simulateLink.removeAttribute("aria-disabled");
+    simulateLink.removeAttribute("title");
+  }
+  updateReview();
+  location.hash = "simulate";
+  showWorkflow();
+  simulateLink.focus({preventScroll: true});
+});
+
+window.addEventListener("hashchange", showWorkflow);
 
 function setBusy(value) {
   busy = value;
@@ -17,6 +84,7 @@ function setBusy(value) {
   byId("compile-button").disabled = value || !topPicker.value;
   byId("native-load").querySelector("button").disabled = value;
   githubDialog.querySelector(".source-head button").disabled = value;
+  updateReview();
 }
 
 function projectSourceUrl({file, line}) {
@@ -45,6 +113,7 @@ function drawProjectFiles(sources = project.sources) {
 }
 
 function activate(next, preferred) {
+  invalidateSimulation();
   project = next;
   if (next.kind !== "github") githubConnection = undefined;
   resetDisplay();
@@ -143,6 +212,7 @@ byId("project-create-form").addEventListener("submit", event => {
 });
 
 byId("close-project").addEventListener("click", () => {
+  invalidateSimulation();
   project = undefined;
   githubConnection = undefined;
   resetDisplay();
@@ -293,8 +363,16 @@ async function analyzeTop() {
 }
 
 topPicker.addEventListener("change", () => {
+  invalidateSimulation();
+  if (project?.options) {
+    project.sources = undefined;
+    drawProjectFiles();
+  }
+  resetDisplay();
+  updateReview();
   byId("compile-button").disabled = busy || !topPicker.value;
   if (project?.kind === "example") analyzeTop();
+  else if (topPicker.value) status("Analyze the selected top to view its logical block diagram.");
 });
 byId("compile").addEventListener("submit", event => {
   event.preventDefault();

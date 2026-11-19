@@ -19,11 +19,11 @@
       <span>RTL2GDS Cockpit</span>
     </a>
     <nav class="workflow-nav" aria-label="Workflows">
-      <a href="/workbench.html" aria-current="page">Understanding your design</a>
-      <a href="/simulate.html">Simulate your design</a>
+      <a id="understand-workflow" href="#design" aria-current="page">Understanding your design</a>
+      <a id="simulate-workflow" role="link" aria-disabled="true" title="Review your RTL to unlock simulation">Simulate your design</a>
     </nav>
   </header>
-  <main class="workbench" aria-label="Understanding your design">
+  <main class="workbench" id="design-workspace" aria-label="Understanding your design">
     <section class="project panel" aria-labelledby="project-title">
       <div class="project-heading">
         <div>
@@ -99,7 +99,12 @@
       <div id="issues"></div>
       <pre id="diagnostics">No compile has been run.</pre>
     </details>
+    <footer class="review-footer">
+      <p id="review-status" class="project-hint">Load a project to review its RTL.</p>
+      <button class="button primary" id="review-proceed" type="button" aria-describedby="review-status" disabled>Reviewed &amp; Proceed</button>
+    </footer>
   </main>
+  <div id="simulation-workspace" hidden></div>
   <dialog class="project-dialog" id="create-dialog" aria-labelledby="create-title">
     <div class="source-head">
       <h2 id="create-title">Create Project</h2>

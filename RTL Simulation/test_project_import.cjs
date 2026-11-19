@@ -8,8 +8,8 @@ const {test} = require("node:test");
 const assert = require("node:assert/strict");
 
 const io = readFileSync(path.join(__dirname, "rtl-project-io.js"), "utf8");
-const {parseRepository, indexRtl, loadSelectedFiles} = vm.runInNewContext(
-  io + "\n({parseRepository, indexRtl, loadSelectedFiles})", {URL});
+const {parseRepository, indexRtl, loadSelectedFiles, reviewedSimulation} = vm.runInNewContext(
+  io + "\n({parseRepository, indexRtl, loadSelectedFiles, reviewedSimulation})", {URL});
 const simple = value => JSON.parse(JSON.stringify(value));
 
 test("accepts repository and tree URLs while keeping repo, ref, and source path distinct", () => {
@@ -54,6 +54,35 @@ test("loads a public GitHub archive and pins the source commit without any GitHu
   assert.equal(result.commit, commit);
   assert.deepEqual(Object.keys(result.sources), [file]);
   assert.match(result.sources[file], /module alu\b/);
+});
+
+test("passes reviewed RTL, include files, and a matching testbench to simulation", () => {
+  const sources = {
+    "rtl/chip.sv": "module chip; endmodule",
+    "test/tb_chip.sv": "module tb_chip; chip dut(); endmodule",
+    "include/pins.svh": "`define PINS 4"
+  };
+  const candidates = indexRtl(sources);
+  const snapshot = reviewedSimulation({name: "New chip", sources, candidates},
+    candidates.find(item => item.name === "chip"));
+  assert.deepEqual(simple(snapshot), {name: "New chip", top: "chip", testbench: "tb_chip", sources});
+});
+
+test("keeps the reviewed variant and elaborated dependency order for parallel RTL trees", () => {
+  const sources = {
+    "older/chip.v": "module chip; endmodule",
+    "older/tb_chip.v": "module tb_chip; endmodule",
+    "rtl/chip.sv": "module chip; sub u(); endmodule",
+    "rtl/tb_chip.sv": "module tb_chip; chip dut(); endmodule",
+    "lib/sub.sv": "module sub; endmodule"
+  };
+  const candidates = indexRtl(sources);
+  const selected = candidates.find(item => item.file === "rtl/chip.sv");
+  const analysis = {top: "chip", hierarchy: {source: {file: selected.file}},
+    files: ["lib/sub.sv", selected.file]};
+  const snapshot = reviewedSimulation({name: "Project", sources, candidates}, selected, analysis);
+  assert.deepEqual(Object.keys(snapshot.sources), ["lib/sub.sv", "rtl/chip.sv", "rtl/tb_chip.sv"]);
+  assert.equal(snapshot.testbench, "tb_chip");
 });
 
 test("converts named buses, child-port bindings, constants, and a clocked cell to connected schematic data", async () => {

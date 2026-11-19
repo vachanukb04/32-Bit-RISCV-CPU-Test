@@ -10,26 +10,32 @@
   <script src="/simulate.js" defer></script>
 </head>
 <body>
-  <header class="masthead">
+  <header class="masthead" id="sim-masthead">
     <a class="brand" href="/" aria-label="RTL2GDS Cockpit home">
       <span class="mark" aria-hidden="true"></span><span>RTL2GDS Cockpit</span>
     </a>
     <nav class="workflow-nav" aria-label="Workflows">
       <a href="/workbench.html">Understanding your design</a>
-      <a href="/simulate.html" aria-current="page">Simulate your design</a>
+      <a role="link" aria-disabled="true">Simulate your design</a>
     </nav>
   </header>
-  <main class="workbench" aria-labelledby="simulation-title">
+  <main class="workbench" id="sim-locked" aria-labelledby="sim-locked-title">
+    <section class="project panel simulation-setup">
+      <h1 id="sim-locked-title">Simulate your design</h1>
+      <p>Open a project in the design workbench and select <strong>Reviewed &amp; Proceed</strong> to load its RTL here.</p>
+      <a class="button" href="/workbench.html" target="_top">Open design workbench</a>
+    </section>
+  </main>
+  <main class="workbench" id="sim-active" aria-labelledby="simulation-title" hidden>
     <section class="project panel simulation-setup">
       <div class="project-heading">
         <div>
           <h1 id="simulation-title">Simulate your design</h1>
-          <p class="project-hint">Run a Verilog or SystemVerilog testbench in the browser with Icarus Verilog.</p>
+          <p class="project-hint" id="sim-project"></p>
         </div>
         <div class="project-actions">
-          <button class="button" type="button" id="sim-open">Open RTL files</button>
+          <button class="button" type="button" id="sim-open">Add simulation files</button>
           <input type="file" id="sim-files" accept=".v,.sv,.vh,.svh,.mem,.hex,.mif,.dat" multiple hidden>
-          <button class="button" type="button" id="sim-example">Load flip-flop example</button>
         </div>
       </div>
       <form id="simulation-form" class="simulation-form">
@@ -37,13 +43,15 @@
           <label>Testbench top module <input id="sim-top" required placeholder="tb" spellcheck="false" maxlength="128"></label>
           <button class="button primary" id="sim-run" type="submit">Run simulation</button>
         </div>
-        <div id="sim-input-list" class="source" hidden></div>
+        <details class="sim-source-list">
+          <summary id="sim-input-summary">Source files</summary>
+          <ul id="sim-input-list" class="source"></ul>
+        </details>
         <div class="sim-editors">
-          <label>Design RTL <textarea id="sim-design" spellcheck="false" placeholder="Paste design RTL or open source files"></textarea></label>
-          <label>Testbench RTL <textarea id="sim-testbench" spellcheck="false" placeholder="Paste your testbench here or include it in the source files"></textarea></label>
+          <label>Testbench RTL (optional) <textarea id="sim-testbench" spellcheck="false" placeholder="Paste a testbench here or use one from the project files"></textarea></label>
         </div>
       </form>
-      <p id="sim-status" class="status" role="status">Open source files or paste RTL to start a simulation.</p>
+      <p id="sim-status" class="status" role="status"></p>
     </section>
     <div class="simulation-results">
       <section class="panel sim-result" aria-labelledby="simulation-output-title">

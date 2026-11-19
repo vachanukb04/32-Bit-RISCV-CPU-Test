@@ -5,6 +5,7 @@ const consoleOutput = el("sim-console");
 const canvas = el("sim-canvas");
 const timeCursor = el("sim-time");
 let localSources = {};
+let reviewed = false;
 let waveFile;
 let waveform;
 const selectedSignals = new Set();
@@ -14,60 +15,55 @@ function simStatus(message, error = false) {
   el("sim-status").dataset.error = error;
 }
 
+function listSimulationFiles() {
+  const paths = Object.keys(localSources);
+  el("sim-input-summary").textContent = paths.length + (paths.length === 1 ? " source file" : " source files");
+  el("sim-input-list").replaceChildren(...paths.map(path => {
+    const item = document.createElement("li");
+    item.textContent = path;
+    return item;
+  }));
+}
+
+window.addEventListener("message", event => {
+  if (reviewed || window.parent === window || event.source !== window.parent ||
+      event.origin !== location.origin || event.data?.type !== "reviewed-rtl") return;
+  const project = event.data.project;
+  if (!Object.keys(project?.sources || {}).some(file => HDL_SOURCE.test(file))) return;
+  reviewed = true;
+  localSources = project.sources;
+  el("sim-top").value = project.testbench;
+  el("sim-project").textContent = project.name + " · Reviewed top " + project.top;
+  listSimulationFiles();
+  el("sim-masthead").hidden = true;
+  el("sim-locked").hidden = true;
+  el("sim-active").hidden = false;
+  simStatus(project.testbench ? "Project RTL loaded. Ready to run " + project.testbench + "." :
+    "Project RTL loaded. Choose a testbench top or add a testbench.");
+});
+
 el("sim-open").onclick = () => el("sim-files").click();
 el("sim-files").onchange = async event => {
-  if (!event.target.files.length) return;
+  if (!reviewed || !event.target.files.length) return;
   try {
     const loaded = await loadSelectedFiles(event.target.files);
-    localSources = loaded.sources;
-    const names = Object.keys(localSources);
-    const list = el("sim-input-list");
-    list.textContent = "Source files · " + names.join(", ");
-    list.hidden = false;
+    const entries = Object.entries(loaded.sources);
+    if (entries.some(([path, text]) => Object.hasOwn(localSources, path) && localSources[path] !== text)) {
+      throw new Error("A selected file shares a path with a loaded source. Rename the new file or update it in the design workbench.");
+    }
+    localSources = {...localSources, ...loaded.sources};
+    listSimulationFiles();
     if (!el("sim-top").value) {
       const modules = indexRtl(localSources);
       el("sim-top").value = modules.find(item => /^tb_|_tb$|testbench/i.test(item.name))?.name ||
         (modules.length === 1 ? modules[0].name : "");
     }
-    simStatus("Loaded " + names.length + " source files.");
+    simStatus("Loaded " + entries.length + (entries.length === 1 ? " source file." : " source files."));
   } catch (error) {
     simStatus(error.message, true);
   } finally {
     event.target.value = "";
   }
-};
-
-el("sim-example").onclick = () => {
-  localSources = {};
-  el("sim-input-list").hidden = true;
-  el("sim-top").value = "tb_dff";
-  el("sim-design").value = [
-    "module dff(input logic clk, reset, d, output logic q);",
-    "  always @(posedge clk) begin",
-    "    if (reset) q <= 1'b0;",
-    "    else       q <= d;",
-    "  end",
-    "endmodule"
-  ].join("\n");
-  el("sim-testbench").value = [
-    "`timescale 1ns/1ps",
-    "module tb_dff;",
-    "  logic clk = 0, reset = 1, d = 0;",
-    "  wire q;",
-    "  dff dut(.clk(clk), .reset(reset), .d(d), .q(q));",
-    "  always #5 clk = ~clk;",
-    "  initial begin",
-    '    $dumpfile("dff.vcd");',
-    "    $dumpvars(0, tb_dff);",
-    "    #10 reset = 0; d = 1;",
-    "    #10 d = 0;",
-    "    #10 d = 1;",
-    '    #9 $display("q=%b at the final sample", q);',
-    "    $finish;",
-    "  end",
-    "endmodule"
-  ].join("\n");
-  simStatus("Flip-flop example loaded.");
 };
 
 function runSimulation(sources, top) {
@@ -97,22 +93,14 @@ function runSimulation(sources, top) {
 
 el("simulation-form").onsubmit = async event => {
   event.preventDefault();
+  if (!reviewed) return;
   const sources = {...localSources};
-  for (const [id, filename] of [["sim-design", "__cockpit_design.sv"], ["sim-testbench", "__cockpit_testbench.sv"]]) {
-    const input = el(id).value;
-    if (!input.trim()) continue;
-    if (Object.hasOwn(sources, filename)) {
-      simStatus("Rename " + filename + " or use its contents as pasted RTL.", true);
-      return;
-    }
-    sources[filename] = input;
-  }
+  const input = el("sim-testbench").value;
+  let filename = "__cockpit_testbench.sv";
+  while (Object.hasOwn(sources, filename)) filename = "_" + filename;
+  if (input.trim()) sources[filename] = input;
   const top = el("sim-top").value.trim();
-  if (!Object.keys(sources).some(name => HDL_SOURCE.test(name))) {
-    simStatus("Add Verilog or SystemVerilog sources before running a simulation.", true);
-    return;
-  }
-  const controls = ["sim-run", "sim-open", "sim-example"].map(id => el(id));
+  const controls = ["sim-run", "sim-open", "sim-top", "sim-testbench"].map(id => el(id));
   for (const control of controls) control.disabled = true;
   consoleOutput.textContent = "Running simulation…";
   displayWaves(null);

@@ -68,7 +68,10 @@ self.onmessage = async ({data: {sources, top}}) => {
     const preprocessor = await preprocess({noInitialRun: true, print: line => text.push(line), printErr: log});
     writeFiles(preprocessor, sources);
     const inputs = Object.keys(sources).filter(name => sourceType.test(name)).map(name => "/" + name);
-    if (invoke(preprocessor, ["-L", ...inputs])) throw new Error("Verilog preprocessing failed.");
+    preprocessor.FS.writeFile("/__cockpit_preprocess.conf", "relative include:true\n");
+    if (invoke(preprocessor, ["-L", "-F", "/__cockpit_preprocess.conf", ...inputs])) {
+      throw new Error("Verilog preprocessing failed.");
+    }
     const compiler = await compile({noInitialRun: true, print: log, printErr: log});
     compiler.FS.writeFile("/__cockpit_ivl.conf", simConfig(top));
     compiler.FS.writeFile("/__cockpit_combined.sv", text.join("\n") + "\n");
