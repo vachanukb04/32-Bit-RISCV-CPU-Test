@@ -31,6 +31,12 @@ ARCHIVE_LIMIT = 32 * 1024 * 1024
 ASSETS = {
     "/": ("index.html", "text/html"),
     "/workbench.html": ("workbench.html", "text/html"),
+    "/simulate.html": ("simulate.html", "text/html"),
+    "/simulate.js": ("simulate.js", "text/javascript"),
+    "/rtl-vcd.js": ("rtl-vcd.js", "text/javascript"),
+    "/rtl-sim-worker.js": ("rtl-sim-worker.js", "text/javascript"),
+    "/rtl-analyze-worker.js": ("rtl-analyze-worker.js", "text/javascript"),
+    "/rtl-analysis.zip": ("rtl-analysis.zip", "application/zip"),
     "/cockpit.js": ("cockpit.js", "text/javascript"),
     "/semiconductor-marks.webp": ("semiconductor-marks.webp", "image/webp"),
     "/workbench.css": ("workbench.css", "text/css"),

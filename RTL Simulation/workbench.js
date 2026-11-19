@@ -22,7 +22,7 @@ function resetDisplay() {
   chain = [];
   expanded.clear();
   byId("tree").replaceChildren(make("p", "empty", "Elaborated instances appear here."));
-  byId("diagram").replaceChildren(make("div", "empty stage-empty", "Load a project and elaborate a top module to inspect its blocks and signals."));
+  byId("diagram").replaceChildren(make("div", "empty stage-empty", "Load a project and analyze a top module to inspect its blocks and signals."));
   for (const id of ["instance-count", "crumbs", "inspector", "sources", "file-count", "includes", "issues"]) {
     byId(id).replaceChildren();
   }
@@ -46,10 +46,10 @@ function showResult(compiled) {
   byId("download").disabled = false;
   drawDiagnostics(result);
   if (!result.hierarchy) {
-    status("Compilation failed. See compiler diagnostics.", true);
+    status("RTL analysis failed. See compiler diagnostics.", true);
     return;
   }
-  status("Elaborated " + result.top + " with " + (result.engine || "Slang") + " · " + result.files.length + " source files.");
+  status("Analyzed " + result.top + " with " + (result.engine || "Slang") + " · " + result.files.length + " source files.");
   byId("instance-count").textContent = count(result.hierarchy) + " instances";
   focus([result.hierarchy]);
 }

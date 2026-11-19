@@ -20,6 +20,7 @@
     </a>
     <nav class="workflow-nav" aria-label="Workflows">
       <a href="/workbench.html" aria-current="page">Understanding your design</a>
+      <a href="/simulate.html">Simulate your design</a>
     </nav>
   </header>
   <main class="workbench" aria-label="Understanding your design">
@@ -31,6 +32,7 @@
         </div>
         <div class="project-actions">
           <button class="button primary" id="connect-github" type="button">Connect GitHub</button>
+          <button class="button" id="create-project" type="button">Create Project</button>
           <button class="button" id="open-folder" type="button">Open RTL folder</button>
           <button class="button" id="open-files" type="button">Open RTL files</button>
           <button class="button" id="open-example" type="button">Open RISC-V example</button>
@@ -62,7 +64,7 @@
           <label>Top module
             <select id="top" required disabled></select>
           </label>
-          <button class="button primary" id="compile-button" disabled type="submit">Compile &amp; elaborate</button>
+          <button class="button primary" id="compile-button" disabled type="submit">Analyze RTL</button>
         </form>
       </div>
       <p id="status" class="status" role="status">Choose a project source to get started.</p>
@@ -80,8 +82,8 @@
         </section>
       </aside>
       <section class="panel design" aria-labelledby="design-title">
-        <div class="section-head"><h2 id="design-title">Block diagram</h2><nav id="crumbs" aria-label="Instance path"></nav></div>
-        <div id="diagram"><div class="empty stage-empty">Load a project and elaborate a top module to inspect its blocks and signals.</div></div>
+        <div class="section-head"><h2 id="design-title">Logical block diagram</h2><nav id="crumbs" aria-label="Instance path"></nav></div>
+        <div id="diagram"><div class="empty stage-empty">Load a project and analyze a top module to inspect its blocks and signals.</div></div>
         <div id="inspector"></div>
       </section>
     </div>
@@ -98,6 +100,16 @@
       <pre id="diagnostics">No compile has been run.</pre>
     </details>
   </main>
+  <dialog class="project-dialog" id="create-dialog" aria-labelledby="create-title">
+    <div class="source-head">
+      <h2 id="create-title">Create Project</h2>
+      <form method="dialog"><button class="button">Close</button></form>
+    </div>
+    <form id="project-create-form" class="github-import">
+      <label>Project name <input id="new-project-name" required maxlength="80" autocomplete="off" autofocus></label>
+      <button class="button primary" type="submit">Create Project</button>
+    </form>
+  </dialog>
   <dialog id="github-dialog" aria-labelledby="github-title">
     <div class="source-head">
       <div><h2 id="github-title">Connect GitHub repository</h2><p class="source">Import RTL from a branch, tag, or commit.</p></div>

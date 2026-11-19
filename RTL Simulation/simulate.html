@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulate your design · RTL2GDS Cockpit</title>
+  <link rel="stylesheet" href="/workbench.css">
+  <script src="/rtl-project-io.js" defer></script>
+  <script src="/rtl-vcd.js" defer></script>
+  <script src="/simulate.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="RTL2GDS Cockpit home">
+      <span class="mark" aria-hidden="true"></span><span>RTL2GDS Cockpit</span>
+    </a>
+    <nav class="workflow-nav" aria-label="Workflows">
+      <a href="/workbench.html">Understanding your design</a>
+      <a href="/simulate.html" aria-current="page">Simulate your design</a>
+    </nav>
+  </header>
+  <main class="workbench" aria-labelledby="simulation-title">
+    <section class="project panel simulation-setup">
+      <div class="project-heading">
+        <div>
+          <h1 id="simulation-title">Simulate your design</h1>
+          <p class="project-hint">Run a Verilog or SystemVerilog testbench in the browser with Icarus Verilog.</p>
+        </div>
+        <div class="project-actions">
+          <button class="button" type="button" id="sim-open">Open RTL files</button>
+          <input type="file" id="sim-files" accept=".v,.sv,.vh,.svh,.mem,.hex,.mif,.dat" multiple hidden>
+          <button class="button" type="button" id="sim-example">Load flip-flop example</button>
+        </div>
+      </div>
+      <form id="simulation-form" class="simulation-form">
+        <div class="sim-controls">
+          <label>Testbench top module <input id="sim-top" required placeholder="tb" spellcheck="false" maxlength="128"></label>
+          <button class="button primary" id="sim-run" type="submit">Run simulation</button>
+        </div>
+        <div id="sim-input-list" class="source" hidden></div>
+        <div class="sim-editors">
+          <label>Design RTL <textarea id="sim-design" spellcheck="false" placeholder="Paste design RTL or open source files"></textarea></label>
+          <label>Testbench RTL <textarea id="sim-testbench" spellcheck="false" placeholder="Paste your testbench here or include it in the source files"></textarea></label>
+        </div>
+      </form>
+      <p id="sim-status" class="status" role="status">Open source files or paste RTL to start a simulation.</p>
+    </section>
+    <div class="simulation-results">
+      <section class="panel sim-result" aria-labelledby="simulation-output-title">
+        <div class="section-head"><h2 id="simulation-output-title">Simulation output</h2></div>
+        <pre id="sim-console" tabindex="0">Testbench output and diagnostics appear here.</pre>
+      </section>
+      <section class="panel sim-result" aria-labelledby="simulation-waves-title">
+        <div class="section-head">
+          <h2 id="simulation-waves-title">Waveforms</h2>
+          <button class="button" type="button" id="sim-download" disabled>Download VCD</button>
+        </div>
+        <p class="empty" id="sim-wave-empty">Use <code>$dumpfile</code> and <code>$dumpvars</code> in the testbench to capture waveforms.</p>
+        <div id="sim-wave-view" hidden>
+          <div id="sim-wave-picker" class="sim-signal-picker" aria-label="Signals to display"></div>
+          <canvas id="sim-canvas" role="img" aria-label="Waveform of selected signals"></canvas>
+          <label class="sim-cursor">Time cursor <input type="range" id="sim-time" min="0" max="0" value="0" step="1"></label>
+          <output id="sim-readout" aria-live="polite"></output>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

@@ -59,14 +59,22 @@ export function createCockpitWorker(assets) {
       if (request.method !== "GET" && request.method !== "HEAD") {
         return new Response("Method not allowed", {status: 405, headers: {Allow: "GET, HEAD"}});
       }
-      const pathname = {"/": "/index.html", "/workbench": "/workbench.html",
-        "/workbench/": "/workbench.html"}[url.pathname] || url.pathname;
+      const pathname = {"/": "/index.html", "/workbench": "/workbench.html", "/workbench/": "/workbench.html",
+        "/simulate": "/simulate.html", "/simulate/": "/simulate.html"}[url.pathname] || url.pathname;
       if (!Object.hasOwn(assets, pathname)) return new Response("Not found", {status: 404});
       const [contentType, value, binary] = assets[pathname];
-      const body = request.method === "HEAD" ? null : binary ? Uint8Array.from(atob(value), char => char.charCodeAt(0)) : value;
+      const body = request.method === "HEAD" ? null : binary ? decodeAsset(value) : value;
       return new Response(body, {headers: {
         "Content-Type": contentType, "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"
       }});
     }
   };
+}
+
+function decodeAsset(value) {
+  if (typeof Uint8Array.fromBase64 === "function") return Uint8Array.fromBase64(value);
+  const decoded = atob(value);
+  const bytes = new Uint8Array(decoded.length);
+  for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index);
+  return bytes;
 }

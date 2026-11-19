@@ -20,27 +20,30 @@ Use **Connect GitHub** with a repository URL or `owner/repository`. Choose a
 branch, tag, commit, or source folder when needed. Use the revision field for
 branch names containing slashes. The imported files and their source links are
 pinned to the resolved commit. **Refresh from GitHub** reads the current ref
-and re-elaborates a previously compiled top if it is still available. A private
+and analyzes the previously selected top if it is still available. A private
 repository requires a fine-grained token with read access to its contents.
 The page holds the token in memory until the project closes or the page reloads.
 Public imports use GitHub ZIP archives up to 32 MB and fall back to the GitHub
 API when an archive is unavailable. ZIP imports preserve commit-pinned links.
 
-**Open RTL folder** preserves file paths and includes. **Open RTL files** is
+**Create Project** starts a named project in the current browser tab. Use
+**Add RTL files** or **Add RTL folder** to populate it. **Open RTL folder**
+preserves file paths and includes. **Open RTL files** is
 convenient for a source set within one directory. Both load sources into the
 browser. The local Python service also offers **Open a directory on this machine**
 for direct Slang elaboration of a working tree, where `.` means this checkout.
 
-GitHub and browser-selected projects use the browser build of Yosys for
-synthesizable RTL. They show the lowered netlist with source links. The bundled
-example and local Slang flow also show source-level process and case regions.
+**Analyze RTL** uses Slang to generate a source-linked logical block diagram.
+GitHub and browser-selected projects run the same analyzer in a WebAssembly worker.
+The RISC-V example tracks the selected top, and the local Python service uses
+native Slang for directories opened directly on the machine.
 
 1. Load a project. Use **Source folder** in the GitHub dialog or
    **Source directory** in the local Slang flow to scope a project with multiple RTL trees.
 2. Select a top and definition path. For the RISC-V core, select
    `riscv_core` from `RiscV-32bit/RiscV-32bit.srcs/sources_1/new/riscv_core.v`.
    For the simulation hierarchy, select `tb_riscv_core` from the same directory.
-3. Click **Compile & elaborate**. Click a block to enter it. The breadcrumbs
+3. Click **Analyze RTL**. Click a block to enter it. The breadcrumbs
    return to any parent, and the tree supports independent expand and collapse.
 4. Open **Data schematic** to see one wired canvas for the selected instance.
    Module ports, child pins, gates, memory, and clock fanout appear on the same
@@ -100,5 +103,43 @@ all come from the project sources.
   by earlier file macros, and custom include paths can require a future
   project manifest. The current workbench searches the source file's directory,
   selected source directory, and RTL root for headers.
-- This milestone ends at elaboration. Testbench execution, result assertions,
-  and waveform viewing belong to the next milestone.
+
+## Simulate your design
+
+Open **Simulate your design** to upload Verilog or SystemVerilog files, or paste
+RTL and a testbench. Set the testbench top and run. The browser worker uses
+Icarus Verilog to compile and execute the testbench. Its console shows simulator
+diagnostics and testbench output. A testbench that records VCD using
+`$dumpfile` and `$dumpvars` produces an interactive waveform and a downloadable
+VCD file. **Load flip-flop example** fills in a runnable design and testbench.
+The worker fetches the pinned [Icarus Verilog WebAssembly port](https://github.com/senolgulgonul/verisim/tree/ab0ff3862a8cf8c6535117a64d370c4bf263042f)
+on the first run.
+
+## Rebuild the browser analyzer
+
+The included browser analyzer pairs Slang 12.1.0 with Pyodide 0.27.7. When the
+Python analysis modules change, run `package-browser-analysis.py` again with
+the same extension and dependency notices. To rebuild the extension, use the
+Slang 12.1.0 source distribution, Emscripten 3.1.58, the Pyodide 0.27.7 CPython
+3.12.7 headers, and a host Python environment with nanobind 3.0.1. Run these
+commands from the unpacked Slang source directory. Set `cockpit_dir` to this
+`RTL Simulation` directory and `pyodide_headers` to the directory containing
+Pyodide's `Python.h`.
+
+```sh
+patch -p1 < "$cockpit_dir/slang-wasm.patch"
+emcmake cmake -S . -B browser-build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
+  -DCMAKE_CXX_FLAGS_RELEASE="-O1 -g0 -fexceptions -fPIC" \
+  -DCMAKE_MODULE_LINKER_FLAGS="-sSIDE_MODULE=2 -sWASM_BIGINT -sEXPORTED_FUNCTIONS=_PyInit_pyslang -fexceptions" \
+  -DPython_EXECUTABLE="$(command -v python)" -DPython_INCLUDE_DIR="$pyodide_headers" \
+  -DSLANG_INCLUDE_PYLIB=ON -DSLANG_INCLUDE_TESTS=OFF -DSLANG_INCLUDE_TOOLS=OFF \
+  -DSLANG_USE_THREADS=OFF -DSLANG_USE_MIMALLOC=OFF
+cmake --build browser-build --target pyslang
+python "$cockpit_dir/package-browser-analysis.py" \
+  browser-build/lib/pyslang.cpython-312-wasm32-emscripten.so . \
+  "$cockpit_dir/rtl-analysis.zip"
+```
+
+Pass the linked dependency notices as `--notice NAME PATH` arguments to
+include them in the archive alongside the Slang license.
