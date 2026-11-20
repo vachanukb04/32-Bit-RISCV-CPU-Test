@@ -112,14 +112,58 @@ opens with the project's source files already loaded. For parallel RTL variants,
 the handoff uses the selected source directory and any dependencies found by
 Analyze RTL. A matching project testbench is selected when available. You can
 also add simulation files or paste a testbench and set its top.
-The browser worker uses
-Icarus Verilog to compile and execute the testbench. Its console shows simulator
-diagnostics and testbench output. A testbench that records VCD using
-`$dumpfile` and `$dumpvars` produces an interactive waveform and a downloadable
-VCD file. Returning to the workbench preserves the active project. Changing its
-sources or top requires another review.
-The worker fetches the pinned [Icarus Verilog WebAssembly port](https://github.com/senolgulgonul/verisim/tree/ab0ff3862a8cf8c6535117a64d370c4bf263042f)
-on the first run.
+
+The **RTL2GDS Simulator** shows three stages. **Analyze** preprocesses and parses
+the project sources with Slang. **Elaborate** selects the testbench hierarchy
+and lowers the elaborated AST into runnable processes and signal drivers.
+**Simulate** runs the processes in the cockpit's own event scheduler. The
+browser worker runs the same Python modules as the command-line simulator.
+
+The scheduler advances to the next scheduled time and processes Active,
+Inactive, and nonblocking assignment (NBA) events at each time slot. Blocking
+assignments update immediately. Nonblocking assignments capture the sampled
+value and resolved target before enqueueing the update. Values preserve
+`0`, `1`, `X`, and `Z`. Waveforms record the final value in each timestamp
+after processing its events.
+
+Open **Run settings** to supply include directories, preprocessor defines,
+a time limit in ticks, or hierarchical signals and scopes to capture.
+`$dumpfile` and `$dumpvars` also configure VCD recording. The simulation screen
+shows compiler diagnostics with source locations, testbench output, stop reason, and
+elapsed simulation time. Recorded signals appear in the waveform viewer and are
+available as a downloadable VCD. Returning to the workbench preserves the
+active project. Changing its sources or top requires another review.
+
+### Supported RTL
+
+The current subset covers integral signals and vectors up to 4096 bits, fixed
+one-dimensional unpacked memories, module hierarchy with input and output
+ports, parameters and generate blocks, continuous assignments, and procedural
+`initial` and `always` blocks. It supports edge and change events, delay and
+wait statements, procedural loops, common arithmetic and logic, selects,
+concatenation, `if`, `case`, `casez`, and `casex`. Testbench support includes
+immediate assertions, console messages, `$finish`, `$stop`, and memory
+initialization via `$readmemh` or `$readmemb`. The project defaults to `1ns/1ps`
+where no time scale is declared. Waveforms are capped at 300 signals and 4 MB.
+
+Concurrent assertions, class-based testbenches and UVM, `fork`, user-defined
+functions and tasks, bidirectional ports, gate primitives and timing, and
+mixed-language inputs are outside this release's subset. Source constructs that
+need these features fail with an analysis or elaboration diagnostic. Runs
+sharing a time slot across testbench processes can be order-sensitive.
+
+### Run from the command line
+
+From the repository root after installing the workbench dependencies:
+
+```sh
+rtl_dir="RiscV-32bit/RiscV-32bit.srcs/sources_1/new"
+"RTL Simulation/.venv/bin/python" "RTL Simulation/rtl_sim_cli.py" \
+  --top tb_riscv_core --vcd riscv_core.vcd "$rtl_dir"/*.v
+```
+
+Run the simulator regressions with
+`python -m unittest discover -s 'RTL Simulation' -p test_simulator.py`.
 
 ## Rebuild the browser analyzer
 

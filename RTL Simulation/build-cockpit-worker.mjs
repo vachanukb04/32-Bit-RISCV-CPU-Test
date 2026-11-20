@@ -15,7 +15,8 @@ for (const file of (await readdir(source, {withFileTypes: true})).filter(entry =
   const value = await readFile(join(source, file.name), binary ? "base64" : "utf8");
   assets["/" + file.name] = [types[extension] + (binary ? "" : "; charset=utf-8"), value, binary];
 }
-for (const required of ["/index.html", "/workbench.html", "/simulate.html", "/rtl-analysis.zip", "/compiled-designs.json"]) {
+for (const required of ["/index.html", "/workbench.html", "/simulate.html", "/rtl-sim-worker.js",
+  "/rtl-python-worker.js", "/rtl-analysis.zip", "/compiled-designs.json"]) {
   if (!assets[required]) throw new Error("Missing hosted asset " + required);
 }
 

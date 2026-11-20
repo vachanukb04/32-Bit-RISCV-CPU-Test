@@ -38,6 +38,11 @@
           <input type="file" id="sim-files" accept=".v,.sv,.vh,.svh,.mem,.hex,.mif,.dat" multiple hidden>
         </div>
       </div>
+      <ol class="sim-stages" aria-label="Simulation stages">
+        <li id="sim-analyze" data-state="waiting"><strong>Analyze</strong><span>Waiting</span></li>
+        <li id="sim-elaborate" data-state="waiting"><strong>Elaborate</strong><span>Waiting</span></li>
+        <li id="sim-simulate" data-state="waiting"><strong>Simulate</strong><span>Waiting</span></li>
+      </ol>
       <form id="simulation-form" class="simulation-form">
         <div class="sim-controls">
           <label>Testbench top module <input id="sim-top" required placeholder="tb" spellcheck="false" maxlength="128"></label>
@@ -46,6 +51,15 @@
         <details class="sim-source-list">
           <summary id="sim-input-summary">Source files</summary>
           <ul id="sim-input-list" class="source"></ul>
+        </details>
+        <details class="sim-source-list">
+          <summary>Run settings</summary>
+          <div class="sim-settings">
+            <label>Time limit in simulation ticks <input id="sim-limit" type="number" min="0" step="1" max="9007199254740991" placeholder="Until testbench finishes"></label>
+            <label>Include directories <input id="sim-include" spellcheck="false" placeholder="include, rtl/include"></label>
+            <label>Preprocessor defines <input id="sim-defines" spellcheck="false" placeholder="SIM, WIDTH=8"></label>
+            <label>Capture signals or scopes <input id="sim-trace" spellcheck="false" placeholder="tb.clk, tb.dut"></label>
+          </div>
         </details>
         <div class="sim-editors">
           <label>Testbench RTL (optional) <textarea id="sim-testbench" spellcheck="false" placeholder="Paste a testbench here or use one from the project files"></textarea></label>
@@ -63,7 +77,7 @@
           <h2 id="simulation-waves-title">Waveforms</h2>
           <button class="button" type="button" id="sim-download" disabled>Download VCD</button>
         </div>
-        <p class="empty" id="sim-wave-empty">Use <code>$dumpfile</code> and <code>$dumpvars</code> in the testbench to capture waveforms.</p>
+        <p class="empty" id="sim-wave-empty">Use <code>$dumpvars</code> in the testbench or choose signals in Run settings to capture waveforms.</p>
         <div id="sim-wave-view" hidden>
           <div id="sim-wave-picker" class="sim-signal-picker" aria-label="Signals to display"></div>
           <canvas id="sim-canvas" role="img" aria-label="Waveform of selected signals"></canvas>

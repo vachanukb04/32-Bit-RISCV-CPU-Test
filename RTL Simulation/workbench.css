@@ -421,11 +421,23 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
     100% 85%, 100% 100%, 83% 100%, 83% 20%, 65% 20%, 65% 100%, 39% 100%, 39% 20%, 21% 20%, 21% 100%, 0 100%); }
 .sim-thumb-plot i:last-child { margin-left: 14%; opacity: .7; }
 .simulation-setup h1 { font-size: 1.45rem; }
+.sim-stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none;
+  gap: .5rem; margin: 1rem 0 0; padding: 0; }
+.sim-stages li { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between;
+  gap: .25rem .6rem; padding: .5rem .65rem; border: 1px solid var(--border); border-radius: 6px;
+  background: #131b24; font-size: .88rem; }
+.sim-stages li span { color: var(--muted); font: .77rem var(--mono); }
+.sim-stages li[data-state="running"] { border-color: var(--accent); }
+.sim-stages li[data-state="complete"] span { color: var(--accent); }
+.sim-stages li[data-state="failed"] { border-color: #e69991; }
+.sim-stages li[data-state="failed"] span { color: #ffc0bb; }
 .simulation-form { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: .9rem; }
 .sim-controls { display: grid; grid-template-columns: minmax(9rem, 18rem) auto; gap: .7rem;
   align-items: end; justify-content: start; }
 .sim-source-list { color: var(--muted); font-size: .85rem; }
 .sim-source-list ul { max-height: 11rem; overflow: auto; overflow-wrap: anywhere; }
+.sim-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .6rem; margin-top: .7rem; }
 .sim-editors { min-width: 0; }
 .sim-editors textarea { resize: vertical; min-height: 13rem; padding: .65rem; border: 1px solid #45556a;
   border-radius: 7px; color: #e4edf8; background: #111821; font: .8rem/1.5 var(--mono); tab-size: 2; }

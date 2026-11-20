@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 MODULES = (
     "compiler.py", "rtl_case_regions.py", "rtl_comb_logic.py", "rtl_process_view.py",
     "rtl_schematic.py", "rtl_structure.py",
+    "rtl_sim_cli.py", "rtl_sim_engine.py", "rtl_sim_logic.py", "rtl_sim_model.py",
 )
 
 

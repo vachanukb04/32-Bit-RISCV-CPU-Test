@@ -9,10 +9,22 @@ let reviewed = false;
 let waveFile;
 let waveform;
 const selectedSignals = new Set();
+const phaseNames = ["Analyze", "Elaborate", "Simulate"];
+let currentPhase = -1;
 
 function simStatus(message, error = false) {
   el("sim-status").textContent = message;
   el("sim-status").dataset.error = error;
+}
+
+function showPhase(index, state) {
+  currentPhase = index;
+  for (const [position, name] of phaseNames.entries()) {
+    const item = el("sim-" + name.toLowerCase());
+    const phase = position < index ? "complete" : position === index ? state : "waiting";
+    item.dataset.state = phase;
+    item.querySelector("span").textContent = phase[0].toUpperCase() + phase.slice(1);
+  }
 }
 
 function listSimulationFiles() {
@@ -33,7 +45,7 @@ window.addEventListener("message", event => {
   reviewed = true;
   localSources = project.sources;
   el("sim-top").value = project.testbench;
-  el("sim-project").textContent = project.name + " · Reviewed top " + project.top;
+  el("sim-project").textContent = "RTL2GDS Simulator · " + project.name + " · Reviewed top " + project.top;
   listSimulationFiles();
   el("sim-masthead").hidden = true;
   el("sim-locked").hidden = true;
@@ -66,7 +78,7 @@ el("sim-files").onchange = async event => {
   }
 };
 
-function runSimulation(sources, top) {
+function runSimulation(sources, top, settings) {
   return new Promise((resolve, reject) => {
     const worker = new Worker("/rtl-sim-worker.js", {type: "module"});
     const deadline = setTimeout(() => complete(new Error("Simulation timed out. Check that the testbench reaches $finish.")), 60000);
@@ -77,17 +89,22 @@ function runSimulation(sources, top) {
       else resolve(result);
     }
     worker.onmessage = ({data}) => {
-      if (data.stage) {
-        simStatus(data.stage);
+      if (data.loading) {
+        simStatus("Loading RTL2GDS Simulator…");
+      } else if (data.stage) {
+        showPhase(phaseNames.indexOf(data.stage), "running");
+        simStatus(data.stage + " · " + top);
       } else if (data.error) {
         if (data.log) consoleOutput.textContent = data.log;
-        complete(new Error(data.error));
+        const phase = phaseNames.indexOf(data.phase);
+        if (phase >= 0) showPhase(phase, "failed");
+        complete(new Error((data.phase ? data.phase + " · " : "") + data.error));
       } else {
         complete(null, data.result);
       }
     };
     worker.onerror = () => complete(new Error("The browser simulator stopped unexpectedly."));
-    worker.postMessage({sources, top});
+    worker.postMessage({sources, top, settings});
   });
 }
 
@@ -100,16 +117,26 @@ el("simulation-form").onsubmit = async event => {
   while (Object.hasOwn(sources, filename)) filename = "_" + filename;
   if (input.trim()) sources[filename] = input;
   const top = el("sim-top").value.trim();
-  const controls = ["sim-run", "sim-open", "sim-top", "sim-testbench"].map(id => el(id));
+  const settingsList = id => el(id).value.split(",").map(value => value.trim()).filter(Boolean);
+  const settings = {includes: settingsList("sim-include"), defines: settingsList("sim-defines"),
+    trace: settingsList("sim-trace"), limit: el("sim-limit").value === "" ? null : el("sim-limit").valueAsNumber};
+  const controls = ["sim-run", "sim-open", "sim-top", "sim-testbench", "sim-include", "sim-defines", "sim-trace", "sim-limit"]
+    .map(id => el(id));
   for (const control of controls) control.disabled = true;
   consoleOutput.textContent = "Running simulation…";
+  showPhase(-1, "waiting");
   displayWaves(null);
   try {
-    const result = await runSimulation(sources, top);
-    consoleOutput.textContent = result.log || "Testbench completed.";
+    const result = await runSimulation(sources, top, settings);
+    consoleOutput.textContent = result.log || "The testbench produced no console output.";
     displayWaves(result.wave);
-    simStatus("Simulation completed for " + top + ".");
+    const outcome = result.testErrors ? "Testbench reported " + result.testErrors + " error(s). " : "";
+    showPhase(result.testErrors ? 2 : 3, result.testErrors ? "failed" : "complete");
+    simStatus(outcome + result.engine + " · " + result.reason + " · " + result.ticks + " × " + result.timescale + ".",
+      Boolean(result.testErrors));
   } catch (error) {
+    if (currentPhase < 0) showPhase(0, "failed");
+    else showPhase(currentPhase, "failed");
     if (consoleOutput.textContent === "Running simulation…") consoleOutput.textContent = error.message;
     simStatus(error.message, true);
   } finally {

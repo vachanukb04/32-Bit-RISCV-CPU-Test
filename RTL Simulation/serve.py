@@ -35,6 +35,7 @@ ASSETS = {
     "/simulate.js": ("simulate.js", "text/javascript"),
     "/rtl-vcd.js": ("rtl-vcd.js", "text/javascript"),
     "/rtl-sim-worker.js": ("rtl-sim-worker.js", "text/javascript"),
+    "/rtl-python-worker.js": ("rtl-python-worker.js", "text/javascript"),
     "/rtl-analyze-worker.js": ("rtl-analyze-worker.js", "text/javascript"),
     "/rtl-analysis.zip": ("rtl-analysis.zip", "application/zip"),
     "/cockpit.js": ("cockpit.js", "text/javascript"),
