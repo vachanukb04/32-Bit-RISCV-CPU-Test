@@ -118,6 +118,10 @@ the project sources with Slang. **Elaborate** selects the testbench hierarchy
 and lowers the elaborated AST into runnable processes and signal drivers.
 **Simulate** runs the processes in the cockpit's own event scheduler. The
 browser worker runs the same Python modules as the command-line simulator.
+Each stage lists its actions while the run progresses. **View log** on a
+stage opens its current log in a new tab, with the inputs and diagnostics
+from Analyze, the hierarchy and model details from Elaborate, or the
+testbench output and stop reason from Simulate.
 
 The scheduler advances to the next scheduled time and processes Active,
 Inactive, and nonblocking assignment (NBA) events at each time slot. Blocking

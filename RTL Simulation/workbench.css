@@ -423,14 +423,27 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 .simulation-setup h1 { font-size: 1.45rem; }
 .sim-stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none;
   gap: .5rem; margin: 1rem 0 0; padding: 0; }
-.sim-stages li { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between;
-  gap: .25rem .6rem; padding: .5rem .65rem; border: 1px solid var(--border); border-radius: 6px;
-  background: #131b24; font-size: .88rem; }
-.sim-stages li span { color: var(--muted); font: .77rem var(--mono); }
-.sim-stages li[data-state="running"] { border-color: var(--accent); }
-.sim-stages li[data-state="complete"] span { color: var(--accent); }
-.sim-stages li[data-state="failed"] { border-color: #e69991; }
-.sim-stages li[data-state="failed"] span { color: #ffc0bb; }
+.sim-stages > li { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem;
+  min-width: 0; padding: .65rem .75rem; border: 1px solid var(--border); border-radius: 6px;
+  background: #131b24; font-size: .9rem; }
+.sim-stage-heading { width: 100%; display: flex; align-items: baseline; flex-wrap: wrap;
+  justify-content: space-between; gap: .25rem .6rem; }
+.sim-stage-heading span { color: var(--muted); font: .77rem var(--mono); }
+.sim-stages [data-state="running"] { border-color: var(--accent); }
+.sim-stages [data-state="complete"] span { color: var(--accent); }
+.sim-stages [data-state="failed"] { border-color: #e69991; }
+.sim-stages [data-state="failed"] span { color: #ffc0bb; }
+.sim-stages ul { margin: 0; padding-left: 1rem; color: #c6d6e5; font-size: .875rem;
+  line-height: 1.4; overflow-wrap: anywhere; }
+.sim-stages ul:empty { display: none; }
+.sim-stages ul li + li { margin-top: .25rem; }
+.sim-log-link { margin-top: auto; padding-block: .25rem; color: var(--accent); font-weight: 650;
+  text-underline-offset: .2em; }
+.sim-log-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.sim-log-page { max-width: 70rem; min-height: 100dvh; margin-inline: auto; }
+.sim-log-entry { padding: 1rem; }
+.sim-log-entry pre { margin: .7rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere;
+  color: #d5e3f2; font: .88rem/1.5 var(--mono); }
 .simulation-form { grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: .9rem; }
 .sim-controls { display: grid; grid-template-columns: minmax(9rem, 18rem) auto; gap: .7rem;
   align-items: end; justify-content: start; }
@@ -457,4 +470,7 @@ pre { font: .76rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhe
 #sim-readout { display: block; min-height: 1.25rem; color: var(--muted); font: .75rem/1.5 var(--mono); overflow-wrap: anywhere; }
 @media (max-width: 850px) {
   .simulation-results { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 690px) {
+  .sim-stages { grid-template-columns: minmax(0, 1fr); }
 }

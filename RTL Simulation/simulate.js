@@ -10,7 +10,13 @@ let waveFile;
 let waveform;
 const selectedSignals = new Set();
 const phaseNames = ["Analyze", "Elaborate", "Simulate"];
+const phaseLabels = {waiting: "Waiting", running: "Running", complete: "Complete", failed: "Failed",
+  skipped: "Not reached"};
+const phaseCards = phaseNames.map(name => el("sim-" + name.toLowerCase()));
+const phaseEntries = phaseNames.map(() => []);
+const logUrls = [];
 let currentPhase = -1;
+let runTop = "";
 
 function simStatus(message, error = false) {
   el("sim-status").textContent = message;
@@ -19,12 +25,80 @@ function simStatus(message, error = false) {
 
 function showPhase(index, state) {
   currentPhase = index;
-  for (const [position, name] of phaseNames.entries()) {
-    const item = el("sim-" + name.toLowerCase());
-    const phase = position < index ? "complete" : position === index ? state : "waiting";
-    item.dataset.state = phase;
-    item.querySelector("span").textContent = phase[0].toUpperCase() + phase.slice(1);
+  for (const [position, card] of phaseCards.entries()) {
+    const phase = position < index ? "complete" : position === index ? state :
+      state === "failed" ? "skipped" : "waiting";
+    if (card.dataset.state === phase) continue;
+    card.dataset.state = phase;
+    card.querySelector("span").textContent = phaseLabels[phase];
+    updateLogLink(position);
   }
+}
+
+function resetStageLogs(top) {
+  for (const url of logUrls.splice(0)) URL.revokeObjectURL(url);
+  runTop = top;
+  for (const [index, card] of phaseCards.entries()) {
+    phaseEntries[index].length = 0;
+    card.querySelector("ul").replaceChildren();
+    const link = card.querySelector("a");
+    link.hidden = true;
+    link.removeAttribute("href");
+  }
+  showPhase(-1, "waiting");
+}
+
+function addStageAction(index, action, detail) {
+  const item = document.createElement("li");
+  item.textContent = action;
+  phaseCards[index].querySelector("ul").append(item);
+  phaseEntries[index].push({action, detail});
+  updateLogLink(index);
+}
+
+function updateLogLink(index) {
+  const entries = phaseEntries[index];
+  if (!entries.length) return;
+  const card = phaseCards[index];
+  const name = phaseNames[index];
+  const page = document.implementation.createHTMLDocument(name + " log · RTL2GDS Simulator");
+  page.documentElement.lang = "en";
+  const make = (tag, text) => {
+    const node = page.createElement(tag);
+    node.textContent = text;
+    return node;
+  };
+  const charset = page.createElement("meta");
+  charset.setAttribute("charset", "utf-8");
+  page.head.prepend(charset);
+  const viewport = page.createElement("meta");
+  viewport.name = "viewport";
+  viewport.content = "width=device-width, initial-scale=1";
+  const css = page.createElement("link");
+  css.rel = "stylesheet";
+  css.href = location.origin + "/workbench.css";
+  page.head.append(viewport, css);
+  const main = page.createElement("main");
+  main.className = "workbench sim-log-page";
+  const heading = page.createElement("header");
+  const subtitle = make("p", "Testbench " + runTop + " · " + phaseLabels[card.dataset.state]);
+  subtitle.className = "project-hint";
+  heading.append(make("h1", name + " log"), subtitle);
+  main.append(heading);
+  for (const {action, detail} of entries) {
+    const section = page.createElement("section");
+    section.className = "panel sim-log-entry";
+    section.append(make("h2", action));
+    if (detail) section.append(make("pre", detail));
+    main.append(section);
+  }
+  page.body.append(main);
+  const content = new Blob(["<!doctype html>\n" + page.documentElement.outerHTML], {type: "text/html;charset=utf-8"});
+  const url = URL.createObjectURL(content);
+  logUrls.push(url);
+  const link = card.querySelector("a");
+  link.href = url;
+  link.hidden = false;
 }
 
 function listSimulationFiles() {
@@ -91,6 +165,9 @@ function runSimulation(sources, top, settings) {
     worker.onmessage = ({data}) => {
       if (data.loading) {
         simStatus("Loading RTL2GDS Simulator…");
+      } else if (data.action) {
+        const phase = phaseNames.indexOf(data.stage);
+        if (phase >= 0) addStageAction(phase, data.action, data.detail);
       } else if (data.stage) {
         showPhase(phaseNames.indexOf(data.stage), "running");
         simStatus(data.stage + " · " + top);
@@ -98,7 +175,9 @@ function runSimulation(sources, top, settings) {
         if (data.log) consoleOutput.textContent = data.log;
         const phase = phaseNames.indexOf(data.phase);
         if (phase >= 0) showPhase(phase, "failed");
-        complete(new Error((data.phase ? data.phase + " · " : "") + data.error));
+        const error = new Error((data.phase ? data.phase + " · " : "") + data.error);
+        error.stageRecorded = phase >= 0;
+        complete(error);
       } else {
         complete(null, data.result);
       }
@@ -124,7 +203,7 @@ el("simulation-form").onsubmit = async event => {
     .map(id => el(id));
   for (const control of controls) control.disabled = true;
   consoleOutput.textContent = "Running simulation…";
-  showPhase(-1, "waiting");
+  resetStageLogs(top);
   displayWaves(null);
   try {
     const result = await runSimulation(sources, top, settings);
@@ -135,8 +214,9 @@ el("simulation-form").onsubmit = async event => {
     simStatus(outcome + result.engine + " · " + result.reason + " · " + result.ticks + " × " + result.timescale + ".",
       Boolean(result.testErrors));
   } catch (error) {
-    if (currentPhase < 0) showPhase(0, "failed");
-    else showPhase(currentPhase, "failed");
+    const failedPhase = Math.min(Math.max(currentPhase, 0), phaseNames.length - 1);
+    showPhase(failedPhase, "failed");
+    if (!error.stageRecorded) addStageAction(failedPhase, "Stage failed", error.message);
     if (consoleOutput.textContent === "Running simulation…") consoleOutput.textContent = error.message;
     simStatus(error.message, true);
   } finally {

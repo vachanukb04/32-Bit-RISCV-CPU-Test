@@ -95,16 +95,25 @@ endmodule
         response = self.project(forever, limit=2500)
         self.assertEqual(response["result"]["reason"], "Time limit reached")
         self.assertEqual(response["result"]["ticks"], 2500)
-        malformed = self.project("module tb; logic x = ; endmodule")
+        actions = []
+        progress = lambda *entry: actions.append(entry)
+        malformed = self.project("module tb; logic x = ; endmodule", progress=progress)
         self.assertEqual(malformed["phase"], "Analyze")
         self.assertIn("test.sv:", malformed["log"])
+        self.assertEqual({stage for stage, _, _ in actions}, {"Analyze"})
+        self.assertTrue(any("test.sv:" in detail for _, _, detail in actions))
+        self.assertEqual(actions[-1], ("Analyze", "Stage failed", malformed["error"]))
         unsupported = self.project("module tb; logic c; always @(c) fork c = 0; join endmodule")
         self.assertEqual(unsupported["phase"], "Elaborate")
         self.assertIn("Parallel fork", unsupported["error"])
-        failed = self.project("module tb; initial begin $display(\"before\"); $fatal(1, \"failure\"); end endmodule")
+        actions.clear()
+        failed = self.project("module tb; initial begin $display(\"before\"); $fatal(1, \"failure\"); end endmodule",
+                              progress=progress)
         self.assertEqual(failed["phase"], "Simulate")
         self.assertIn("failure", failed["error"])
         self.assertIn("before", failed["log"])
+        self.assertIn(("Simulate", "Testbench output before the error", "before"), actions)
+        self.assertEqual(actions[-1], ("Simulate", "Stage failed", failed["error"]))
 
     def test_run_options_memory_file_and_explicit_wave_selection(self):
         with TemporaryDirectory() as directory:
@@ -136,8 +145,9 @@ endmodule
         root = Path(__file__).resolve().parents[1]
         rtl = root / "RiscV-32bit/RiscV-32bit.srcs/sources_1/new"
         phases = []
+        actions = []
         response = run_project(rtl, [path.name for path in sorted(rtl.glob("*.v"))],
-                               "tb_riscv_core", report=phases.append)
+                               "tb_riscv_core", report=phases.append, progress=lambda *entry: actions.append(entry))
         self.assertIn("result", response, response)
         result = response["result"]
         self.assertEqual(phases, ["Analyze", "Elaborate", "Simulate"])
@@ -145,6 +155,12 @@ endmodule
         self.assertIn("Time: 55000 | IO Output changed to: 00005555", result["log"])
         self.assertEqual(result["wave"]["name"], "riscv_core.vcd")
         self.assertIn("dbg_pc [31:0]", result["wave"]["text"])
+        logs = {phase: "\n".join(detail for stage, _, detail in actions if phase == stage) for phase in phases}
+        self.assertIn("tb_riscv_core.v", logs["Analyze"])
+        self.assertIn("tb_riscv_core.uut.u_pc (pc)", logs["Elaborate"])
+        self.assertIn("implicit conversion changes signedness", logs["Elaborate"])
+        self.assertIn("IO Output changed to: 00005555", logs["Simulate"])
+        self.assertIn("riscv_core.vcd", logs["Simulate"])
 
 
 if __name__ == "__main__":

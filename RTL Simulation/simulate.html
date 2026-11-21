@@ -39,9 +39,21 @@
         </div>
       </div>
       <ol class="sim-stages" aria-label="Simulation stages">
-        <li id="sim-analyze" data-state="waiting"><strong>Analyze</strong><span>Waiting</span></li>
-        <li id="sim-elaborate" data-state="waiting"><strong>Elaborate</strong><span>Waiting</span></li>
-        <li id="sim-simulate" data-state="waiting"><strong>Simulate</strong><span>Waiting</span></li>
+        <li id="sim-analyze" data-state="waiting">
+          <div class="sim-stage-heading"><strong>Analyze</strong><span>Waiting</span></div>
+          <ul aria-label="Analyze actions"></ul>
+          <a class="sim-log-link" target="_blank" rel="noopener" aria-label="View Analyze log (opens in a new tab)" hidden>View log</a>
+        </li>
+        <li id="sim-elaborate" data-state="waiting">
+          <div class="sim-stage-heading"><strong>Elaborate</strong><span>Waiting</span></div>
+          <ul aria-label="Elaborate actions"></ul>
+          <a class="sim-log-link" target="_blank" rel="noopener" aria-label="View Elaborate log (opens in a new tab)" hidden>View log</a>
+        </li>
+        <li id="sim-simulate" data-state="waiting">
+          <div class="sim-stage-heading"><strong>Simulate</strong><span>Waiting</span></div>
+          <ul aria-label="Simulate actions"></ul>
+          <a class="sim-log-link" target="_blank" rel="noopener" aria-label="View Simulate log (opens in a new tab)" hidden>View log</a>
+        </li>
       </ol>
       <form id="simulation-form" class="simulation-form">
         <div class="sim-controls">
